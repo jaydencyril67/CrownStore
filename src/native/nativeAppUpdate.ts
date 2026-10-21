@@ -6,6 +6,8 @@ export type NativeAppUpdateEvent = { message?: string; stage?: string; packageId
 export type NativeAppUpdatePlugin = {
   getAppInfo(): Promise<NativeAppInfo>;
   getInstalledApps(options: { packageIds: string[] }): Promise<{ apps: NativeInstalledApp[] }>;
+  getDownloadStatus(options: { downloadId: number }): Promise<{ status: string; bytesDownloaded: number; totalSize: number; reason: number }>;
+  cancelDownload(options: { downloadId: number }): Promise<{ removed: boolean }>;
   downloadAndInstall(options: { url: string; appName?: string; packageId?: string }): Promise<{
     status?: string; downloadId?: number; requiresPermission?: boolean; url?: string; queuedAt?: number
   }>;
