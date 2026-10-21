@@ -7,19 +7,25 @@
     "dev": "node scripts/copy-fonts.mjs && vite --host 0.0.0.0",
     "build": "node scripts/copy-fonts.mjs && tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "typecheck": "node scripts/copy-fonts.mjs && tsc -b --pretty"
+    "typecheck": "node scripts/copy-fonts.mjs && tsc -b --pretty",
+    "android:add": "cap add android",
+    "android:sync": "npm run build && npx cap sync android && python3 scripts/install-android-device-bridge.py"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@fontsource/stix-two-text": "^5.2.6"
+    "@fontsource/stix-two-text": "^5.2.6",
+    "@capacitor/android": "^7.6.9",
+    "@capacitor/app": "^7.0.1",
+    "@capacitor/core": "^7.6.9"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "~5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "@capacitor/cli": "^7.6.9"
   }
 }
