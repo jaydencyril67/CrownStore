@@ -1,0 +1,34 @@
+{
+  "name": "CrownStore — Official KingsHall App Store",
+  "short_name": "CrownStore",
+  "description": "Discover, inspect and download official Android applications from the KingsHall ecosystem.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#100719",
+  "theme_color": "#100719",
+  "categories": [
+    "shopping",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/crownstore-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/crownstore-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
