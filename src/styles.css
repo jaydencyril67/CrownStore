@@ -130,8 +130,8 @@ button,a{-webkit-tap-highlight-color:transparent}
   .apps-section{padding-top:70px}
   .app-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .section-heading h2{font-size:32px}
-  .shelf-app-card{flex-basis:116px}
-  .shelf-track>.app-shell-placeholder{flex-basis:98px}
+  .shelf-app-card{flex-basis:104px}
+  .shelf-track>.app-shell-placeholder{flex-basis:88px}
   .shelves-heading h1{font-size:38px}
 }
 @media(max-width:620px){
@@ -211,8 +211,8 @@ button,a{-webkit-tap-highlight-color:transparent}
   .shelf-heading p{font-size:11px}
   .shelf-count{font-size:10px;padding:4px 7px}
   .shelf-track{gap:8px}
-  .shelf-app-card{flex-basis:min(32vw,116px)}
-  .shelf-track>.app-shell-placeholder{flex-basis:min(32vw,116px)}
+  .shelf-app-card{flex-basis:min(28.8vw,104px)}
+  .shelf-track>.app-shell-placeholder{flex-basis:min(28.8vw,104px)}
   .app-shell-placeholder,.app-shell-placeholder.is-loading{min-height:132px;padding:11px}
   
   
@@ -311,9 +311,9 @@ button,a{-webkit-tap-highlight-color:transparent}
 .shelf-see-all:hover{color:#fff0b5}
 .shelf-track{display:flex;gap:5px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding:1px 1px 5px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .shelf-track::-webkit-scrollbar{display:none}
-.shelf-app-card{flex:0 0 124px;min-width:0;scroll-snap-align:start}
+.shelf-app-card{flex:0 0 112px;min-width:0;scroll-snap-align:start}
 .shelf-app-card .app-card{height:100%;box-sizing:border-box}
-.shelf-track>.app-shell-placeholder{flex:0 0 102px;scroll-snap-align:start}
+.shelf-track>.app-shell-placeholder{flex:0 0 92px;scroll-snap-align:start}
 .app-shell-placeholder{min-width:0;min-height:82px;box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;padding:6px;border:1px solid rgba(255,255,255,.12);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.012));box-shadow:inset 0 1px rgba(255,255,255,.045),0 12px 28px rgba(0,0,0,.1)}
 .shell-placeholder-top{width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:4px;margin-bottom:6px}
 .shell-placeholder-icon{width:30px;height:30px;flex-shrink:0;display:grid;place-items:center;border:1px solid rgba(217,182,79,.22);border-radius:15px;color:rgba(241,215,124,.72);background:linear-gradient(145deg,rgba(217,182,79,.12),rgba(255,255,255,.02))}
