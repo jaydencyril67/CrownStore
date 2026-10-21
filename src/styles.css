@@ -136,7 +136,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   .nav-links.nav-open{display:flex}
   .nav-links>a{padding:14px 12px;border-radius:9px}
   .nav-links>a:hover{background:rgba(255,255,255,.04)}
-  .nav-mobile-cta{display:flex!important;align-items:center;gap:8px;color:var(--gold)!important}
+  .nav-links .nav-mobile-cta{display:flex;align-items:center;gap:8px;color:var(--gold)}
   .hero{display:flex;flex-direction:column;align-items:stretch;padding:56px 21px 34px;gap:0}
   .hero-copy{max-width:none}
   .hero h1{font-size:clamp(43px,11vw,58px);margin-top:20px;font-family:"STIX Two Text"}
@@ -304,7 +304,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .shelf-see-all:hover{color:#fff0b5}
 .shelf-app-card .shelf-app-tile{width:100%;min-height:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:9px 5px 11px;border:1px solid transparent;border-radius:15px;background:transparent;color:#f5f1e5;text-align:center;cursor:pointer;transition:background .18s,border-color .18s}
 .shelf-app-card .shelf-app-tile:hover,.shelf-app-card .shelf-app-tile:focus-visible{background:rgba(255,255,255,.035);border-color:rgba(217,182,79,.24);outline:none}
-.shelf-app-icon{width:72px;height:72px;display:grid;place-items:center;flex:0 0 60px;overflow:hidden;border-radius:50%;background:linear-gradient(145deg,rgba(217,182,79,.13),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px rgba(255,255,255,.08),0 5px 16px rgba(0,0,0,.18);flex-basis:72px}
+.shelf-app-icon{width:72px;height:72px;display:grid;place-items:center;flex:0 0 72px;overflow:hidden;border-radius:50%;background:linear-gradient(145deg,rgba(217,182,79,.13),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px rgba(255,255,255,.08),0 5px 16px rgba(0,0,0,.18)}
 .shelf-app-icon .app-icon-image,.shelf-app-icon .app-icon-fallback{display:block;width:100%;height:100%;border:0;border-radius:50%;object-fit:cover}
 .shelf-app-icon .app-icon-fallback{display:grid;place-items:center}
 .shelf-app-icon .app-icon-fallback svg{width:32px;height:32px}
