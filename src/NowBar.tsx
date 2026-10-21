@@ -15,8 +15,8 @@ const actions: Action[] = [
 const ORDER: ActionLabel[] = ["HOME"];
 
 export default function NowBar({ onHome }: { onHome: () => void }) {
-  const [view, setView] = useState<"title" | "actions">("title");
-  const [mode, setMode] = useState<"compact" | "expanded">("compact");
+  const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
+  const { view, mode } = barState;
   const barRef = useRef<HTMLDivElement | null>(null);
   const holdTimer = useRef<number | null>(null);
   const idleTimer = useRef<number | null>(null);
@@ -32,8 +32,7 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
   const resetIdle = () => {
     if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     idleTimer.current = window.setTimeout(() => {
-      setView("title");
-      setMode("compact");
+      setBarState({ view: "title", mode: "compact" });
     }, 10000);
   };
 
@@ -42,8 +41,7 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
     if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
     holdTimer.current = window.setTimeout(() => {
       holdTriggered.current = true;
-      setView("actions");
-      setMode((current) => current === "compact" ? "expanded" : "compact");
+      setBarState((current) => ({ view: "actions", mode: current.mode === "compact" ? "expanded" : "compact" }));
       resetIdle();
     }, 700);
   };
@@ -75,8 +73,7 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
     if (label !== "HOME") return;
     try { window.localStorage.setItem("crownstore-nowbar-action", label); } catch {}
     resetIdle();
-    setView("title");
-    setMode("compact");
+    setBarState({ view: "title", mode: "compact" });
     onHome();
   };
 
@@ -93,8 +90,7 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
     if (next !== "HOME") return;
     swipeHandled.current = true;
     onHome();
-    setView("title");
-    setMode("compact");
+    setBarState({ view: "title", mode: "compact" });
     resetIdle();
   };
 
@@ -131,15 +127,13 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
             onClick={() => {
               if (swipeHandled.current) { swipeHandled.current = false; return; }
               if (holdTriggered.current) { holdTriggered.current = false; return; }
-              setView((current) => current === "title" ? "actions" : "title");
-              setMode("compact");
+              setBarState((current) => ({ view: current.view === "title" ? "actions" : "title", mode: "compact" }));
               resetIdle();
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                setView((current) => current === "title" ? "actions" : "title");
-                setMode("compact");
+                setBarState((current) => ({ view: current.view === "title" ? "actions" : "title", mode: "compact" }));
                 resetIdle();
               }
             }}
