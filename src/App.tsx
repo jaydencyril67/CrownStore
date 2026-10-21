@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import NowBar from "./NowBar";
 import {
   ArrowDownToLine, ArrowRight, Bot, CheckCircle2, ChevronRight,
-  Download, Info, Layers3, MessageCircle, Search,
+  Download, Info, Layers3, MessageCircle, PackageCheck, Search,
   ShieldCheck, Smartphone, Sparkles, X
 } from "lucide-react";
 import type { AppsResponse, CrownApp } from "./types";
