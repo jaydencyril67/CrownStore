@@ -364,6 +364,21 @@ export default function App() {
     });
   }, []);
 
+  // Catalogue data arrives asynchronously. Reset shelves again after the real
+  // app tiles replace loading placeholders, so browser scroll restoration or
+  // snap positioning cannot leave the user parked among empty slots.
+  useEffect(() => {
+    if (loading || view !== "HOME") return;
+    const resetShelves = () => {
+      document.querySelectorAll<HTMLElement>(".shelf-track").forEach((track) => {
+        track.scrollLeft = 0;
+      });
+    };
+    resetShelves();
+    const frame = window.requestAnimationFrame(resetShelves);
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading, apps.length, view]);
+
   async function loadApps(signal?: AbortSignal) {
     setLoading(true);
     setError("");
