@@ -291,7 +291,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .publisher-form textarea{resize:vertical;min-height:70px;line-height:1.6}
 .publisher-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .publisher-submit{width:100%;margin-top:3px}
-.publisher-message{font-size:10px;line-height:1.7;overflow-wrap:anywhere;color:var(--gold-light);background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.18);border-radius:10px;padding:11px;margin:0}
+.publisher-message{font-size:10px;line-height:1.7;overflow-wrap:anywhere;white-space:pre-line;color:var(--gold-light);background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.18);border-radius:10px;padding:11px;margin:0}.publisher-sync-control{margin-bottom:16px}
 .publisher-submit:disabled{opacity:.65}
 .catalogue-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-10px 0 23px}
 .category-filters{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
