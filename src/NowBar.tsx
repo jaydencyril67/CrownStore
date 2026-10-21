@@ -102,10 +102,10 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
   };
 
   return (
-    <div className={`kh-nowbar-dock crown-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""}`}>
+    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""}`}>
       <div
         ref={barRef}
-        className={`kh-nowbar crown-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
+        className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
         role="group"
         aria-label="CrownStore quick navigation"
         onPointerDown={startHold}
@@ -130,7 +130,7 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
           <button
             className={`kh-nowbar-title ${pressing ? "is-pressing" : ""}`}
             type="button"
-            aria-label="HOME page. Tap to show navigation buttons; hold to expand."
+            aria-label="HOME page. Tap to show navigation buttons; hold to expand; swipe to navigate."
             onClick={() => {
               if (swipeHandled.current) { swipeHandled.current = false; return; }
               if (holdTriggered.current) { holdTriggered.current = false; return; }
@@ -157,13 +157,13 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
               <div className={`kh-nowbar-slot ${mode === "expanded" ? "is-expanded" : ""}`} key={action.label}>
                 <button
                   data-nowbar-label={action.label}
-                  className={`kh-nowbar-action ${action.label === "HOME" ? "is-active" : ""} ${mode === "expanded" ? "is-expanded" : ""}`}
+                  className={`kh-nowbar-action ${action.label === "HOME" ? "is-active" : ""}`}
                   type="button"
                   aria-label={action.label}
-                  onClick={action.label === "HOME" ? () => {
+                  onClick={() => {
                     if (holdTriggered.current) { holdTriggered.current = false; return; }
-                    activate(action.label);
-                  } : undefined}
+                    if (action.label === "HOME") activate(action.label);
+                  }}
                 >
                   <span className="kh-nowbar-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={action.icon} /></svg></span>
                   {mode === "compact" && <span className="kh-nowbar-label-compact">{action.label}</span>}
