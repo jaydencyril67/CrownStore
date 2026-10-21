@@ -10,8 +10,15 @@ const pause = (ms: number) => new Promise<void>((resolve) => window.setTimeout(r
 
 export default function NativeDeviceBridgeAgent({ session }: Props) {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || !session) return;
-    const activeSession: BridgeSessionRef = session;
+    if (!Capacitor.isNativePlatform() || session === null) return;
+    // Copy the non-null session into an effect-local snapshot. This remains
+    // narrowed inside async functions and callbacks, including TypeScript builds.
+    const activeSession: BridgeSessionRef = {
+      sessionId: session.sessionId,
+      secret: session.secret,
+      deepLink: session.deepLink,
+      expiresAt: session.expiresAt,
+    };
     let stopped = false;
     let activeCommandId = "";
     let activeCommandPackageId = "";
