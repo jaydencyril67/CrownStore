@@ -184,10 +184,6 @@ export default function App() {
     </header>
     <main id="home">
       {view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
-        <div className="shelves-heading">
-          <div><div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div><h1>Your apps, <span>all in one place.</span></h1><p>Explore the KingsHall family of apps. Every shelf stays ready as the collection grows.</p></div>
-          <button className="button button-primary" onClick={() => navigate("APPS")}>Browse all apps <ArrowRight size={17} /></button>
-        </div>
         {[
           { id: "recommended", title: "Recommended for you", subtitle: "Explore the official KingsHall app collection.", icon: Sparkles, select: (_app: CrownApp) => true, sort: (a: CrownApp, b: CrownApp) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name) },
           { id: "top-charts", title: "Top charts", subtitle: "Discover the apps available across CrownStore.", icon: Layers3, select: (_app: CrownApp) => true, sort: (a: CrownApp, b: CrownApp) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name) },
