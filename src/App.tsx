@@ -183,6 +183,7 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
               ? <><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span>{currentDownload?.status === "starting" ? "Starting download…" : "Downloading " + (currentDownload && currentDownload.total > 0 ? Math.min(100, Math.floor(currentDownload.loaded / currentDownload.total * 100)) : 0) + "%"} </>
               : isAnotherDownloadRunning ? "Another download is in progress"
               : currentDownload?.status === "complete" ? <><CheckCircle2 size={17} /> Download again</>
+              : currentDownload?.status === "permission" ? <><Smartphone size={17} /> Continue installation</>
               : currentDownload?.status === "error" || currentDownload?.status === "cancelled" ? <><Download size={17} /> Retry download</>
               : <><Download size={17} /> Download / update APK</>}
           </button>
