@@ -3,6 +3,22 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles.css";
 
+function GlobalInteractionRules() {
+  useEffect(() => {
+    const preventBrowserContextMenu = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (target.closest('input, textarea, select, option, [contenteditable="true"], [data-allow-context-menu="true"]')) return;
+      event.preventDefault();
+    };
+
+    document.addEventListener("contextmenu", preventBrowserContextMenu);
+    return () => document.removeEventListener("contextmenu", preventBrowserContextMenu);
+  }, []);
+
+  return null;
+}
+
 function PwaServiceWorker() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -44,6 +60,7 @@ function RefreshSplashCleanup() {
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <GlobalInteractionRules />
     <PwaServiceWorker />
     <RefreshSplashCleanup />
     <App />
