@@ -3,6 +3,18 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./styles.css";
 
+function PwaServiceWorker() {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {
+        // CrownStore remains usable in the browser if service-worker registration is unavailable.
+      });
+    }
+  }, []);
+
+  return null;
+}
+
 function RefreshSplashCleanup() {
   useEffect(() => {
     const splash = document.getElementById("crownstore-refresh-splash");
@@ -32,6 +44,7 @@ function RefreshSplashCleanup() {
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <PwaServiceWorker />
     <RefreshSplashCleanup />
     <App />
   </React.StrictMode>
