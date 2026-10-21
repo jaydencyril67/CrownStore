@@ -88,7 +88,46 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
   const [sourceCommit, setSourceCommit] = useState("");
   const [changelog, setChangelog] = useState("");
   const [busy, setBusy] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  async function syncSourceReleases() {
+    if (!token.trim()) { setMessage("Enter the publishing token first."); return; }
+    setSyncBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch(API_BASE + "/api/publishing/sync", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token.trim() }
+      });
+      const report = await response.json() as {
+        status?: string; trigger?: string; checked?: number; message?: string;
+        published?: Array<{ app: string; tag?: string; message?: string }>;
+        unchanged?: Array<{ app: string; tag?: string; message?: string }>;
+        skipped?: Array<{ app: string; tag?: string; message?: string }>;
+        errors?: Array<{ app: string; tag?: string; message?: string }>;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(report.error || report.message || "Could not synchronize source releases.");
+      const lines = [
+        "Sync " + (report.status || "finished") + " — checked " + (report.checked ?? 0) + " app(s).",
+        "Published: " + (report.published?.length ?? 0) + ".",
+        "Already current: " + (report.unchanged?.length ?? 0) + ".",
+        "Skipped: " + (report.skipped?.length ?? 0) + ".",
+        "Errors: " + (report.errors?.length ?? 0) + "."
+      ];
+      for (const item of [...(report.published || []), ...(report.skipped || []), ...(report.errors || [])]) {
+        lines.push(item.app + (item.tag ? " (" + item.tag + ")" : "") + ": " + (item.message || "No additional details."));
+      }
+      if (report.message) lines.push(report.message);
+      setMessage(lines.join("\\n"));
+      onPublished();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not synchronize source releases.");
+    } finally {
+      setSyncBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (apps.length > 0 && !apps.some((item) => item.slug === appSlug)) setAppSlug(apps[0].slug);
@@ -121,9 +160,12 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
       <button className="modal-close" onClick={onClose} aria-label="Close publisher"><X size={19} /></button>
       <span className="eyebrow">ADMINISTRATOR TOOL</span>
       <h2 id="publisher-title">Publish an official APK</h2>
-      <p className="publisher-intro">First create a published, non-prerelease GitHub Release with the APK attached in the public CrownStoreApk repository. This publisher downloads it to a temporary server file, checks the APK manifest against the selected app and version, calculates SHA-256, then atomically publishes the verified release metadata. Your publishing token stays in this browser session and is sent only to the CrownStore API.</p>
-      <form onSubmit={submit} className="publisher-form">
+      <p className="publisher-intro">CrownStore checks each listed app's own GitHub releases automatically. The API verifies each APK, mirrors valid builds to the public CrownStore APK repository, and updates the catalogue. Automatic checks run when the API starts and every five minutes; use the button below to request an immediate sync. Your publishing token is held in this browser session and sent only to the CrownStore API.</p>
+      <div className="publisher-form publisher-sync-control">
         <label>Publishing token<input type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" required placeholder="Render PUBLISHING_TOKEN" /></label>
+        <button className="button button-outline publisher-submit" type="button" onClick={() => void syncSourceReleases()} disabled={busy || syncBusy || !token.trim()}>{syncBusy ? "Checking latest releases…" : "Sync latest source releases now"}</button>
+      </div>
+      <form onSubmit={submit} className="publisher-form">
         <label>Application<select value={appSlug} onChange={(event) => setAppSlug(event.target.value)} required disabled={apps.length === 0}>
           {apps.map((item) => <option value={item.slug} key={item.id}>{item.name} ({item.slug})</option>)}
         </select></label>
