@@ -1,177 +1,23 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowDownToLine, ArrowRight, CheckCircle2, ChevronDown, Crown,
-  ExternalLink, Menu, Search, ShieldCheck, Smartphone, Sparkles, X
-} from "lucide-react";
-import type { AppsResponse, CrownApp } from "./types";
-
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:4000").replace(/\/$/, "");
-
-function formatSize(value: number | string | null): string {
-  const bytes = Number(value);
-  if (!Number.isFinite(bytes) || bytes <= 0) return "Size unavailable";
-  const units = ["B", "KB", "MB", "GB"];
-  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  return (bytes / Math.pow(1024, index)).toFixed(index > 1 ? 1 : 0) + " " + units[index];
-}
-
-function AppIcon({ app }: { app: CrownApp }) {
-  if (app.iconUrl) return <img className="app-icon-image" src={app.iconUrl} alt="" loading="lazy" />;
-  return <div className="app-icon-fallback"><Crown size={28} strokeWidth={1.5} /></div>;
-}
-
-function AppCard({ app }: { app: CrownApp }) {
-  const ready = Boolean(app.releaseId);
-  return (
-    <article className="app-card">
-      <div className="app-card-top">
-        <AppIcon app={app} />
-        <span className="category-pill">{app.category || "Application"}</span>
-      </div>
-      <h3>{app.name}</h3>
-      <p className="app-description">{app.shortDescription || app.description || "An official application from the KingsHall ecosystem."}</p>
-      <div className="app-meta">
-        <span>{app.versionName ? "Version " + app.versionName : "Coming soon"}</span>
-        <span>{formatSize(app.sizeBytes)}</span>
-      </div>
-      {ready ? (
-        <a className="button button-primary card-download" href={API_BASE + "/api/downloads/" + app.releaseId}>
-          <ArrowDownToLine size={17} /> Download APK
-        </a>
-      ) : (
-        <button className="button button-muted card-download" disabled>
-          <span className="status-dot" /> Release coming soon
-        </button>
-      )}
-    </article>
-  );
-}
-
-export default function App() {
-  const [apps, setApps] = useState<CrownApp[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [mobileMenu, setMobileMenu] = useState(false);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    async function loadApps() {
-      setLoading(true);
-      setError("");
-      try {
-        const response = await fetch(API_BASE + "/api/apps", { signal: controller.signal });
-        if (!response.ok) {
-          throw new Error(response.status === 503
-            ? "The app catalogue is being configured. Please check back soon."
-            : "CrownStore could not load the catalogue. Please try again.");
-        }
-        const data = await response.json() as AppsResponse;
-        setApps(Array.isArray(data.apps) ? data.apps : []);
-      } catch (reason) {
-        if (controller.signal.aborted) return;
-        setError(reason instanceof Error ? reason.message : "Something went wrong while loading CrownStore.");
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }
-    void loadApps();
-    return () => controller.abort();
-  }, []);
-
-  const filteredApps = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return apps;
-    return apps.filter((app) =>
-      [app.name, app.shortDescription, app.description, app.category]
-        .some((value) => value?.toLowerCase().includes(query))
-    );
-  }, [apps, search]);
-
-  return (
-    <div className="site-shell">
-      <div className="ambient ambient-one" />
-      <div className="ambient ambient-two" />
-      <header className="site-header">
-        <a className="brand" href="#home" aria-label="CrownStore home">
-          <span className="brand-mark"><Crown size={22} strokeWidth={1.8} /></span>
-          <span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span>
-        </a>
-        <nav className={mobileMenu ? "nav-links nav-open" : "nav-links"}>
-          <a href="#apps" onClick={() => setMobileMenu(false)}>Explore apps</a>
-          <a href="#about" onClick={() => setMobileMenu(false)}>Why CrownStore</a>
-          <a href="#apps" className="nav-mobile-cta" onClick={() => setMobileMenu(false)}>Browse catalogue <ArrowRight size={16} /></a>
-        </nav>
-        <a className="button button-outline header-cta" href="#apps">Explore store <ArrowRight size={16} /></a>
-        <button className="menu-toggle" onClick={() => setMobileMenu((open) => !open)} aria-label={mobileMenu ? "Close menu" : "Open menu"}>
-          {mobileMenu ? <X size={22} /> : <Menu size={22} />}
-        </button>
-      </header>
-
-      <main id="home">
-        <section className="hero">
-          <div className="hero-copy">
-            <div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div>
-            <h1>Your next favourite app.<br /><span>One royal home.</span></h1>
-            <p className="hero-description">Discover the apps built for the KingsHall ecosystem. Official releases, straightforward downloads, all in one place.</p>
-            <div className="hero-actions">
-              <a className="button button-primary" href="#apps">Explore applications <ArrowRight size={17} /></a>
-              <a className="button button-quiet" href="#about">How it works <ChevronDown size={16} /></a>
-            </div>
-            <div className="trust-row">
-              <span><ShieldCheck size={16} /> Official releases</span>
-              <span><CheckCircle2 size={16} /> Release integrity metadata</span>
-            </div>
-          </div>
-          <div className="hero-art" aria-label="CrownStore application collection illustration">
-            <div className="orbit orbit-outer" />
-            <div className="orbit orbit-inner" />
-            <div className="hero-glow" />
-            <div className="hero-crown"><Crown size={64} strokeWidth={1.2} /><span>CROWNSTORE</span></div>
-            <div className="floating-chip chip-one"><Smartphone size={17} /><span>Android apps</span></div>
-            <div className="floating-chip chip-two"><ShieldCheck size={17} /><span>Official builds</span></div>
-            <div className="floating-chip chip-three"><ArrowDownToLine size={17} /><span>Direct downloads</span></div>
-          </div>
-        </section>
-
-        <section className="feature-strip" id="about">
-          <div><ShieldCheck /><span><strong>Official builds</strong><small>Published releases only</small></span></div>
-          <div><ArrowDownToLine /><span><strong>Simple downloads</strong><small>No account required</small></span></div>
-          <div><Smartphone /><span><strong>Android ready</strong><small>Install with Android's installer</small></span></div>
-        </section>
-
-        <section className="apps-section" id="apps">
-          <div className="section-heading">
-            <div><div className="eyebrow">THE COLLECTION</div><h2>Find your next app.</h2><p>Every official KingsHall release, in one place.</p></div>
-            <label className="search-box"><Search size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search applications..." aria-label="Search applications" />{search && <button onClick={() => setSearch("")} aria-label="Clear search"><X size={15} /></button>}</label>
-          </div>
-
-          {loading ? (
-            <div className="state-panel"><div className="loader-ring" /><strong>Opening the collection</strong><span>Fetching the latest published apps…</span></div>
-          ) : error ? (
-            <div className="state-panel state-error"><div className="state-icon"><ExternalLink size={22} /></div><strong>Catalogue temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => window.location.reload()}>Try again</button></div>
-          ) : filteredApps.length ? (
-            <div className="app-grid">{filteredApps.map((app) => <AppCard key={app.id} app={app} />)}</div>
-          ) : apps.length ? (
-            <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No matching applications</strong><span>Try another search term.</span><button className="button button-outline" onClick={() => setSearch("")}>Clear search</button></div>
-          ) : (
-            <div className="state-panel"><div className="state-icon"><Crown size={23} /></div><strong>The collection is getting ready.</strong><span>Official apps will appear here when their first stable releases are published.</span></div>
-          )}
-          <div className="catalogue-footnote"><ShieldCheck size={15} /> CrownStore lists published stable releases only.</div>
-        </section>
-
-        <section className="bottom-banner">
-          <div className="banner-icon"><Crown size={28} /></div>
-          <div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back here for official releases and future updates.</p></div>
-          <a className="button button-outline" href="#apps">Browse apps <ArrowRight size={16} /></a>
-        </section>
-      </main>
-
-      <footer className="site-footer">
-        <a className="brand footer-brand" href="#home"><span className="brand-mark"><Crown size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a>
-        <span>Official apps. One trusted home.</span>
-        <span className="footer-status"><span className="status-dot" /> Public catalogue</span>
-      </footer>
-    </div>
-  );
-}
+import { useEffect,useMemo,useState } from "react";
+import { ArrowDownToLine,ArrowRight,CheckCircle2,ChevronRight,Crown,Download,Home,Info,Layers3,Menu,PackageCheck,Search,ShieldCheck,Smartphone,Sparkles,X } from "lucide-react";
+import type { AppsResponse,CrownApp } from "./types";
+const API_BASE=(import.meta.env.VITE_API_BASE_URL||"https://apicrownstore.kingshall.online").replace(/\/$/,"");
+type View="HOME"|"APPS"|"UPDATES"|"ABOUT";
+function formatSize(value:number|string|null){const bytes=Number(value);if(!Number.isFinite(bytes)||bytes<=0)return "Size pending";const units=["B","KB","MB","GB"];const i=Math.min(Math.floor(Math.log(bytes)/Math.log(1024)),3);return(bytes/Math.pow(1024,i)).toFixed(i>1?1:0)+" "+units[i]}
+function AppIcon({app}:{app:CrownApp}){return app.iconUrl?<img className="app-icon-image" src={app.iconUrl} alt="" loading="lazy"/>:<div className={"app-icon-fallback icon-"+app.slug}><Crown size={27}/></div>}
+function AppCard({app,onDetails}:{app:CrownApp;onDetails:(app:CrownApp)=>void}){const ready=Boolean(app.releaseId);return <article className="app-card"><button className="app-card-details" onClick={()=>onDetails(app)}><div className="app-card-top"><AppIcon app={app}/><span className={ready?"category-pill is-ready":"category-pill"}>{ready?"Official release":"Coming soon"}</span></div><h3>{app.name}</h3><p className="app-description">{app.shortDescription||app.description||"An official application from the KingsHall ecosystem."}</p><span className="details-link">App details <ChevronRight size={15}/></span></button><div className="app-meta"><span>{app.versionName?"v"+app.versionName:"Awaiting first release"}</span><span>{formatSize(app.sizeBytes)}</span></div>{ready?<a className="button button-primary card-download" href={API_BASE+"/api/downloads/"+app.releaseId}><ArrowDownToLine size={17}/> Download APK</a>:<button className="button button-muted card-download" disabled><span className="status-dot"/> Release coming soon</button>}</article>}
+function AppDetails({app,onClose}:{app:CrownApp;onClose:()=>void}){const ready=Boolean(app.releaseId);return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><section className="details-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="details-title"><button className="modal-close" onClick={onClose} aria-label="Close details"><X size={19}/></button><div className="details-heading"><AppIcon app={app}/><div><span className="eyebrow">KINGSHALL ECOSYSTEM</span><h2 id="details-title">{app.name}</h2><span className="details-package">{app.packageId}</span></div></div><p className="details-description">{app.description||app.shortDescription}</p><div className="details-facts"><div><span>Latest version</span><strong>{app.versionName?"v"+app.versionName:"Not released yet"}</strong></div><div><span>APK size</span><strong>{formatSize(app.sizeBytes)}</strong></div><div><span>Package ID</span><strong>{app.packageId}</strong></div><div><span>Status</span><strong>{ready?"Published stable":"Coming soon"}</strong></div></div>{app.changelog&&<div className="changelog"><strong>What's new</strong><p>{app.changelog}</p></div>}{ready?<a className="button button-primary details-download" href={API_BASE+"/api/downloads/"+app.releaseId}><Download size={17}/> Download official APK</a>:<div className="release-note"><ShieldCheck size={17}/> The download appears here after a stable release is published.</div>}</section></div>}
+export default function App(){const[apps,setApps]=useState<CrownApp[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[search,setSearch]=useState(""),[mobileMenu,setMobileMenu]=useState(false),[selectedApp,setSelectedApp]=useState<CrownApp|null>(null),[view,setView]=useState<View>("HOME");
+async function loadApps(signal?:AbortSignal){setLoading(true);setError("");try{const response=await fetch(API_BASE+"/api/apps",{signal});if(!response.ok)throw new Error(response.status===503?"The catalogue service is temporarily unavailable. Please try again shortly.":"CrownStore could not load the catalogue. Please try again.");const data=await response.json() as AppsResponse;setApps(Array.isArray(data.apps)?data.apps:[])}catch(e){if(signal?.aborted)return;setError(e instanceof Error?e.message:"Something went wrong loading CrownStore.")}finally{if(!signal?.aborted)setLoading(false)}}
+useEffect(()=>{const c=new AbortController();void loadApps(c.signal);return()=>c.abort()},[]);
+const filtered=useMemo(()=>{const q=search.trim().toLowerCase();return q?apps.filter(a=>[a.name,a.shortDescription,a.description,a.category,a.packageId].some(v=>v?.toLowerCase().includes(q))):apps},[apps,search]);
+function navigate(next:View){setView(next);setMobileMenu(false);document.getElementById(next==="HOME"?"home":next==="ABOUT"?"about":"apps")?.scrollIntoView({behavior:"smooth",block:"start"})}
+return <div className="site-shell"><div className="ambient ambient-one"/><div className="ambient ambient-two"/>
+<header className="app-header glass-panel"><a className="brand" href="#home" onClick={()=>setView("HOME")}><span className="brand-mark"><Crown size={22}/></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><div className="header-context"><span className="header-status"><span className="status-dot live-dot"/> OFFICIAL STORE</span><span className="header-divider"/><span className="header-subtitle">Android applications</span></div><button className="menu-toggle" onClick={()=>setMobileMenu(v=>!v)} aria-label="Toggle menu">{mobileMenu?<X size={21}/>:<Menu size={21}/>}</button>{mobileMenu&&<nav className="header-menu glass-panel"><button onClick={()=>navigate("HOME")}>Home</button><button onClick={()=>navigate("APPS")}>Applications</button><button onClick={()=>navigate("UPDATES")}>Updates</button><button onClick={()=>navigate("ABOUT")}>About CrownStore</button></nav>}</header>
+<main id="home"><section className="hero"><div className="hero-copy"><div className="eyebrow"><Sparkles size={14}/> THE OFFICIAL APP COLLECTION</div><h1>All your apps.<br/><span>One royal home.</span></h1><p className="hero-description">Discover the apps built for the KingsHall ecosystem. Official Android releases, clear version details and direct downloads—all in one trusted place.</p><div className="hero-actions"><button className="button button-primary" onClick={()=>navigate("APPS")}>Explore applications <ArrowRight size={17}/></button><button className="button button-quiet" onClick={()=>navigate("ABOUT")}>How it works <ChevronRight size={16}/></button></div><div className="trust-row"><span><ShieldCheck size={16}/> Official releases</span><span><CheckCircle2 size={16}/> Release integrity metadata</span></div></div><div className="hero-art"><div className="orbit orbit-outer"/><div className="orbit orbit-inner"/><div className="hero-glow"/><div className="hero-crown"><Crown size={61}/><span>CROWNSTORE</span></div><div className="floating-chip chip-one"><Smartphone size={17}/> Android apps</div><div className="floating-chip chip-two"><ShieldCheck size={17}/> Official builds</div><div className="floating-chip chip-three"><ArrowDownToLine size={17}/> Direct downloads</div></div></section>
+<section className="feature-strip" id="about"><div><ShieldCheck/><span><strong>Official releases</strong><small>Published stable builds only</small></span></div><div><PackageCheck/><span><strong>Release details</strong><small>Version, size and changelog</small></span></div><div><Smartphone/><span><strong>Android ready</strong><small>APK downloads for Android</small></span></div></section>
+<section className="apps-section" id="apps"><div className="section-heading"><div><div className="eyebrow">THE COLLECTION</div><h2>Find your next app.</h2><p>Explore the official KingsHall app family.</p></div><label className="search-box"><Search size={18}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search apps or package names..." aria-label="Search applications"/>{search&&<button onClick={()=>setSearch("")} aria-label="Clear search"><X size={15}/></button>}</label></div>
+{loading?<div className="state-panel"><div className="loader-ring"/><strong>Opening the collection</strong><span>Fetching published apps…</span></div>:error?<div className="state-panel state-error"><div className="state-icon"><Info size={22}/></div><strong>Catalogue temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={()=>void loadApps()}>Try again</button></div>:filtered.length?<div className="app-grid">{filtered.map(app=><AppCard key={app.id} app={app} onDetails={setSelectedApp}/>)}</div>:apps.length?<div className="state-panel"><div className="state-icon"><Search size={22}/></div><strong>No matching applications</strong><span>Try another search term.</span><button className="button button-outline" onClick={()=>setSearch("")}>Clear search</button></div>:<div className="state-panel"><div className="state-icon"><Crown size={23}/></div><strong>The collection is getting ready.</strong><span>Official apps appear here as soon as stable releases are published.</span></div>}<div className="catalogue-footnote"><ShieldCheck size={15}/> Downloads point to the official CrownStore release catalogue.</div></section>
+<section className="bottom-banner"><div className="banner-icon"><Crown size={28}/></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and future updates.</p></div><button className="button button-outline" onClick={()=>navigate("APPS")}>Browse apps <ArrowRight size={16}/></button></section></main>
+<footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><Crown size={19}/></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot"/> Public catalogue</span></footer>
+<nav className="nowbar glass-panel" aria-label="CrownStore navigation"><button className={view==="HOME"?"nowbar-item active":"nowbar-item"} onClick={()=>navigate("HOME")}><Home size={17}/><span>HOME</span></button><button className={view==="APPS"?"nowbar-item active":"nowbar-item"} onClick={()=>navigate("APPS")}><Layers3 size={17}/><span>APPS</span></button><button className={view==="UPDATES"?"nowbar-item active":"nowbar-item"} onClick={()=>navigate("UPDATES")}><Download size={17}/><span>UPDATES</span></button><button className={view==="ABOUT"?"nowbar-item active":"nowbar-item"} onClick={()=>navigate("ABOUT")}><Info size={17}/><span>ABOUT</span></button></nav>{selectedApp&&<AppDetails app={selectedApp} onClose={()=>setSelectedApp(null)}/>}</div>}
