@@ -19,7 +19,7 @@
   ],
   "icons": [
     {
-      "src": "/crownstore-pwa-icon.svg?v=1",
+      "src": "/crownstore-pwa-icon.svg?v=2",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
