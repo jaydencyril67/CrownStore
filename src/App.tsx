@@ -70,7 +70,7 @@ function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp)
 }
 
 function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
-  const [expandedSection, setExpandedSection] = useState("about");
+  const [expandedSection, setExpandedSection] = useState<string | null>("about");
   const ready = Boolean(app.releaseId);
   return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="details-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="details-title">
@@ -92,8 +92,8 @@ function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
         ? <a className="button button-primary details-download" href={API_BASE + "/api/downloads/" + app.releaseId}><Download size={17} /> Download official APK</a>
         : <div className="release-note"><ShieldCheck size={17} /> The download appears here after an official stable APK is verified and published.</div>}
       <div className="details-sections">
-        <details className="details-section" open={expandedSection === "about"} onToggle={(event) => { if (event.currentTarget.open) setExpandedSection("about"); }}>
-          <summary><span><Info size={16} /><span><strong>About this app</strong><small>What it does and how it fits in</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+        <details className="details-section" open={expandedSection === "about"}>
+          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "about" ? null : "about"); }}><span><Info size={16} /><span><strong>About this app</strong><small>What it does and how it fits in</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
           <div className="details-section-body">
             <p className="details-full-description">{app.description || app.shortDescription || "No extended description has been provided yet."}</p>
             <div className="details-facts">
@@ -102,8 +102,8 @@ function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
             </div>
           </div>
         </details>
-        <details className="details-section" open={expandedSection === "technical"} onToggle={(event) => { if (event.currentTarget.open) setExpandedSection("technical"); }}>
-          <summary><span><Smartphone size={16} /><span><strong>Version &amp; technical details</strong><small>Build information and verification</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+        <details className="details-section" open={expandedSection === "technical"}>
+          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "technical" ? null : "technical"); }}><span><Smartphone size={16} /><span><strong>Version &amp; technical details</strong><small>Build information and verification</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
           <div className="details-section-body">
             <div className="details-facts">
               <div><span>Version code</span><strong>{app.versionCode ?? "Not available"}</strong></div>
@@ -112,12 +112,12 @@ function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
             </div>
           </div>
         </details>
-        {app.changelog && <details className="details-section" open={expandedSection === "changelog"} onToggle={(event) => { if (event.currentTarget.open) setExpandedSection("changelog"); }}>
-          <summary><span><PackageCheck size={16} /><span><strong>What’s new</strong><small>Latest published release notes</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+        {app.changelog && <details className="details-section" open={expandedSection === "changelog"}>
+          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "changelog" ? null : "changelog"); }}><span><PackageCheck size={16} /><span><strong>What’s new</strong><small>Latest published release notes</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
           <div className="details-section-body"><p className="details-changelog">{app.changelog}</p></div>
         </details>}
-        {app.screenshots.length > 0 && <details className="details-section" open={expandedSection === "screenshots"} onToggle={(event) => { if (event.currentTarget.open) setExpandedSection("screenshots"); }}>
-          <summary><span><Layers3 size={16} /><span><strong>Screenshots</strong><small>{app.screenshots.length} {app.screenshots.length === 1 ? "image" : "images"}</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+        {app.screenshots.length > 0 && <details className="details-section" open={expandedSection === "screenshots"}>
+          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "screenshots" ? null : "screenshots"); }}><span><Layers3 size={16} /><span><strong>Screenshots</strong><small>{app.screenshots.length} {app.screenshots.length === 1 ? "image" : "images"}</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
           <div className="details-section-body"><div className="details-screenshots" aria-label={app.name + " screenshots"}>
             {app.screenshots.map((screenshot, index) => <img key={screenshot + index} src={screenshot} alt={app.name + " screenshot " + (index + 1)} loading="lazy" />)}
           </div></div>
