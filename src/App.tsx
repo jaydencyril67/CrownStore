@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import NowBar from "./NowBar";
 import DeviceUpdatesPanel from "./DeviceUpdatesPanel";
 import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
+import NativeSelfUpdate from "./NativeSelfUpdate";
 import { Capacitor } from "@capacitor/core";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
@@ -991,6 +992,7 @@ export default function App() {
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
+    <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
     <NowBar activePage={view === "SEARCH" ? "SEARCH" : "HOME"} onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} onSearch={() => navigate("SEARCH")} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
       <DownloadFeedback
