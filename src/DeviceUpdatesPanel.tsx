@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle2, Download, RefreshCw, Smartphone, Wifi } from
 import { Capacitor } from "@capacitor/core";
 import type { CrownApp } from "./types";
 import type { BridgeSessionRef, BridgeSnapshot, InstalledCatalogueApp } from "./native/deviceBridgeTypes";
-import { API_BASE, bridgeFetch, createBridgeSession, readBridgeSnapshot } from "./native/deviceBridge";
+import { bridgeFetch, createBridgeSession, readBridgeSnapshot } from "./native/deviceBridge";
 
 type Props = {
   apps: CrownApp[];
