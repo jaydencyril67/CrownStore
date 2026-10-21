@@ -89,12 +89,13 @@ function formatProgressBytes(value: number) {
 }
 
 function DownloadFeedback({
-  progress, onCancel, onRetry, onDismiss
+  progress, onCancel, onRetry, onDismiss, onInstall
 }: {
   progress: DownloadProgress;
   onCancel: () => void;
   onRetry: () => void;
   onDismiss: () => void;
+  onInstall: () => void;
 }) {
   const busy = ["starting", "downloading", "installing"].includes(progress.status);
   const percent = progress.total > 0
@@ -111,7 +112,7 @@ function DownloadFeedback({
     : progress.status === "downloading" ? "CrownStore is downloading the verified APK."
     : progress.status === "installing" ? "The APK is downloaded. CrownStore is opening Android’s installer…"
     : progress.status === "permission" ? "The APK is downloaded. Allow CrownStore to install apps in Android settings, then return and tap Continue installation."
-    : progress.status === "complete" ? (progress.platform === "android" ? "Android’s installer is open. Review its prompt to install or update " + progress.appName + "." : "CrownStore finished receiving the APK. Open the downloaded file from Downloads to install or update the app.")
+    : progress.status === "complete" ? (progress.platform === "android" ? "Android’s installer is open. Review its prompt to install or update " + progress.appName + "." : "The APK is already saved on this device. Tap Install below to open your browser's downloads and open that saved file; CrownStore will not fetch the APK again.")
     : progress.status === "cancelled" ? "The download was stopped. You can start it again."
     : progress.error || "CrownStore could not finish the download. Check your connection and try again.";
 
@@ -140,8 +141,9 @@ function DownloadFeedback({
         <strong>{progress.status === "complete" || progress.status === "installing" || progress.status === "permission" ? "100%" : percent === null ? "In progress" : percent + "%"}</strong>
       </div>
     </>}
-    {(progress.status === "error" || progress.status === "cancelled" || progress.status === "permission") && <div className="download-feedback-actions">
-      <button type="button" className="button button-outline" onClick={onRetry}>{progress.status === "permission" ? <><Smartphone size={15} /> Continue installation</> : <><Download size={15} /> Try again</>}</button>
+    {(progress.status === "complete" || progress.status === "error" || progress.status === "cancelled" || progress.status === "permission") && <div className="download-feedback-actions">
+      {progress.status === "complete" && <button type="button" className="button button-primary" onClick={onInstall}>{progress.platform === "android" ? <><Smartphone size={15} /> Open installer</> : <><PackageCheck size={15} /> Install downloaded APK</>}</button>}
+      {(progress.status === "error" || progress.status === "cancelled" || progress.status === "permission") && <button type="button" className="button button-outline" onClick={progress.status === "permission" ? onInstall : onRetry}>{progress.status === "permission" ? <><Smartphone size={15} /> Continue installation</> : <><Download size={15} /> Try again</>}</button>}
     </div>}
   </section>;
 }
@@ -169,7 +171,7 @@ function SearchAppResultRow({ app, onDetails }: { app: CrownApp; onDetails: (app
   </div>;
 }
 
-function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload }: {
+function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload, onInstallDownloaded }: {
   app: CrownApp; onClose: () => void; download: DownloadProgress | null; isAnotherDownloadRunning: boolean;
   onDownload: (app: CrownApp) => Promise<void>; onCancelDownload: () => void; onDismissDownload: () => void;
 }) {
@@ -195,11 +197,14 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
       </div>
       {ready
         ? <>
-          <button className="button button-primary details-download" type="button" onClick={() => void onDownload(app)} disabled={isAnotherDownloadRunning}>
+          <button className="button button-primary details-download" type="button" onClick={() => {
+            if (currentDownload?.status === "complete" || currentDownload?.status === "permission") onInstallDownloaded(app);
+            else void onDownload(app);
+          }} disabled={isAnotherDownloadRunning || isCurrentDownloadBusy}>
             {isCurrentDownloadBusy
               ? <><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span>{currentDownload?.status === "starting" ? "Starting download…" : currentDownload?.status === "installing" ? "Opening installer…" : "Downloading " + (currentDownload && currentDownload.total > 0 ? Math.min(100, Math.floor(currentDownload.loaded / currentDownload.total * 100)) : 0) + "%"} </>
               : isAnotherDownloadRunning ? "Another download is in progress"
-              : currentDownload?.status === "complete" ? <><CheckCircle2 size={17} /> Download again</>
+              : currentDownload?.status === "complete" ? <><PackageCheck size={17} /> {currentDownload.platform === "android" ? "Open installer again" : "Install downloaded APK"}</>
               : currentDownload?.status === "permission" ? <><Smartphone size={17} /> Continue installation</>
               : currentDownload?.status === "error" || currentDownload?.status === "cancelled" ? <><Download size={17} /> Retry download</>
               : <><Download size={17} /> Download / update APK</>}
@@ -209,6 +214,7 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
             onCancel={onCancelDownload}
             onRetry={() => void onDownload(app)}
             onDismiss={onDismissDownload}
+            onInstall={() => onInstallDownloaded(app)}
           />}
         </>
         : <div className="release-note"><ShieldCheck size={17} /> The download appears here after an official stable APK is verified and published.</div>}
@@ -804,6 +810,26 @@ export default function App() {
     }
   }
 
+  function onInstallDownloaded(app: CrownApp) {
+    if (!downloadProgress || downloadProgress.releaseId !== app.releaseId || downloadProgress.status !== "complete" && downloadProgress.status !== "permission") return;
+    if (Capacitor.getPlatform() === "android") {
+      const downloadId = downloadProgress.downloadId;
+      if (downloadId && downloadId > 0) void continueNativeInstall(app, downloadId);
+      else window.alert("CrownStore cannot find the completed Android download. Please download the APK again.");
+      return;
+    }
+    // The web download has already been saved by the browser. Do not fetch or save a second copy.
+    // On Android Chrome, open its downloads list so the user can launch the exact saved APK file.
+    const ua = window.navigator.userAgent;
+    const isAndroidChrome = /Android/i.test(ua) && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
+    if (isAndroidChrome) {
+      const downloadsWindow = window.open("chrome://downloads/", "_blank");
+      if (!downloadsWindow) window.alert("Your APK is already downloaded. Open your browser's Downloads, then tap " + downloadProgress.filename + " to install it.");
+      return;
+    }
+    window.alert("Your APK is already downloaded as " + downloadProgress.filename + ". Open your browser or device Downloads and tap that saved APK to install it. CrownStore will not download it again.");
+  }
+
   function cancelDownload() {
     downloadAbortRef.current?.abort();
     const downloadId = nativeDownloadIdRef.current;
@@ -1004,6 +1030,10 @@ export default function App() {
           if (app) void downloadRelease(app);
         }}
         onDismiss={dismissDownload}
+        onInstall={() => {
+          const app = apps.find((item) => item.releaseId === downloadProgress.releaseId);
+          if (app) onInstallDownloaded(app);
+        }}
       />
     </div>}
     {selectedApp && <AppDetails
@@ -1014,6 +1044,7 @@ export default function App() {
       onDownload={downloadRelease}
       onCancelDownload={cancelDownload}
       onDismissDownload={dismissDownload}
+      onInstallDownloaded={onInstallDownloaded}
     />}
     {showAppManager && <AppManagerPanel onClose={() => setShowAppManager(false)} onSaved={() => void loadApps()} />}
     {showPublisher && <PublisherPanel apps={apps.filter((item) => !("isListed" in item) || item.isListed)} onPublished={() => void loadApps()} onClose={() => setShowPublisher(false)} />}
