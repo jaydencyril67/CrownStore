@@ -260,6 +260,12 @@ public class NativeAppUpdatePlugin extends Plugin {
             call.reject("The APK URL is not a trusted CrownStore published-release endpoint.");
             return;
         }
+        // One active DownloadManager handoff at a time: don't unregister another
+        // download's receiver if a second screen requests an APK concurrently.
+        if (downloadReceiver != null) {
+            call.reject("Another CrownStore APK download is already in progress. Wait for it to finish, then retry.");
+            return;
+        }
 
         DownloadManager manager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
         if (manager == null) {
@@ -268,10 +274,6 @@ public class NativeAppUpdatePlugin extends Plugin {
         }
 
         try {
-            if (downloadReceiver != null) {
-                try { getContext().unregisterReceiver(downloadReceiver); } catch (Exception ignored) {}
-                downloadReceiver = null;
-            }
             final String packageId = call.getString("packageId", "");
             IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
             downloadReceiver = new BroadcastReceiver() {
