@@ -1,0 +1,39 @@
+/* CrownStore app search page — native catalogue data, Play Store-inspired layout. */
+.store-search-page{width:min(100%,900px);margin:0 auto;padding:clamp(20px,5vw,48px) 0 140px;min-height:62vh}
+.store-search-heading{margin:0 0 22px}
+.store-search-heading .eyebrow{display:inline-flex;align-items:center;gap:7px}
+.store-search-heading h1{font:500 clamp(30px,5vw,43px)/1.12 var(--serif);letter-spacing:-.6px;margin:13px 0 9px;color:#f4efff}
+.store-search-heading p{max-width:560px;margin:0;color:var(--muted);font-size:13px;line-height:1.7}
+.store-search-bar{display:flex;align-items:center;gap:12px;min-width:0;padding:9px 10px 9px 15px;border-radius:18px;border:1px solid rgba(255,255,255,.2);background:linear-gradient(145deg,rgba(255,255,255,.09),rgba(255,255,255,.035));box-shadow:inset 0 1px rgba(255,255,255,.07),0 12px 30px rgba(0,0,0,.16);color:#d9caff}
+.store-search-bar>svg{flex:0 0 auto}
+.store-search-bar input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-size:14px;padding:9px 0;user-select:text;-webkit-user-select:text}
+.store-search-bar input::placeholder{color:#a9a0bb}
+.store-search-bar>button:not(.store-search-submit){display:grid;place-items:center;flex:0 0 auto;border:0;background:transparent;color:#cfc3e6;padding:7px}
+.store-search-submit{flex:0 0 auto;border:1px solid rgba(196,181,253,.35);border-radius:12px;padding:10px 15px;background:linear-gradient(145deg,rgba(139,92,246,.24),rgba(139,92,246,.09));color:#f0e7ff;font-size:12px;font-weight:700}
+.store-search-submit:disabled{opacity:.4}
+.search-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 10px}
+.search-section-heading h2{margin:0;color:#f4efff;font:500 20px/1.25 var(--serif)}
+.search-section-heading>span{color:var(--muted);font-size:11px}
+.search-section-heading button{border:0;background:transparent;color:#c4b5fd;font-size:11px;padding:7px}
+.recent-search-row{display:flex;align-items:center;gap:8px;min-height:47px;border-bottom:1px solid rgba(255,255,255,.075)}
+.recent-search-term{display:flex;align-items:center;gap:13px;flex:1;min-width:0;padding:10px 4px;border:0;background:transparent;color:#e9e2f4;text-align:left;font-size:13px}
+.recent-search-term>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-search-clock{display:grid;place-items:center;flex:0 0 27px;height:27px;border:1px solid rgba(255,255,255,.1);border-radius:50%;color:#b8a9d3;font-size:17px}
+.recent-search-remove{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:#a9a0bb}
+.search-empty-prompt{display:grid;justify-items:center;gap:9px;padding:48px 18px;text-align:center;color:#b9accb}
+.search-empty-prompt>svg{color:#c4b5fd;margin-bottom:3px}
+.search-empty-prompt strong{font-size:14px;color:#f0e7ff}
+.search-empty-prompt span{font-size:12px;line-height:1.6}
+.search-results-section{margin-top:6px}
+.store-search-results{display:grid;gap:2px}
+.store-search-result{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid rgba(255,255,255,.075);min-width:0}
+.store-search-result-main{display:flex;align-items:center;gap:13px;flex:1;min-width:0;text-align:left;border:0;background:transparent;color:inherit;padding:3px 0}
+.store-search-result-icon{display:grid;place-items:center;flex:0 0 54px;width:54px;height:54px;overflow:hidden;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.04)}
+.store-search-result-icon .app-icon-image{width:100%;height:100%;object-fit:contain}
+.store-search-result-icon .app-icon-fallback{width:100%;height:100%;font-size:6px}
+.store-search-result-copy{display:grid;gap:5px;min-width:0}
+.store-search-result-copy strong{font-size:14px;color:#f4efff;font-weight:650}
+.store-search-result-copy small{font-size:10px;color:#b9a9d2}
+.store-search-result-copy>span{font-size:11px;line-height:1.45;color:#b9b2c6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.store-search-result-action{display:flex;align-items:center;gap:4px;flex:0 0 auto;padding:8px 4px 8px 7px;border:0;background:transparent;color:#c4b5fd;font-size:10px;font-weight:650}
+@media(max-width:480px){.store-search-page{padding-top:18px}.store-search-bar{gap:8px;padding-left:12px}.store-search-submit{padding:10px 11px}.store-search-result-icon{flex-basis:47px;width:47px;height:47px;border-radius:14px}.store-search-result{gap:5px}.store-search-result-action{font-size:9px}}
