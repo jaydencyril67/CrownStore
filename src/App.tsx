@@ -37,16 +37,20 @@ function StoreMark({ size = 24 }: { size?: number }) {
 }
 
 function AppIcon({ app }: { app: CrownApp }) {
+  const slug = app.slug.toLowerCase().replace(/[_\s]+/g, "-");
   const localIcons: Record<string, string> = {
     kingshall: "/app-icons/kingshall.svg",
+    "kings-hall": "/app-icons/kingshall.svg",
+    hallschat: "/app-icons/halls-chat.svg",
     "halls-chat": "/app-icons/halls-chat.svg",
-    crybots: "/app-icons/crybots.svg"
+    crybots: "/app-icons/crybots.svg",
+    "cry-bots": "/app-icons/crybots.svg"
   };
-  const localIcon = localIcons[app.slug.toLowerCase()];
+  const localIcon = localIcons[slug];
   const [iconSrc, setIconSrc] = useState(localIcon || app.iconUrl || "");
   useEffect(() => {
     setIconSrc(localIcon || app.iconUrl || "");
-  }, [app.slug, app.iconUrl]);
+  }, [localIcon, app.iconUrl]);
   if (iconSrc) {
     return <img
       className="app-icon-image"
@@ -60,7 +64,8 @@ function AppIcon({ app }: { app: CrownApp }) {
       }}
     />;
   }
-  return <div className="app-icon-fallback" aria-hidden="true"><StoreMark size={27} /></div>;
+  // Never brand an unrelated app with CrownStore's own logo when its icon is missing.
+  return <div className="app-icon-fallback" aria-label={app.name + " icon unavailable"}><PackageCheck size={25} /></div>;
 }
 
 function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
