@@ -4,7 +4,7 @@ import NowBar from "./NowBar";
 import DeviceUpdatesPanel from "./DeviceUpdatesPanel";
 import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
 import NativeSelfUpdate from "./NativeSelfUpdate";
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
 import type { BridgeSessionRef } from "./native/deviceBridgeTypes";
@@ -564,10 +564,51 @@ export default function App() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(API_BASE + "/api/apps", { signal });
-      if (!response.ok) throw new Error(response.status === 503 ? "The catalogue service is temporarily unavailable. Please try again shortly." : "CrownStore could not load the catalogue. Please try again.");
-      const data = await response.json() as AppsResponse;
-      setApps(Array.isArray(data.apps) ? data.apps : []);
+      let nativeResponse: Awaited<ReturnType<typeof CapacitorHttp.get>> | null = null;
+
+      // Prefer native networking in the APK so WebView origin/CORS behaviour cannot
+      // prevent the live catalogue (and home shelves) from loading.
+      if (Capacitor.isNativePlatform()) {
+        try {
+          nativeResponse = await CapacitorHttp.get({
+            url: API_BASE + "/api/apps",
+            headers: { Accept: "application/json" },
+            connectTimeout: 12000,
+            readTimeout: 20000
+          });
+        } catch (nativeError) {
+          if (signal?.aborted) return;
+          console.warn("CrownStore native catalogue request failed; retrying with WebView fetch.", nativeError);
+        }
+      }
+
+      if (signal?.aborted) return;
+
+      if (nativeResponse) {
+        if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
+          const body = nativeResponse.data as { error?: string; message?: string } | null;
+          throw new Error(body?.error || body?.message ||
+            (nativeResponse.status === 503
+              ? "The catalogue service is temporarily unavailable. Please try again shortly."
+              : "CrownStore could not load the catalogue (HTTP " + nativeResponse.status + "). Please try again."));
+        }
+        const data = nativeResponse.data as AppsResponse;
+        if (!Array.isArray(data?.apps)) {
+          throw new Error("CrownStore received an invalid catalogue response. Please try again.");
+        }
+        setApps(data.apps);
+      } else {
+        // Keep the existing browser/PWA path, with the same API and response shape.
+        const response = await fetch(API_BASE + "/api/apps", {
+          signal,
+          headers: { Accept: "application/json" }
+        });
+        if (!response.ok) throw new Error(response.status === 503
+          ? "The catalogue service is temporarily unavailable. Please try again shortly."
+          : "CrownStore could not load the catalogue (HTTP " + response.status + "). Please try again.");
+        const data = await response.json() as AppsResponse;
+        setApps(Array.isArray(data.apps) ? data.apps : []);
+      }
     } catch (error) {
       if (signal?.aborted) return;
       setError(error instanceof Error ? error.message : "Something went wrong loading CrownStore.");
