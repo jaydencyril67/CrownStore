@@ -5,7 +5,7 @@
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
   <rect x="18" y="18" width="476" height="476" rx="100" fill="none" stroke="#c4b5fd" stroke-opacity=".42" stroke-width="3"/>
-  <g fill="none" stroke="url(#metal)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(-2 11)" fill="none" stroke="url(#metal)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
     <path d="M98 112h52l37 235h188l43-157H176"/>
     <path d="m176 166 40-64 51 60 48-72 44 70 51-23-43 151H197l-21-122Z" fill="url(#metal)" stroke-width="13"/>
     <path d="M222 221h133" stroke="#24133f" stroke-opacity=".75" stroke-width="12"/>
