@@ -1,0 +1,189 @@
+name: Build CrownStore Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Publish a signed production APK; requires Android signing secrets"
+        required: true
+        default: false
+        type: boolean
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "scripts/**"
+      - "package.json"
+      - "capacitor.config.ts"
+      - ".github/workflows/android-build.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Choose next version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release list --limit 1000 --json tagName,isDraft,isPrerelease > releases.json
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          releases=json.loads(Path("releases.json").read_text())
+          versions=[]
+          for r in releases:
+              m=re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)",r.get("tagName",""))
+              if m and not r.get("isDraft") and not r.get("isPrerelease"):
+                  versions.append(tuple(map(int,m.groups())))
+          if not versions: v=(1,0,0)
+          else:
+              major,minor,patch=max(versions); v=(major,minor,patch+1)
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write("app_version="+".".join(map(str,v))+"\n")
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+
+      - name: Install web, Android and icon dependencies
+        run: |
+          npm install
+          npm install --no-save --package-lock=false @capacitor/assets@3.0.5 sharp
+
+      - name: Build web/PWA
+        run: npm run build
+
+      - name: Generate Android project
+        run: npx cap add android
+
+      - name: Configure Android compile SDK
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("android/variables.gradle")
+          s,n=re.subn(r"(?m)^(\s*compileSdkVersion\s*=\s*)\d+\s*$",r"\g<1>35",p.read_text(),count=1)
+          if n!=1: raise SystemExit("Could not set compileSdkVersion=35.")
+          p.write_text(s)
+          PY
+
+      - name: Generate CrownStore icon resources
+        run: |
+          mkdir -p assets
+          cp public/crownstore-pwa-icon.svg assets/icon.svg
+          cp public/crownstore-pwa-icon.svg assets/splash.svg
+          npx capacitor-assets generate --android
+
+      - name: Sync native plugin and deep link
+        run: |
+          npx cap sync android
+          python3 scripts/install-android-device-bridge.py
+
+      - name: Set Android version
+        env:
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
+          APP_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,re
+          p=Path("android/app/build.gradle"); s=p.read_text()
+          s,n1=re.subn(r"(?m)^\s*versionCode\s+\d+\s*$",f"        versionCode {int(os.environ['APP_VERSION_CODE'])}",s,count=1)
+          s,n2=re.subn(r'''(?m)^\s*versionName\s+["'][^"']*["']\s*$''',f'versionName "{os.environ["APP_VERSION"]}"',s,count=1)
+          if n1!=1 or n2!=1: raise SystemExit("Could not set Android version.")
+          p.write_text(s)
+          PY
+
+      - name: Check release signing secrets
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$KS" && test -n "$KSP" && test -n "$ALIAS" && test -n "$KP" || {
+            echo "::error::Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD to Actions secrets."
+            exit 1
+          }
+
+      - name: Configure persistent release signing
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_PATH: ${{ runner.temp }}/crownstore-release.keystore
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android/app/build.gradle"); s=p.read_text()
+          if "signingConfigs {" in s: raise SystemExit("Signing config already exists.")
+          marker="    buildTypes {"
+          if marker not in s: raise SystemExit("Could not find Android buildTypes block.")
+          signing="""    signingConfigs {
+                  release {
+                      storeFile file(System.getenv("KEYSTORE_PATH"))
+                      storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                      keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                  }
+              }
+
+          """
+          s=s.replace(marker,signing+marker,1); b=s.index(marker); idx=s.find("release {",b)
+          if idx<0: raise SystemExit("Could not find release build type.")
+          end=s.find("\n",idx)+1; s=s[:end]+"            signingConfig signingConfigs.release\n"+s[end:]; p.write_text(s)
+          PY
+
+      - name: Build debug APK for testing
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.publish_release) }}
+        working-directory: android
+        run: ./gradlew --no-daemon --stacktrace --console=plain assembleDebug
+      - name: Upload debug APK
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.publish_release) }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: crownstore-debug-apk-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Build production APK
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        working-directory: android
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/crownstore-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon --stacktrace --console=plain assembleRelease
+
+      - name: Verify, checksum and publish release
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_VERSION: ${{ steps.version.outputs.app_version }}
+        run: |
+          set -euo pipefail
+          cp android/app/build/outputs/apk/release/app-release.apk CrownStore.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose CrownStore.apk
+          sha256sum CrownStore.apk > CrownStore.apk.sha256
+          gh release create "v$APP_VERSION" CrownStore.apk CrownStore.apk.sha256 --target "$GITHUB_SHA" --title "CrownStore $APP_VERSION" --notes "CrownStore Android production APK $APP_VERSION. Android will ask the user to approve installation."
