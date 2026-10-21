@@ -33,22 +33,10 @@ function AppIcon({ app }: { app: CrownApp }) {
 }
 
 function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
-  const ready = Boolean(app.releaseId);
-  return <article className="app-card">
-    <button className="app-card-details" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details"}>
-      <div className="app-card-top">
-        <AppIcon app={app} />
-        <span className={ready ? "category-pill is-ready" : "category-pill"}>{ready ? "Official release" : "Coming soon"}</span>
-      </div>
-      <h3>{app.name}</h3>
-      <p className="app-description">{app.shortDescription || app.description || "An official application from the KingsHall ecosystem."}</p>
-      <span className="details-link">App details <ChevronRight size={15} /></span>
-    </button>
-    <div className="app-meta"><span>{app.versionName ? "v" + app.versionName : "Awaiting first release"}</span><span>{formatSize(app.sizeBytes)}</span></div>
-    {ready
-      ? <a className="button button-primary card-download" href={API_BASE + "/api/downloads/" + app.releaseId}><ArrowDownToLine size={17} /> Download APK</a>
-      : <button className="button button-muted card-download" disabled><span className="status-dot" /> Release coming soon</button>}
-  </article>;
+  return <button className="shelf-app-tile" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details"}>
+    <span className="shelf-app-icon"><AppIcon app={app} /></span>
+    <span className="shelf-app-name">{app.name}</span>
+  </button>;
 }
 
 function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
