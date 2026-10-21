@@ -354,6 +354,16 @@ export default function App() {
   const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>("HOME");
 
+  // Always open the storefront at its first section and reset each horizontal
+  // shelf to its first app instead of restoring an old mid-scroll position.
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+    document.querySelectorAll<HTMLElement>(".shelf-track").forEach((track) => {
+      track.scrollLeft = 0;
+    });
+  }, []);
+
   async function loadApps(signal?: AbortSignal) {
     setLoading(true);
     setError("");
