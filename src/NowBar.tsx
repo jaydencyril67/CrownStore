@@ -17,7 +17,6 @@ const ORDER: ActionLabel[] = ["HOME"];
 export default function NowBar({ onHome }: { onHome: () => void }) {
   const [view, setView] = useState<"title" | "actions">("title");
   const [mode, setMode] = useState<"compact" | "expanded">("compact");
-  const [pressing, setPressing] = useState(false);
   const barRef = useRef<HTMLDivElement | null>(null);
   const holdTimer = useRef<number | null>(null);
   const idleTimer = useRef<number | null>(null);
@@ -26,7 +25,6 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
   const swipeHandled = useRef(false);
 
   const stopHold = () => {
-    setPressing(false);
     if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
     holdTimer.current = null;
   };
@@ -41,7 +39,6 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
 
   const startHold = () => {
     holdTriggered.current = false;
-    setPressing(true);
     if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
     holdTimer.current = window.setTimeout(() => {
       holdTriggered.current = true;
@@ -128,7 +125,7 @@ export default function NowBar({ onHome }: { onHome: () => void }) {
         <div className="kh-nowbar-rail" />
         {view === "title" ? (
           <button
-            className={`kh-nowbar-title ${pressing ? "is-pressing" : ""}`}
+            className="kh-nowbar-title"
             type="button"
             aria-label="HOME page. Tap to show navigation buttons; hold to expand; swipe to navigate."
             onClick={() => {
