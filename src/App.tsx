@@ -29,10 +29,10 @@ function readableCategory(value: string) {
 
 function StoreMark({ size = 24 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true" focusable="false">
-    <path d="M20 3.5 33 11v15L20 33.5 7 26V11L20 3.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-    <path d="m12 14.2 8-4.6 8 4.6-8 4.6-8-4.6Z" fill="currentColor" fillOpacity=".95" />
-    <path d="m12 19.3 8 4.6 8-4.6M12 23.8l8 4.6 8-4.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="m30.8 5.2.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" fill="currentColor" />
+    <path d="M4.5 6.5H9L12.2 26.7H29.5L33.2 13.2H13.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M13.4 14.1 16.7 8.8 21 13.8 25.1 7.8 28.8 13.7 33.1 11.8 29.5 25.1H15.1L13.4 14.1Z" fill="currentColor" fillOpacity=".94" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
+    <path d="M17 31.2a1.8 1.8 0 1 0 0 .1M27.7 31.2a1.8 1.8 0 1 0 0 .1" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+    <path d="M16.8 18.1h11.6" stroke="#24133f" strokeOpacity=".72" strokeWidth="1.25" strokeLinecap="round" />
   </svg>;
 }
 
@@ -332,7 +332,7 @@ export default function App() {
     <header className="app-header glass-panel" aria-label="CrownStore">
       <span className="header-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></span>
       <div className="header-brand"><div className="header-brand-copy"><p className="header-brand-title">CrownStore</p></div></div>
-      <div className="header-right-artwork"><span className="header-logo brand-mark"><ShoppingBag size={19} /></span></div>
+      <div className="header-right-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></div>
     </header>
     <main id="home">
       {view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
