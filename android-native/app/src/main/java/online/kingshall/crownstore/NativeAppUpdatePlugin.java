@@ -77,6 +77,82 @@ public class NativeAppUpdatePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void installDownloadedApk(PluginCall call) {
+        Long downloadId = call.getLong("downloadId");
+        String appName = call.getString("appName", "CrownStore app");
+        String packageId = call.getString("packageId", "");
+        if (downloadId == null || downloadId <= 0L) {
+            call.reject("A valid Android download ID is required.");
+            return;
+        }
+
+        DownloadManager manager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+        if (manager == null) {
+            call.reject("Android's download service is unavailable.");
+            return;
+        }
+
+        android.database.Cursor cursor = null;
+        try {
+            cursor = manager.query(new DownloadManager.Query().setFilterById(downloadId));
+            if (cursor == null || !cursor.moveToFirst()) {
+                call.reject("Android could not find this CrownStore download. Download the APK again.");
+                return;
+            }
+            int statusColumn = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+            int state = statusColumn >= 0 ? cursor.getInt(statusColumn) : -1;
+            if (state != DownloadManager.STATUS_SUCCESSFUL) {
+                call.reject("The APK has not finished downloading yet.");
+                return;
+            }
+        } catch (Exception error) {
+            call.reject("Unable to verify the downloaded APK.", error);
+            return;
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                && !getContext().getPackageManager().canRequestPackageInstalls()) {
+            try {
+                Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + getContext().getPackageName()));
+                settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getActivity().startActivity(settings);
+                JSObject result = new JSObject();
+                result.put("requiresPermission", true);
+                call.resolve(result);
+            } catch (Exception error) {
+                call.reject("Android could not open CrownStore's installation permission settings.", error);
+            }
+            return;
+        }
+
+        Uri apk = manager.getUriForDownloadedFile(downloadId);
+        if (apk == null) {
+            call.reject("Android could not locate the downloaded " + appName + " APK.");
+            return;
+        }
+        try {
+            Intent install = new Intent(Intent.ACTION_VIEW);
+            install.setDataAndType(apk, "application/vnd.android.package-archive");
+            install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getActivity().startActivity(install);
+            JSObject complete = new JSObject();
+            complete.put("stage", "installer-opened");
+            complete.put("packageId", packageId);
+            complete.put("downloadId", downloadId);
+            complete.put("timestamp", System.currentTimeMillis());
+            notifyListeners("downloadComplete", complete);
+            JSObject result = new JSObject();
+            result.put("opened", true);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Android could not open the " + appName + " installer.", error);
+        }
+    }
+
+    @PluginMethod
     public void getDownloadStatus(PluginCall call) {
         Long downloadId = call.getLong("downloadId");
         if (downloadId == null || downloadId <= 0L) {
@@ -177,17 +253,6 @@ public class NativeAppUpdatePlugin extends Plugin {
             return;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                && !getContext().getPackageManager().canRequestPackageInstalls()) {
-            Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:" + getContext().getPackageName()));
-            getActivity().startActivity(settings);
-            JSObject result = new JSObject();
-            result.put("requiresPermission", true);
-            call.resolve(result);
-            return;
-        }
-
         DownloadManager manager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
         if (manager == null) {
             call.reject("Android's download service is unavailable.");
@@ -232,6 +297,26 @@ public class NativeAppUpdatePlugin extends Plugin {
                         failure.put("message", "Android could not locate the downloaded " + appName + " APK.");
                         failure.put("packageId", packageId);
                         notifyListeners("downloadError", failure);
+                        return;
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                            && !getContext().getPackageManager().canRequestPackageInstalls()) {
+                        try {
+                            Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                    Uri.parse("package:" + getContext().getPackageName()));
+                            settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            getActivity().startActivity(settings);
+                            JSObject needed = new JSObject();
+                            needed.put("message", "The APK is downloaded. Allow CrownStore to install apps, then return and tap Continue installation.");
+                            needed.put("packageId", packageId);
+                            needed.put("downloadId", completedId);
+                            notifyListeners("installPermissionRequired", needed);
+                        } catch (Exception error) {
+                            JSObject failure = new JSObject();
+                            failure.put("message", "The APK is downloaded, but Android could not open installation settings: " + String.valueOf(error.getMessage()));
+                            failure.put("packageId", packageId);
+                            notifyListeners("downloadError", failure);
+                        }
                         return;
                     }
                     Intent install = new Intent(Intent.ACTION_VIEW);
