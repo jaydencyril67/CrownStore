@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import NowBar from "./NowBar";
 import {
-  ArrowDownToLine, ArrowRight, Bot, CheckCircle2, ChevronRight, ShoppingBag,
+  ArrowDownToLine, ArrowRight, Bot, CheckCircle2, ChevronRight,
   Download, Info, Layers3, MessageCircle, PackageCheck, Search,
   ShieldCheck, Smartphone, Sparkles, X
 } from "lucide-react";
@@ -27,9 +27,18 @@ function readableCategory(value: string) {
   return value.replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function StoreMark({ size = 24 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true" focusable="false">
+    <path d="M20 3.5 33 11v15L20 33.5 7 26V11L20 3.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+    <path d="m12 14.2 8-4.6 8 4.6-8 4.6-8-4.6Z" fill="currentColor" fillOpacity=".95" />
+    <path d="m12 19.3 8 4.6 8-4.6M12 23.8l8 4.6 8-4.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="m30.8 5.2.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" fill="currentColor" />
+  </svg>;
+}
+
 function AppIcon({ app }: { app: CrownApp }) {
   if (app.iconUrl) return <img className="app-icon-image" src={app.iconUrl} alt={app.name + " icon"} loading="lazy" />;
-  return <div className="app-icon-fallback" aria-hidden="true"><ShoppingBag size={27} /></div>;
+  return <div className="app-icon-fallback" aria-hidden="true"><StoreMark size={27} /></div>;
 }
 
 function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
@@ -321,7 +330,7 @@ export default function App() {
   return <div className="site-shell">
     <div className="ambient ambient-one" /><div className="ambient ambient-two" />
     <header className="app-header glass-panel" aria-label="CrownStore">
-      <span className="header-artwork"><span className="header-logo brand-mark"><ShoppingBag size={19} /></span></span>
+      <span className="header-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></span>
       <div className="header-brand"><div className="header-brand-copy"><p className="header-brand-title">CrownStore</p></div></div>
       <div className="header-right-artwork"><span className="header-logo brand-mark"><ShoppingBag size={19} /></span></div>
     </header>
@@ -359,7 +368,7 @@ export default function App() {
           <div className="hero-actions"><button className="button button-primary" onClick={() => navigate("APPS")}>Explore applications <ArrowRight size={17} /></button><button className="button button-quiet" onClick={() => navigate("ABOUT")}>How it works <ChevronRight size={16} /></button></div>
           <div className="trust-row"><span><ShieldCheck size={16} /> Official releases</span><span><CheckCircle2 size={16} /> Verified APK metadata</span></div>
         </div>
-        <div className="hero-art"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-glow" /><div className="hero-crown"><ShoppingBag size={61} /><span>CROWNSTORE</span></div><div className="floating-chip chip-one"><Smartphone size={17} /> Android apps</div><div className="floating-chip chip-two"><ShieldCheck size={17} /> Verified builds</div><div className="floating-chip chip-three"><ArrowDownToLine size={17} /> Direct downloads</div></div>
+        <div className="hero-art"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-glow" /><div className="hero-crown"><StoreMark size={61} /><span>CROWNSTORE</span></div><div className="floating-chip chip-one"><Smartphone size={17} /> Android apps</div><div className="floating-chip chip-two"><ShieldCheck size={17} /> Verified builds</div><div className="floating-chip chip-three"><ArrowDownToLine size={17} /> Direct downloads</div></div>
       </section>
       <section className="feature-strip" id="about">
         <div><ShieldCheck /><span><strong>Verified releases</strong><small>APK package and version checked</small></span></div>
@@ -387,11 +396,11 @@ export default function App() {
                 ? <div className="state-panel"><div className="state-icon"><Download size={22} /></div><strong>No published updates yet</strong><span>The apps are in the catalogue, but no stable APK release has been published yet. Check back after the first release is verified.</span></div>
                 : apps.length
                   ? <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No matching applications</strong><span>Try another search term or category.</span><button className="button button-outline" onClick={() => { setSearch(""); setCategory("All apps"); }}>Clear filters</button></div>
-                  : <div className="state-panel"><div className="state-icon"><ShoppingBag size={23} /></div><strong>The collection is getting ready</strong><span>Official apps appear here as soon as the catalogue is configured.</span></div>}
+                  : <div className="state-panel"><div className="state-icon"><StoreMark size={23} /></div><strong>The collection is getting ready</strong><span>Official apps appear here as soon as the catalogue is configured.</span></div>}
         <div className="catalogue-footnote"><ShieldCheck size={15} /> Downloads resolve through the official CrownStore API and published release catalogue.</div>
       </section>
       </>}
-      {view !== "HOME" && <section className="bottom-banner"><div className="banner-icon"><ShoppingBag size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
+      {view !== "HOME" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><ShoppingBag size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NowBar onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />
