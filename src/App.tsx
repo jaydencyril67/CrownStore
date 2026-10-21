@@ -275,12 +275,12 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
 }
 
 export default function App() {
-  const [apps, setApps] = useState<ShoppingBagApp[]>([]);
+  const [apps, setApps] = useState<CrownApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All apps");
-  const [selectedApp, setSelectedApp] = useState<ShoppingBagApp | null>(null);
+  const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
   const [showPublisher, setShowPublisher] = useState(false);
   const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>("HOME");
