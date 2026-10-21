@@ -107,11 +107,15 @@ jobs:
 
           (async () => {
             const master = fs.readFileSync('public/crownstore-pwa-icon.svg', 'utf8');
-            const defs = master.match(/<defs>[\\s\\S]*?<\\/defs>/);
-            const artworkGroup = master.match(/<g\\s+transform="translate\\(37\\.5 58\\.75\\) scale\\(1\\.25\\)"[\\s\\S]*?<\\/g>/);
-            if (!defs || !artworkGroup) {
+            const defsStart = master.indexOf('<defs>');
+            const defsEnd = master.indexOf('</defs>', defsStart);
+            const artworkStart = master.indexOf('<g transform="translate(37.5 58.75) scale(1.25)"');
+            const artworkEnd = master.indexOf('</g>', artworkStart);
+            if (defsStart < 0 || defsEnd < 0 || artworkStart < 0 || artworkEnd < 0) {
               throw new Error('CrownStore master SVG changed; cannot safely isolate the cart/crown splash artwork.');
             }
+            const defs = master.slice(defsStart, defsEnd + '</defs>'.length);
+            const artworkGroup = master.slice(artworkStart, artworkEnd + '</g>'.length);
 
             // Crop to the actual cart/crown artwork so its visible scale matches the other APKs,
             // instead of scaling the full PWA icon (which also contains its square canvas and circle).
@@ -225,11 +229,13 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
-          import re
-
           path = Path("android/app/src/main/res/values/styles.xml")
           text = path.read_text()
-          pattern = re.compile(r'(?s)<style\\s+name="AppTheme\\.NoActionBarLaunch"[^>]*>.*?</style>')
+          name_index = text.find('name="AppTheme.NoActionBarLaunch"')
+          start = text.rfind("<style", 0, name_index) if name_index >= 0 else -1
+          close = text.find("</style>", name_index) if name_index >= 0 else -1
+          if start < 0 or close < 0:
+              raise SystemExit("Could not find Capacitor AppTheme.NoActionBarLaunch in values/styles.xml")
           replacement = """<style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
               <item name="android:windowBackground">@drawable/crownstore_launch_background</item>
               <item name="windowSplashScreenBackground">@color/crownstore_splash_background</item>
@@ -237,9 +243,8 @@ jobs:
               <item name="android:windowSplashScreenBrandingImage">@drawable/crownstore_branding</item>
               <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
           </style>"""
-          if not pattern.search(text):
-              raise SystemExit("Could not find Capacitor AppTheme.NoActionBarLaunch in values/styles.xml")
-          path.write_text(pattern.sub(lambda _: replacement, text, count=1))
+          close += len("</style>")
+          path.write_text(text[:start] + replacement + text[close:])
           PY
 
       - name: Set Android version
