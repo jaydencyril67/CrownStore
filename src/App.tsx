@@ -132,6 +132,7 @@ export default function App() {
   const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
   const [showPublisher, setShowPublisher] = useState(false);
   const [view, setView] = useState<View>("HOME");
+  const [nowbarOpen, setNowbarOpen] = useState(false);
 
   async function loadApps(signal?: AbortSignal) {
     setLoading(true);
@@ -246,7 +247,14 @@ export default function App() {
       {view !== "HOME" && <section className="bottom-banner"><div className="banner-icon"><Crown size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><Crown size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></footer>
-    <nav className="nowbar glass-panel" aria-label="CrownStore navigation"><button className="nowbar-item active" onClick={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} aria-current="page"><Home size={17} /><span>HOME</span></button></nav>
+    <nav className="kh-nowbar-dock crown-nowbar-dock" aria-label="CrownStore navigation">
+      <div className={`kh-nowbar crown-nowbar ${nowbarOpen ? "is-actions" : "is-title"}`} role="group" aria-label="CrownStore quick navigation">
+        <span className="kh-nowbar-rail" />
+        {nowbarOpen ? <div className="kh-nowbar-actions is-compact" aria-label="Navigation buttons">
+          <div className="kh-nowbar-slot"><button className="kh-nowbar-action is-active" type="button" aria-current="page" aria-label="Home" onClick={() => { setView("HOME"); setNowbarOpen(false); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}><span className="kh-nowbar-icon"><Home size={18} /></span><span className="kh-nowbar-label-compact">HOME</span></button></div>
+        </div> : <button className="kh-nowbar-title" type="button" aria-label="HOME page. Tap to show navigation button." onClick={() => setNowbarOpen(true)}><span className="kh-nowbar-orb" /><span className="kh-nowbar-current">HOME</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></button>}
+      </div>
+    </nav>
     {selectedApp && <AppDetails app={selectedApp} onClose={() => setSelectedApp(null)} />}
     {showPublisher && <PublisherPanel onClose={() => setShowPublisher(false)} />}
   </div>;
