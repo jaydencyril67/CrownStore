@@ -120,7 +120,7 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
         lines.push(item.app + (item.tag ? " (" + item.tag + ")" : "") + ": " + (item.message || "No additional details."));
       }
       if (report.message) lines.push(report.message);
-      setMessage(lines.join("\\n"));
+      setMessage(lines.join("\n"));
       onPublished();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not synchronize source releases.");
