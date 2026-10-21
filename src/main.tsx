@@ -16,7 +16,7 @@ function RefreshSplashCleanup() {
     let timeout = 0;
     firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(() => {
-        timeout = window.setTimeout(() => splash.remove(), 1400);
+        timeout = window.setTimeout(() => splash.remove(), 3000);
       });
     });
 
