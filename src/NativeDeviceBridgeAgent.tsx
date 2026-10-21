@@ -37,7 +37,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
       void NativeAppUpdate.addListener(eventName, (event) => {
         if (stopped || !activeCommandPackageId || event.packageId !== activeCommandPackageId) return;
         if (eventName === "installPermissionRequired" && Number(event.downloadId) > 0) {
-          pendingInstall = { packageId: event.packageId, downloadId: Number(event.downloadId) };
+          pendingInstall = { packageId: activeCommandPackageId, downloadId: Number(event.downloadId) };
         }
         void setStatus(eventName === "downloadError" ? "failed" : eventName === "installPermissionRequired" ? "permission-required" : "install-ready",
           event.message || (eventName === "downloadComplete" ? "Android's installer opened; confirm its prompt." : eventName === "installPermissionRequired" ? "Allow CrownStore to install apps in Android settings, then request the update again." : "APK download or installer failed."));
