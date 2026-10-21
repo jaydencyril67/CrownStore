@@ -85,7 +85,5 @@ body{background:#090a0c;color:#f5f1e5}
 @media(max-width:850px){.shelf-track{grid-template-columns:repeat(2,minmax(0,1fr))}.shelves-heading h1{font-size:38px}}
 @media(max-width:620px){.site-shell>main{padding-top:76px}.home-shelves{margin:0;padding:21px 17px 45px}.shelves-heading{align-items:stretch;flex-direction:column;gap:19px;margin-bottom:27px;padding:9px 0 22px}.shelves-heading h1{font-size:clamp(32px,9vw,41px);margin-top:13px}.shelves-heading p{font-size:12px}.shelves-heading>.button{width:100%}.app-shelf{margin-bottom:29px}.shelf-heading{align-items:flex-start}.shelf-title-wrap{gap:10px}.shelf-icon{width:35px;height:35px;border-radius:11px}.shelf-heading h2{font-size:20px}.shelf-heading p{font-size:10px}.shelf-count{font-size:9px;padding:5px 8px}.shelf-track{grid-template-columns:1fr;gap:10px}.app-shell-placeholder,.app-shell-placeholder.is-loading{min-height:190px;padding:17px}.shelf-app-card .app-card{padding:17px}.shelf-footer-note{text-align:center;line-height:1.7}}
 
-/* STIX Two Text is the only app typeface, including WebView/APK controls and splash UI. */
-@font-face{font-family:"STIX Two Text";font-style:normal;font-weight:100 699;font-display:block;src:url("@fontsource/stix-two-text/files/stix-two-text-latin-400-normal.woff2") format("woff2")}
-@font-face{font-family:"STIX Two Text";font-style:normal;font-weight:700 1000;font-display:block;src:url("@fontsource/stix-two-text/files/stix-two-text-latin-700-normal.woff2") format("woff2")}
+/* STIX Two Text is bundled locally and used by the web UI and Android WebView. */
 html,body,#root,*,*::before,*::after,button,input,textarea,select,option{font-family:"STIX Two Text" !important;font-synthesis:none !important}
