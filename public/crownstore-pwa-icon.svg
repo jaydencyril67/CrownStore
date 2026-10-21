@@ -7,7 +7,7 @@
   </defs>
   <rect width="720" height="720" fill="#100719"/>
   <circle cx="360" cy="360" r="330" fill="#090510" stroke="#241038" stroke-width="10"/>
-  <g transform="translate(-40 -40) scale(1.25)" fill="none" stroke="url(#metal)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(37.5 53.75) scale(1.25)" fill="none" stroke="url(#metal)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
     <path d="M98 112h52l37 235h188l43-157H176"/>
     <path d="m176 166 40-64 51 60 48-72 44 70 51-23-43 151H197l-21-122Z" fill="url(#metal)" stroke-width="13"/>
     <path d="M222 221h133" stroke="#24133f" stroke-opacity=".75" stroke-width="12"/>
