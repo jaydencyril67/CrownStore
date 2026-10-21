@@ -69,7 +69,7 @@ function AppIcon({ app }: { app: CrownApp }) {
   />;
 }
 
-type DownloadStatus = "starting" | "downloading" | "installing" | "complete" | "error" | "cancelled";
+type DownloadStatus = "starting" | "downloading" | "installing" | "permission" | "complete" | "error" | "cancelled";
 type DownloadProgress = {
   releaseId: string;
   appName: string;
@@ -102,12 +102,14 @@ function DownloadFeedback({
   const title = progress.status === "starting" ? "Preparing download"
     : progress.status === "downloading" ? "Downloading APK"
     : progress.status === "installing" ? "Opening Android installer"
+    : progress.status === "permission" ? "Installation permission needed"
     : progress.status === "complete" ? (progress.platform === "android" ? "Installer ready" : "Download ready")
     : progress.status === "cancelled" ? "Download cancelled"
     : "Download failed";
   const message = progress.status === "starting" ? "Connecting securely to CrownStore…"
     : progress.status === "downloading" ? "CrownStore is downloading the verified APK."
     : progress.status === "installing" ? "The APK is downloaded. CrownStore is opening Android’s installer…"
+    : progress.status === "permission" ? "The APK is downloaded. Allow CrownStore to install apps in Android settings, then return and tap Continue installation."
     : progress.status === "complete" ? (progress.platform === "android" ? "Android’s installer is open. Review its prompt to install or update " + progress.appName + "." : "CrownStore finished receiving the APK. Open the downloaded file from Downloads to install or update the app.")
     : progress.status === "cancelled" ? "The download was stopped. You can start it again."
     : progress.error || "CrownStore could not finish the download. Check your connection and try again.";
@@ -117,6 +119,7 @@ function DownloadFeedback({
       <span className="download-feedback-icon" aria-hidden="true">
         {progress.status === "complete" ? <CheckCircle2 size={17} />
           : progress.status === "error" ? <Info size={17} />
+          : progress.status === "permission" ? <Smartphone size={17} />
           : <Download size={17} />}
       </span>
       <div className="download-feedback-copy">
@@ -127,17 +130,17 @@ function DownloadFeedback({
         {busy ? "Cancel" : "Dismiss"}
       </button>
     </div>
-    {(busy || progress.status === "complete" || progress.status === "installing") && <>
+    {(busy || progress.status === "complete" || progress.status === "installing" || progress.status === "permission") && <>
       <div className="download-progress-track" aria-label={percent === null ? "Download in progress" : "Download " + percent + "% complete"}>
-        <span className={percent === null && busy && progress.status !== "installing" ? "is-indeterminate" : ""} style={{ width: (percent === null ? 28 : progress.status === "complete" || progress.status === "installing" ? 100 : percent) + "%" }} />
+        <span className={percent === null && busy && progress.status !== "installing" ? "is-indeterminate" : ""} style={{ width: (percent === null ? 28 : progress.status === "complete" || progress.status === "installing" || progress.status === "permission" ? 100 : percent) + "%" }} />
       </div>
       <div className="download-progress-meta">
         <span>{progress.total > 0 ? formatProgressBytes(progress.loaded) + " of " + formatProgressBytes(progress.total) : formatProgressBytes(progress.loaded) + " downloaded"}</span>
-        <strong>{progress.status === "complete" || progress.status === "installing" ? "100%" : percent === null ? "In progress" : percent + "%"}</strong>
+        <strong>{progress.status === "complete" || progress.status === "installing" || progress.status === "permission" ? "100%" : percent === null ? "In progress" : percent + "%"}</strong>
       </div>
     </>}
-    {(progress.status === "error" || progress.status === "cancelled") && <div className="download-feedback-actions">
-      <button type="button" className="button button-outline" onClick={onRetry}><Download size={15} /> Try again</button>
+    {(progress.status === "error" || progress.status === "cancelled" || progress.status === "permission") && <div className="download-feedback-actions">
+      <button type="button" className="button button-outline" onClick={onRetry}>{progress.status === "permission" ? <><Smartphone size={15} /> Continue installation</> : <><Download size={15} /> Try again</>}</button>
     </div>}
   </section>;
 }
@@ -553,8 +556,39 @@ export default function App() {
     return () => controller.abort();
   }, []);
 
+  async function continueNativeInstall(app: CrownApp, downloadId: number): Promise<void> {
+    setDownloadProgress((current) => current?.releaseId === app.releaseId
+      ? { ...current, status: "installing", error: undefined, downloadId }
+      : current);
+    try {
+      const result = await NativeAppUpdate.installDownloadedApk({
+        downloadId,
+        appName: app.name,
+        packageId: app.packageId
+      });
+      if (result.requiresPermission) {
+        setDownloadProgress((current) => current?.releaseId === app.releaseId
+          ? { ...current, status: "permission", downloadId, error: "Allow CrownStore to install apps in Android settings, then return and tap Continue installation." }
+          : current);
+        return;
+      }
+      if (!result.opened) throw new Error("Android did not confirm that the installer opened.");
+      setDownloadProgress((current) => current?.releaseId === app.releaseId
+        ? { ...current, status: "complete", loaded: current.total || current.loaded, total: current.total || current.loaded, downloadId, error: undefined }
+        : current);
+    } catch (error) {
+      setDownloadProgress((current) => current?.releaseId === app.releaseId
+        ? { ...current, status: "error", error: error instanceof Error ? error.message : "Android could not open the installer." }
+        : current);
+    }
+  }
+
   async function downloadRelease(app: CrownApp): Promise<void> {
     if (!app.releaseId) return;
+    if (Capacitor.getPlatform() === "android" && downloadProgress?.releaseId === app.releaseId && downloadProgress.status === "permission" && downloadProgress.downloadId) {
+      await continueNativeInstall(app, downloadProgress.downloadId);
+      return;
+    }
     if (downloadProgress && ["starting", "downloading", "installing"].includes(downloadProgress.status)) return;
 
     const releaseId = app.releaseId;
@@ -569,11 +603,12 @@ export default function App() {
     setDownloadProgress({ releaseId, appName: app.name, filename, status: "starting", loaded: 0, total, platform });
 
     if (platform === "android") {
-      let terminalStatus: "complete" | "error" | "cancelled" | null = null;
+      let terminalStatus: "complete" | "error" | "permission" | "cancelled" | null = null;
       let completedHandle: { remove: () => Promise<void> } | null = null;
       let failedHandle: { remove: () => Promise<void> } | null = null;
+      let permissionHandle: { remove: () => Promise<void> } | null = null;
       let lastError = "";
-      const settle = (status: "complete" | "error" | "cancelled", errorMessage?: string) => {
+      const settle = (status: "complete" | "error" | "permission" | "cancelled", errorMessage?: string) => {
         if (terminalStatus) return;
         terminalStatus = status;
         setDownloadProgress((current) => {
@@ -582,8 +617,8 @@ export default function App() {
           return {
             ...current,
             status,
-            loaded: status === "complete" ? finishedBytes : current.loaded,
-            total: status === "complete" ? finishedBytes : current.total,
+            loaded: status === "complete" || status === "permission" ? finishedBytes : current.loaded,
+            total: status === "complete" || status === "permission" ? finishedBytes : current.total,
             error: errorMessage
           };
         });
@@ -599,16 +634,20 @@ export default function App() {
           lastError = event.message || "Android could not finish the APK download or open its installer.";
           settle("error", lastError);
         });
+        permissionHandle = await NativeAppUpdate.addListener("installPermissionRequired", (event) => {
+          if (event.packageId && event.packageId !== app.packageId) return;
+          const message = event.message || "The APK is downloaded. Allow CrownStore to install apps in Android settings, then return and tap Continue installation.";
+          settle("permission", message);
+          setDownloadProgress((current) => current?.releaseId === releaseId
+            ? { ...current, status: "permission", downloadId: Number(event.downloadId) || current.downloadId, error: message, loaded: current.total || current.loaded, total: current.total || current.loaded }
+            : current);
+        });
 
         const result = await NativeAppUpdate.downloadAndInstall({
           url: API_BASE + "/api/downloads/" + encodeURIComponent(releaseId),
           appName: app.name,
           packageId: app.packageId
         });
-
-        if (result.requiresPermission) {
-          throw new Error("Android needs permission to install apps from CrownStore. Allow it in Android settings, return here, then tap Download / update again.");
-        }
 
         const downloadId = Number(result.downloadId);
         if (!Number.isSafeInteger(downloadId) || downloadId <= 0) {
@@ -662,6 +701,7 @@ export default function App() {
       } finally {
         if (completedHandle) await completedHandle.remove().catch(() => undefined);
         if (failedHandle) await failedHandle.remove().catch(() => undefined);
+        if (permissionHandle) await permissionHandle.remove().catch(() => undefined);
         nativeDownloadIdRef.current = null;
         if (downloadAbortRef.current === controller) downloadAbortRef.current = null;
       }
