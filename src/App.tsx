@@ -49,6 +49,9 @@ function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
         <div><span className="eyebrow">KINGSHALL ECOSYSTEM</span><h2 id="details-title">{app.name}</h2><span className="details-package">{app.packageId}</span></div>
       </div>
       <p className="details-description">{app.description || app.shortDescription}</p>
+      {app.screenshots.length > 0 && <div className="details-screenshots" aria-label={app.name + " screenshots"}>
+        {app.screenshots.map((screenshot, index) => <img key={screenshot + index} src={screenshot} alt={app.name + " screenshot " + (index + 1)} loading="lazy" />)}
+      </div>}
       <div className="details-facts">
         <div><span>Latest version</span><strong>{app.versionName ? "v" + app.versionName : "Not released yet"}</strong></div>
         <div><span>Version code</span><strong>{app.versionCode ?? "Not available"}</strong></div>
@@ -66,9 +69,9 @@ function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
   </div>;
 }
 
-function PublisherPanel({ onClose }: { onClose: () => void }) {
+function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; apps: CrownApp[]; onPublished: () => void }) {
   const [token, setToken] = useState("");
-  const [appSlug, setAppSlug] = useState("kingshall");
+  const [appSlug, setAppSlug] = useState(apps[0]?.slug || "kingshall");
   const [tagName, setTagName] = useState("");
   const [versionName, setVersionName] = useState("");
   const [versionCode, setVersionCode] = useState("");
@@ -77,6 +80,10 @@ function PublisherPanel({ onClose }: { onClose: () => void }) {
   const [changelog, setChangelog] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    if (apps.length > 0 && !apps.some((item) => item.slug === appSlug)) setAppSlug(apps[0].slug);
+  }, [apps, appSlug]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,6 +99,7 @@ function PublisherPanel({ onClose }: { onClose: () => void }) {
       if (!response.ok) throw new Error(data.error || "Publishing failed.");
       setMessage("Published " + data.app.name + " " + data.release.versionName + " successfully. SHA-256: " + data.release.sha256);
       setVersionCode(""); setVersionName(""); setTagName(""); setAssetName(""); setSourceCommit(""); setChangelog("");
+      onPublished();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Publishing failed. Please try again.");
     } finally {
@@ -107,7 +115,10 @@ function PublisherPanel({ onClose }: { onClose: () => void }) {
       <p className="publisher-intro">First create a published, non-prerelease GitHub Release with the APK attached in the public CrownStoreApk repository. This publisher downloads it to a temporary server file, checks the APK manifest against the selected app and version, calculates SHA-256, then atomically publishes the verified release metadata. Your publishing token stays in this browser session and is sent only to the CrownStore API.</p>
       <form onSubmit={submit} className="publisher-form">
         <label>Publishing token<input type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" required placeholder="Render PUBLISHING_TOKEN" /></label>
-        <label>Application<select value={appSlug} onChange={(event) => setAppSlug(event.target.value)}><option value="kingshall">KingsHall</option><option value="halls-chat">HallsChat</option><option value="crybots">CryBots</option></select></label>
+        <label>Application<select value={appSlug} onChange={(event) => setAppSlug(event.target.value)} required disabled={apps.length === 0}>
+          {apps.map((item) => <option value={item.slug} key={item.id}>{item.name} ({item.slug})</option>)}
+        </select></label>
+        {apps.length === 0 && <p className="publisher-message">No listed apps are available to publish. Add and list an app in Manage Apps first.</p>}
         <div className="publisher-fields">
           <label>Release tag<input value={tagName} onChange={(event) => setTagName(event.target.value)} required placeholder="v1.0.0" /></label>
           <label>Version name<input value={versionName} onChange={(event) => setVersionName(event.target.value)} required placeholder="1.0.0" /></label>
@@ -123,6 +134,137 @@ function PublisherPanel({ onClose }: { onClose: () => void }) {
   </div>;
 }
 
+
+type ManagedApp = CrownApp & { sourceRepo: string; isListed: boolean };
+type CatalogueForm = {
+  name: string; slug: string; packageId: string; shortDescription: string; description: string;
+  category: string; sourceRepo: string; iconUrl: string; screenshotsText: string; isListed: boolean;
+};
+const emptyCatalogueForm = (): CatalogueForm => ({
+  name: "", slug: "", packageId: "", shortDescription: "", description: "",
+  category: "Utilities", sourceRepo: "", iconUrl: "", screenshotsText: "", isListed: true
+});
+function catalogueFormFor(app: ManagedApp): CatalogueForm {
+  return {
+    name: app.name, slug: app.slug, packageId: app.packageId, shortDescription: app.shortDescription || "",
+    description: app.description || "", category: app.category || "Utilities", sourceRepo: app.sourceRepo || "",
+    iconUrl: app.iconUrl || "", screenshotsText: (app.screenshots || []).join("\\n"), isListed: app.isListed
+  };
+}
+
+function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [token, setToken] = useState("");
+  const [catalogue, setCatalogue] = useState<ManagedApp[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [editingSlug, setEditingSlug] = useState("__new__");
+  const [form, setForm] = useState<CatalogueForm>(emptyCatalogueForm);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function loadCatalogue() {
+    if (!token.trim()) { setMessage("Enter the Render PUBLISHING_TOKEN to access app management."); return; }
+    setBusy(true); setMessage("");
+    try {
+      const response = await fetch(API_BASE + "/api/apps/admin/catalogue", {
+        headers: { Authorization: "Bearer " + token.trim() }
+      });
+      const data = await response.json() as { apps?: ManagedApp[]; error?: string };
+      if (!response.ok) throw new Error(data.error || "Could not load the managed catalogue.");
+      const items = Array.isArray(data.apps) ? data.apps : [];
+      setCatalogue(items); setLoaded(true);
+      setEditingSlug("__new__"); setForm(emptyCatalogueForm());
+      setMessage("Loaded " + items.length + " catalogue entries.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not load the managed catalogue.");
+    } finally { setBusy(false); }
+  }
+
+  function selectEntry(value: string) {
+    setMessage("");
+    setEditingSlug(value);
+    if (value === "__new__") { setForm(emptyCatalogueForm()); return; }
+    const item = catalogue.find((entry) => entry.slug === value);
+    if (item) setForm(catalogueFormFor(item));
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token.trim()) { setMessage("Enter your publishing token first."); return; }
+    setBusy(true); setMessage("");
+    const previousSlug = editingSlug;
+    const isNew = previousSlug === "__new__";
+    const payload = {
+      name: form.name.trim(),
+      slug: form.slug.trim().toLowerCase(),
+      packageId: form.packageId.trim(),
+      shortDescription: form.shortDescription.trim(),
+      description: form.description.trim(),
+      category: form.category.trim() || "Utilities",
+      sourceRepo: form.sourceRepo.trim(),
+      iconUrl: form.iconUrl.trim() || null,
+      screenshots: form.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean),
+      isListed: form.isListed
+    };
+    try {
+      const endpoint = isNew ? API_BASE + "/api/apps" : API_BASE + "/api/apps/" + encodeURIComponent(previousSlug);
+      const response = await fetch(endpoint, {
+        method: isNew ? "POST" : "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token.trim() },
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json() as { app?: ManagedApp; error?: string };
+      if (!response.ok || !data.app) throw new Error(data.error || "Could not save application details.");
+      const saved = data.app;
+      setCatalogue((current) => {
+        const next = isNew ? [...current, saved] : current.map((item) => item.slug === previousSlug ? saved : item);
+        return next.sort((a, b) => a.name.localeCompare(b.name));
+      });
+      setEditingSlug(saved.slug);
+      setForm(catalogueFormFor(saved));
+      setMessage((isNew ? "Application added: " : "Application updated: ") + saved.name + ". " +
+        (saved.isListed ? "It is listed in the public store." : "It is hidden from the public store."));
+      onSaved();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not save application details.");
+    } finally { setBusy(false); }
+  }
+
+  return <div className="modal-backdrop publisher-backdrop">
+    <section className="publisher-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="manager-title">
+      <button className="modal-close" onClick={onClose} aria-label="Close app manager"><X size={19} /></button>
+      <span className="eyebrow">CATALOGUE ADMINISTRATION</span>
+      <h2 id="manager-title">Manage CrownStore apps</h2>
+      <p className="publisher-intro">Add, update, or hide applications without editing the storefront source. App metadata is stored in the CrownStore database. APK releases are published separately through the verified Publisher.</p>
+      <div className="publisher-form">
+        <label>Administrator publishing token<input type="password" value={token} onChange={(event) => setToken(event.target.value)} autoComplete="off" required placeholder="Render PUBLISHING_TOKEN" /></label>
+        <button className="button button-outline" type="button" onClick={() => void loadCatalogue()} disabled={busy}>{busy ? "Loading…" : "Load catalogue"}</button>
+      </div>
+      {loaded && <>
+        <form onSubmit={submit} className="publisher-form manager-form">
+          <label>Application<select value={editingSlug} onChange={(event) => selectEntry(event.target.value)}>
+            <option value="__new__">+ Add a new application</option>
+            {catalogue.map((item) => <option value={item.slug} key={item.id}>{item.name}{item.isListed ? "" : " (hidden)"}</option>)}
+          </select></label>
+          <div className="publisher-fields">
+            <label>App name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required maxLength={80} placeholder="My KingsHall App" /></label>
+            <label>URL slug<input value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} required maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="my-app" /></label>
+            <label>Android package ID<input value={form.packageId} onChange={(event) => setForm({ ...form, packageId: event.target.value })} required maxLength={200} placeholder="com.kingshall.myapp" /></label>
+            <label>Category<input value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} required maxLength={50} placeholder="Utilities, Social, AI…" /></label>
+            <label>Source repository (owner/repo)<input value={form.sourceRepo} onChange={(event) => setForm({ ...form, sourceRepo: event.target.value })} required maxLength={200} pattern="[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+" placeholder="jaydencyril67/MyApp" /></label>
+            <label>App icon HTTPS URL<input type="url" value={form.iconUrl} onChange={(event) => setForm({ ...form, iconUrl: event.target.value })} placeholder="https://…/icon.png" /></label>
+          </div>
+          <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
+          <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
+          <label>Screenshot HTTPS URLs (one per line)<textarea value={form.screenshotsText} onChange={(event) => setForm({ ...form, screenshotsText: event.target.value })} rows={3} placeholder="https://…/screenshot-1.png" /></label>
+          <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
+          <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
+        </form>
+      </>}
+      {message && <p className="publisher-message manager-message" role="status">{message}</p>}
+    </section>
+  </div>;
+}
+
 export default function App() {
   const [apps, setApps] = useState<CrownApp[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +273,7 @@ export default function App() {
   const [category, setCategory] = useState("All apps");
   const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
   const [showPublisher, setShowPublisher] = useState(false);
+  const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>("HOME");
 
   async function loadApps(signal?: AbortSignal) {
@@ -250,9 +393,10 @@ export default function App() {
       </>}
       {view !== "HOME" && <section className="bottom-banner"><div className="banner-icon"><Crown size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
-    <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><Crown size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></footer>
+    <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><Crown size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NowBar onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />
     {selectedApp && <AppDetails app={selectedApp} onClose={() => setSelectedApp(null)} />}
-    {showPublisher && <PublisherPanel onClose={() => setShowPublisher(false)} />}
+    {showAppManager && <AppManagerPanel onClose={() => setShowAppManager(false)} onSaved={() => void loadApps()} />}
+    {showPublisher && <PublisherPanel apps={apps.filter((item) => !("isListed" in item) || item.isListed)} onPublished={() => void loadApps()} onClose={() => setShowPublisher(false)} />}
   </div>;
 }
