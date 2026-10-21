@@ -53,8 +53,22 @@ if plugin_import not in activity:
 registration = "registerPlugin(NativeAppUpdatePlugin.class);"
 if registration not in activity:
     marker = "super.onCreate(savedInstanceState);"
-    if marker not in activity:
-        raise SystemExit("Could not locate MainActivity.onCreate.")
-    activity = activity.replace(marker, registration + "\n        " + marker, 1)
+    if marker in activity:
+        activity = activity.replace(marker, registration + "\n        " + marker, 1)
+    else:
+        # A new Capacitor project may start with an empty BridgeActivity subclass.
+        class_marker = "public class MainActivity extends BridgeActivity {"
+        if class_marker not in activity:
+            raise SystemExit("Could not locate a Java MainActivity extending BridgeActivity.")
+        if "import android.os.Bundle;" not in activity:
+            package_marker = "package online.kingshall.crownstore;"
+            if package_marker not in activity:
+                raise SystemExit("Could not locate the MainActivity package declaration.")
+            activity = activity.replace(package_marker, package_marker + "\n\nimport android.os.Bundle;", 1)
+        final_brace = activity.rfind("}")
+        if final_brace < 0:
+            raise SystemExit("Could not locate the end of MainActivity.")
+        override = "\n    @Override\n    public void onCreate(Bundle savedInstanceState) {\n        " + registration + "\n        super.onCreate(savedInstanceState);\n    }\n"
+        activity = activity[:final_brace] + override + activity[final_brace:]
 activity_path.write_text(activity, encoding="utf-8")
 print("Installed CrownStore native package scanner, trusted APK downloader/installer bridge, and crownstore://connect deep link.")
