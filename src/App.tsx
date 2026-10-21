@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import NowBar from "./NowBar";
+import DeviceUpdatesPanel from "./DeviceUpdatesPanel";
+import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
+import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
+import type { BridgeSessionRef } from "./native/deviceBridgeTypes";
 import {
   ArrowDownToLine, ArrowRight, Bot, CheckCircle2, ChevronRight,
   Download, Info, Layers3, MessageCircle, PackageCheck, Search,
@@ -374,6 +379,31 @@ export default function App() {
   const [showPublisher, setShowPublisher] = useState(false);
   const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>("HOME");
+  const [bridgeSession, setBridgeSession] = useState<BridgeSessionRef | null>(null);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let disposed = false;
+    let subscription: { remove: () => Promise<void> } | null = null;
+    const acceptUrl = (value: string) => {
+      try {
+        const url = new URL(value);
+        if (url.protocol !== "crownstore:" || url.hostname !== "connect") return;
+        const sessionId = url.searchParams.get("sessionId") || "";
+        const secret = url.searchParams.get("secret") || "";
+        if (!sessionId || !secret) return;
+        setBridgeSession({ sessionId, secret, deepLink: value, expiresAt: "" });
+        setView("UPDATES");
+      } catch { /* Ignore unrelated Android intents. */ }
+    };
+    void CapacitorApp.getLaunchUrl().then((launch) => {
+      if (launch?.url && !disposed) acceptUrl(launch.url);
+    }).catch(() => {});
+    void CapacitorApp.addListener("appUrlOpen", (event) => acceptUrl(event.url)).then((handle) => {
+      if (disposed) void handle.remove(); else subscription = handle;
+    }).catch(() => {});
+    return () => { disposed = true; if (subscription) void subscription.remove(); };
+  }, []);
 
   // Always open the storefront at its first section and reset each horizontal
   // shelf to its first app instead of restoring an old mid-scroll position.
@@ -490,6 +520,7 @@ export default function App() {
         <div><PackageCheck /><span><strong>Release details</strong><small>Version, size, checksum and changelog</small></span></div>
         <div><Smartphone /><span><strong>Android ready</strong><small>Direct APK downloads</small></span></div>
       </section>
+      {view === "UPDATES" && <DeviceUpdatesPanel apps={apps} launchSession={bridgeSession} onConnect={setBridgeSession} />}
       <section className="apps-section" id="apps">
         <div className="section-heading">
           <div><div className="eyebrow">{view === "UPDATES" ? "LATEST PUBLISHED BUILDS" : "THE COLLECTION"}</div><h2>{view === "UPDATES" ? "Latest releases" : "Find your next app."}</h2><p>{view === "UPDATES" ? "The latest stable APKs published to CrownStore." : "Browse the official KingsHall app family."}</p></div>
@@ -518,6 +549,7 @@ export default function App() {
       {view !== "HOME" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
+    <NativeDeviceBridgeAgent session={bridgeSession} />
     <NowBar onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />
     {selectedApp && <AppDetails app={selectedApp} onClose={() => setSelectedApp(null)} />}
     {showAppManager && <AppManagerPanel onClose={() => setShowAppManager(false)} onSaved={() => void loadApps()} />}
