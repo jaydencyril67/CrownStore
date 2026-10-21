@@ -76,29 +76,55 @@ function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
       <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={19} /></button>
       <div className="details-heading">
         <AppIcon app={app} />
-        <div><span className="eyebrow">KINGSHALL ECOSYSTEM</span><h2 id="details-title">{app.name}</h2><span className="details-package">{app.packageId}</span></div>
+        <div className="details-heading-copy"><span className="eyebrow">KINGSHALL ECOSYSTEM</span><h2 id="details-title">{app.name}</h2><span className="details-package">{app.packageId}</span></div>
       </div>
-      <p className="details-description">{app.description || app.shortDescription}</p>
-      {app.screenshots.length > 0 && <div className="details-screenshots" aria-label={app.name + " screenshots"}>
-        {app.screenshots.map((screenshot, index) => <img key={screenshot + index} src={screenshot} alt={app.name + " screenshot " + (index + 1)} loading="lazy" />)}
-      </div>}
-      <div className="details-facts">
-        <div><span>Latest version</span><strong>{app.versionName ? "v" + app.versionName : "Not released yet"}</strong></div>
-        <div><span>Version code</span><strong>{app.versionCode ?? "Not available"}</strong></div>
+      <div className="details-quick-row">
+        <span className={ready ? "details-status is-ready" : "details-status"}><span className="details-status-dot" />{ready ? "Stable release available" : "Not released yet"}</span>
+        <span className="details-category-chip">{readableCategory(app.category || "Utilities")}</span>
+      </div>
+      <p className="details-description">{app.shortDescription || app.description || "Official app in the KingsHall ecosystem."}</p>
+      <div className="details-primary-facts">
+        <div><span>Latest version</span><strong>{app.versionName ? "v" + app.versionName : "Pending"}</strong></div>
         <div><span>APK size</span><strong>{formatSize(app.sizeBytes)}</strong></div>
-        <div><span>Release status</span><strong>{ready ? "Published stable" : "Coming soon"}</strong></div>
-        <div><span>Category</span><strong>{readableCategory(app.category || "Utilities")}</strong></div>
-        <div><span>Published</span><strong>{formatDate(app.publishedAt)}</strong></div>
-        {app.sha256 && <div className="details-checksum"><span>Verified APK SHA-256</span><strong>{app.sha256}</strong></div>}
       </div>
-      {app.changelog && <div className="changelog"><strong>What's new</strong><p>{app.changelog}</p></div>}
       {ready
         ? <a className="button button-primary details-download" href={API_BASE + "/api/downloads/" + app.releaseId}><Download size={17} /> Download official APK</a>
         : <div className="release-note"><ShieldCheck size={17} /> The download appears here after an official stable APK is verified and published.</div>}
+      <div className="details-sections">
+        <details className="details-section" open>
+          <summary><span><Info size={16} /><span><strong>About this app</strong><small>What it does and how it fits in</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+          <div className="details-section-body">
+            <p className="details-full-description">{app.description || app.shortDescription || "No extended description has been provided yet."}</p>
+            <div className="details-facts">
+              <div><span>Category</span><strong>{readableCategory(app.category || "Utilities")}</strong></div>
+              <div><span>Release status</span><strong>{ready ? "Published stable" : "Coming soon"}</strong></div>
+            </div>
+          </div>
+        </details>
+        <details className="details-section">
+          <summary><span><Smartphone size={16} /><span><strong>Version &amp; technical details</strong><small>Build information and verification</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+          <div className="details-section-body">
+            <div className="details-facts">
+              <div><span>Version code</span><strong>{app.versionCode ?? "Not available"}</strong></div>
+              <div><span>Published</span><strong>{formatDate(app.publishedAt)}</strong></div>
+              {app.sha256 && <div className="details-checksum"><span>Verified APK SHA-256</span><strong>{app.sha256}</strong></div>}
+            </div>
+          </div>
+        </details>
+        {app.changelog && <details className="details-section">
+          <summary><span><PackageCheck size={16} /><span><strong>What’s new</strong><small>Latest published release notes</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+          <div className="details-section-body"><p className="details-changelog">{app.changelog}</p></div>
+        </details>}
+        {app.screenshots.length > 0 && <details className="details-section">
+          <summary><span><Layers3 size={16} /><span><strong>Screenshots</strong><small>{app.screenshots.length} {app.screenshots.length === 1 ? "image" : "images"}</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
+          <div className="details-section-body"><div className="details-screenshots" aria-label={app.name + " screenshots"}>
+            {app.screenshots.map((screenshot, index) => <img key={screenshot + index} src={screenshot} alt={app.name + " screenshot " + (index + 1)} loading="lazy" />)}
+          </div></div>
+        </details>}
+      </div>
     </section>
   </div>;
 }
-
 function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; apps: CrownApp[]; onPublished: () => void }) {
   const [token, setToken] = useState("");
   const [appSlug, setAppSlug] = useState(apps[0]?.slug || "kingshall");
