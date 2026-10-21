@@ -219,7 +219,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   .shelf-heading h2{font-size:14px}
   .shelf-heading p{font-size:11px}
   .shelf-count{font-size:10px;padding:4px 7px}
-  .shelf-track{gap:8px}
+  .shelf-track{gap:6px}
   .shelf-app-card{flex-basis:min(28.8vw,104px)}
 
   
@@ -317,7 +317,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .shelf-heading-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .shelf-see-all{display:inline-flex;align-items:center;gap:3px;border:0;background:transparent;color:var(--gold-light);font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;padding:7px 0 7px 5px}
 .shelf-see-all:hover{color:#ede4ff}
-.shelf-track{display:flex;gap:5px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding:1px 1px 5px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.shelf-track{display:flex;gap:6px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding:1px 1px 5px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .shelf-track::-webkit-scrollbar{display:none}
 .shelf-app-card{flex:0 0 112px;min-width:0;scroll-snap-align:start}
 .shelf-app-card .app-card{height:100%;box-sizing:border-box}
