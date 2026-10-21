@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Download, RefreshCw, Smartphone } from "lucide-react";
+import { Download, RefreshCw, Smartphone } from "lucide-react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import type { CrownApp } from "./types";
