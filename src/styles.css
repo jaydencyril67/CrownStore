@@ -358,3 +358,55 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-marquee{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:600px){.kh-nowbar-dock{bottom:calc(10px + env(safe-area-inset-bottom,0px))}.kh-nowbar.is-actions{padding:7px}}
 @media(max-width:412px){.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr));padding:9px;gap:7px}.kh-nowbar-dock.is-expanded .kh-nowbar-action{min-width:0}}@media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{width:calc(100vw - 24px);max-width:calc(100vw - 24px)}}
+
+
+/* Global interaction rules aligned with CryBots: no browser tap flash, selection,
+   long-press callouts, or click/hover motion on interactive UI. Editable controls
+   retain normal text selection and native editing behavior. */
+html,body,#root,.site-shell,.site-shell *{
+  -webkit-tap-highlight-color:transparent;
+}
+html,body,#root,.site-shell,.site-shell *:not(input):not(textarea):not(select):not(option):not([contenteditable="true"]){
+  -webkit-touch-callout:none;
+}
+.site-shell *:not(input):not(textarea):not(select):not(option):not([contenteditable="true"]){
+  -webkit-user-select:none;
+  user-select:none;
+}
+.site-shell input,.site-shell textarea,.site-shell select,.site-shell option,
+.site-shell [contenteditable="true"],.details-checksum strong{
+  -webkit-user-select:text;
+  user-select:text;
+  -webkit-touch-callout:default;
+}
+.site-shell button,.site-shell a,.site-shell [role="button"],
+.site-shell .app-card,.site-shell .shelf-app-tile,
+.site-shell .category-filter,.site-shell .nowbar-item,
+.site-shell .kh-nowbar-title,.site-shell .kh-nowbar-action{
+  animation:none;
+  transition:none!important;
+  transform:none;
+}
+.site-shell button:hover:not(:disabled),.site-shell a:hover,
+.site-shell .app-card:hover,.site-shell .shelf-app-tile:hover,
+.site-shell .button:hover:not(:disabled),.site-shell .category-filter:hover,
+.site-shell .nowbar-item:hover,.site-shell .kh-nowbar-action:hover,
+.site-shell .kh-nowbar-title:hover{
+  transform:none!important;
+  filter:none;
+}
+.site-shell button:active,.site-shell a:active,.site-shell [role="button"]:active,
+.site-shell .app-card:active,.site-shell .shelf-app-tile:active,
+.site-shell .category-filter:active,.site-shell .nowbar-item:active,
+.site-shell .kh-nowbar-title:active,.site-shell .kh-nowbar-action:active{
+  transform:none!important;
+  scale:1!important;
+  animation:none!important;
+  filter:none!important;
+}
+html,body,.site-shell *{
+  scrollbar-width:none;
+}
+html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar{
+  display:none;
+}
