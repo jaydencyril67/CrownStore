@@ -148,7 +148,7 @@ function catalogueFormFor(app: ManagedApp): CatalogueForm {
   return {
     name: app.name, slug: app.slug, packageId: app.packageId, shortDescription: app.shortDescription || "",
     description: app.description || "", category: app.category || "Utilities", sourceRepo: app.sourceRepo || "",
-    iconUrl: app.iconUrl || "", screenshotsText: (app.screenshots || []).join("\\n"), isListed: app.isListed
+    iconUrl: app.iconUrl || "", screenshotsText: (app.screenshots || []).join("\n"), isListed: app.isListed
   };
 }
 
@@ -202,7 +202,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       category: form.category.trim() || "Utilities",
       sourceRepo: form.sourceRepo.trim(),
       iconUrl: form.iconUrl.trim() || null,
-      screenshots: form.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean),
+      screenshots: form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean),
       isListed: form.isListed
     };
     try {
