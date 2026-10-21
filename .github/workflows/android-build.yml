@@ -48,7 +48,7 @@ jobs:
       - name: Install web, Android and icon dependencies
         run: |
           npm install
-          npm install --no-save --package-lock=false @capacitor/assets@3.0.5 sharp
+          npm install --no-save --package-lock=false @capacitor/assets@3.0.5 @capacitor/splash-screen@7.0.3 sharp
 
       - name: Build web/PWA
         run: npm run build
@@ -78,6 +78,169 @@ jobs:
         run: |
           npx cap sync android
           python3 scripts/install-android-device-bridge.py
+
+      - name: Configure unified CrownStore native launch splash
+        run: |
+          set -euo pipefail
+          mkdir -p android/app/src/main/res/drawable android/app/src/main/res/drawable-nodpi android/app/src/main/res/values android/app/src/main/res/values-v31
+
+          # Use the CrownStore master mark, but compose it like the other KingsHall apps:
+          # 92dp circular holder + 72dp artwork on legacy Android and Android 12+.
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("android/app/build.gradle")
+          text = path.read_text()
+          marker = "dependencies {"
+          dependency = 'implementation "androidx.core:core-splashscreen:1.0.1"'
+          if dependency not in text:
+              if marker not in text:
+                  raise SystemExit("Could not find Android dependencies block for SplashScreen.")
+              offset = text.index(marker) + len(marker)
+              text = text[:offset] + "\n    " + dependency + text[offset:]
+              path.write_text(text)
+          PY
+
+          node - <<'NODE'
+          const fs = require('fs');
+          const sharp = require('sharp');
+
+          (async () => {
+            const master = fs.readFileSync('public/crownstore-pwa-icon.svg', 'utf8');
+            const defs = master.match(/<defs>[\\s\\S]*?<\\/defs>/);
+            const artworkGroup = master.match(/<g\\s+transform="translate\\(37\\.5 58\\.75\\) scale\\(1\\.25\\)"[\\s\\S]*?<\\/g>/);
+            if (!defs || !artworkGroup) {
+              throw new Error('CrownStore master SVG changed; cannot safely isolate the cart/crown splash artwork.');
+            }
+
+            // Crop to the actual cart/crown artwork so its visible scale matches the other APKs,
+            // instead of scaling the full PWA icon (which also contains its square canvas and circle).
+            const artworkSvg = Buffer.from(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="140 163 440 440">' +
+              defs[0] + artworkGroup[0] + '</svg>'
+            );
+
+            const background = '#100719';
+            const circleFill = '#090510';
+            const circleStroke = '#241038';
+            const legacyCanvasPx = 512;
+            const legacyHolderDp = 92;
+            const artworkDp = 72;
+            const legacyArtworkPx = 400;
+            const systemCanvasPx = 512;
+            const systemCanvasDp = 288;
+            const systemHolderPx = Math.round(legacyHolderDp / systemCanvasDp * systemCanvasPx);
+            const systemArtworkPx = Math.round(artworkDp / systemCanvasDp * systemCanvasPx);
+
+            if (systemHolderPx !== 164 || systemArtworkPx !== 128 || legacyArtworkPx !== 400) {
+              throw new Error('CrownStore splash dimensions no longer match the shared 92dp holder / 72dp artwork system.');
+            }
+
+            const legacyCircleSvg = Buffer.from(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">' +
+              '<circle cx="256" cy="256" r="253" fill="' + circleFill + '" stroke="' + circleStroke + '" stroke-width="4"/>' +
+              '</svg>'
+            );
+            const legacyCircle = await sharp(legacyCircleSvg).png().toBuffer();
+            const legacyArtwork = await sharp(artworkSvg).resize(legacyArtworkPx, legacyArtworkPx, { fit: 'contain' }).png().toBuffer();
+            await sharp({
+              create: { width: legacyCanvasPx, height: legacyCanvasPx, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+            }).composite([
+              { input: legacyCircle, left: 0, top: 0 },
+              { input: legacyArtwork, left: Math.round((legacyCanvasPx - legacyArtworkPx) / 2), top: Math.round((legacyCanvasPx - legacyArtworkPx) / 2) }
+            ]).png().toFile('android/app/src/main/res/drawable-nodpi/crownstore_splash_logo.png');
+
+            const systemCircleSvg = Buffer.from(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="' + systemHolderPx + '" height="' + systemHolderPx + '" viewBox="0 0 ' + systemHolderPx + ' ' + systemHolderPx + '">' +
+              '<circle cx="' + (systemHolderPx / 2) + '" cy="' + (systemHolderPx / 2) + '" r="' + (systemHolderPx / 2 - 1) + '" fill="' + circleFill + '" stroke="' + circleStroke + '" stroke-width="2"/>' +
+              '</svg>'
+            );
+            const systemCircle = await sharp(systemCircleSvg).png().toBuffer();
+            const systemArtwork = await sharp(artworkSvg).resize(systemArtworkPx, systemArtworkPx, { fit: 'contain' }).png().toBuffer();
+            await sharp({
+              create: { width: systemCanvasPx, height: systemCanvasPx, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } }
+            }).composite([
+              { input: systemCircle, left: Math.round((systemCanvasPx - systemHolderPx) / 2), top: Math.round((systemCanvasPx - systemHolderPx) / 2) },
+              { input: systemArtwork, left: Math.round((systemCanvasPx - systemArtworkPx) / 2), top: Math.round((systemCanvasPx - systemArtworkPx) / 2) }
+            ]).png().toFile('android/app/src/main/res/drawable-nodpi/crownstore_splash_logo_v31.png');
+
+            const branding = Buffer.from(
+              '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="320" viewBox="0 0 800 320">' +
+              '<rect width="800" height="320" fill="none"/>' +
+              '<text x="400" y="174" text-anchor="middle" fill="#ddd6fe" font-family="STIX Two Text, serif" font-size="72" font-weight="700" letter-spacing="3">CrownStore</text>' +
+              '</svg>'
+            );
+            await sharp(branding).png().toFile('android/app/src/main/res/drawable-nodpi/crownstore_branding.png');
+
+            const auditLegacy = await sharp('android/app/src/main/res/drawable-nodpi/crownstore_splash_logo.png').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+            const auditSystem = await sharp('android/app/src/main/res/drawable-nodpi/crownstore_splash_logo_v31.png').ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+            const alphaAt = (audit, x, y) => audit.data[(y * audit.info.width + x) * audit.info.channels + 3];
+            if (auditLegacy.info.width !== 512 || auditLegacy.info.height !== 512 ||
+                alphaAt(auditLegacy, 0, 0) !== 0 || alphaAt(auditLegacy, 256, 256) === 0 ||
+                auditSystem.info.width !== 512 || auditSystem.info.height !== 512 ||
+                alphaAt(auditSystem, 0, 0) !== 0 || alphaAt(auditSystem, 256, 256) === 0) {
+              throw new Error('CrownStore splash image failed size, transparency, or center-art validation.');
+            }
+            console.log('Created and validated CrownStore splash: 92dp circle holder + 72dp artwork on legacy Android and Android 12+.');
+            console.log('CrownStore native splash background: ' + background);
+          })().catch(error => { console.error(error); process.exit(1); });
+          NODE
+
+          cat > android/app/src/main/res/drawable/crownstore_launch_background.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:drawable="@color/crownstore_splash_background" />
+              <item
+                  android:width="92dp"
+                  android:height="92dp"
+                  android:gravity="center"
+                  android:drawable="@drawable/crownstore_splash_logo" />
+              <item
+                  android:width="160dp"
+                  android:height="64dp"
+                  android:gravity="center|bottom"
+                  android:bottom="51dp"
+                  android:drawable="@drawable/crownstore_branding" />
+          </layer-list>
+          XML
+
+          cat > android/app/src/main/res/values/crownstore_splash_colors.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="crownstore_splash_background">#100719</color>
+          </resources>
+          XML
+
+          cat > android/app/src/main/res/values-v31/crownstore_splash.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+                  <item name="android:windowSplashScreenBackground">@color/crownstore_splash_background</item>
+                  <item name="android:windowSplashScreenAnimatedIcon">@drawable/crownstore_splash_logo_v31</item>
+                  <item name="android:windowSplashScreenBrandingImage">@drawable/crownstore_branding</item>
+                  <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+              </style>
+          </resources>
+          XML
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("android/app/src/main/res/values/styles.xml")
+          text = path.read_text()
+          pattern = re.compile(r'(?s)<style\\s+name="AppTheme\\.NoActionBarLaunch"[^>]*>.*?</style>')
+          replacement = """<style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+              <item name="android:windowBackground">@drawable/crownstore_launch_background</item>
+              <item name="windowSplashScreenBackground">@color/crownstore_splash_background</item>
+              <item name="windowSplashScreenAnimatedIcon">@drawable/crownstore_splash_logo</item>
+              <item name="android:windowSplashScreenBrandingImage">@drawable/crownstore_branding</item>
+              <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+          </style>"""
+          if not pattern.search(text):
+              raise SystemExit("Could not find Capacitor AppTheme.NoActionBarLaunch in values/styles.xml")
+          path.write_text(pattern.sub(lambda _: replacement, text, count=1))
+          PY
 
       - name: Set Android version
         env:
