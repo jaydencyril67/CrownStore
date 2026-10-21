@@ -522,3 +522,14 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
   .download-feedback-copy>span{font-size:9px}
   .download-feedback-dismiss{font-size:8px;padding:5px 6px}
 }
+
+
+.native-self-update{display:flex;align-items:center;gap:12px;margin:0 0 18px;padding:14px 16px;border:1px solid rgba(255,205,92,.32);border-radius:18px;background:rgba(255,187,55,.065)}
+.native-self-update-icon{width:40px;height:40px;display:grid;place-items:center;flex:0 0 auto;border:1px solid rgba(255,205,92,.25);border-radius:13px;background:rgba(255,187,55,.08)}
+.native-self-update-copy{display:grid;gap:4px;min-width:0;flex:1}
+.native-self-update-copy .eyebrow{color:#ffd36f;font-size:.68rem}
+.native-self-update-copy strong{font-size:.9rem}
+.native-self-update-copy p{margin:0;color:var(--text-muted,rgba(255,255,255,.67));font-size:.77rem;line-height:1.45}
+.native-self-update-copy small{color:#ffb4b4;font-size:.75rem}
+.native-self-update>.button{white-space:nowrap;flex:0 0 auto}
+@media(max-width:520px){.native-self-update{align-items:flex-start;flex-wrap:wrap}.native-self-update-copy{min-width:calc(100% - 60px)}.native-self-update>.button{width:100%;margin-left:52px}}
