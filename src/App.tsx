@@ -112,7 +112,7 @@ function DownloadFeedback({
     : progress.status === "downloading" ? "CrownStore is downloading the verified APK."
     : progress.status === "installing" ? "The APK is downloaded. CrownStore is opening Android’s installer…"
     : progress.status === "permission" ? "The APK is downloaded. Allow CrownStore to install apps in Android settings, then return and tap Continue installation."
-    : progress.status === "complete" ? (progress.platform === "android" ? "Android’s installer is open. Review its prompt to install or update " + progress.appName + "." : "The APK is already saved as " + progress.filename + ". Install will try to open that existing file in Android’s installer; if direct handoff is blocked, tap Install again to open Downloads. CrownStore will not fetch the APK again.")
+    : progress.status === "complete" ? (progress.platform === "android" ? "Android’s installer is open. Review its prompt to install or update " + progress.appName + "." : "The APK is already saved as " + progress.filename + ". Tap Install saved APK to open your device’s Files app at Downloads, then select the saved APK. CrownStore will not download it again.")
     : progress.status === "cancelled" ? "The download was stopped. You can start it again."
     : progress.error || "CrownStore could not finish the download. Check your connection and try again.";
 
@@ -506,7 +506,6 @@ export default function App() {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const downloadAbortRef = useRef<AbortController | null>(null);
   const nativeDownloadIdRef = useRef<number | null>(null);
-  const browserInstallerAttemptRef = useRef<string | null>(null);
   const [showPublisher, setShowPublisher] = useState(false);
   const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>("HOME");
@@ -627,7 +626,6 @@ export default function App() {
     let total = Number(app.sizeBytes) || 0;
     const platform = Capacitor.getPlatform() === "android" ? "android" as const : "browser" as const;
 
-    if (platform === "browser") browserInstallerAttemptRef.current = null;
     setDownloadProgress({ releaseId, appName: app.name, filename, status: "starting", loaded: 0, total, platform });
 
     if (platform === "android") {
@@ -821,28 +819,18 @@ export default function App() {
       else window.alert("CrownStore cannot find the completed Android download. Please download the APK again.");
       return;
     }
-    // Browser downloads cannot call Android's PackageInstaller API directly. On Android,
-    // hand the already-saved file to the system using its Downloads DocumentsProvider URI.
-    // This does not fetch the APK again. If this first handoff fails, a second tap opens
-    // the browser's Downloads screen (or explains the manual fallback for other browsers).
-    const ua = window.navigator.userAgent;
-    const isAndroid = /Android/i.test(ua);
-    const isAndroidChrome = isAndroid && /Chrome\//i.test(ua) && !/EdgA|OPR\//i.test(ua);
-    if (isAndroid && browserInstallerAttemptRef.current !== downloadProgress.releaseId) {
-      browserInstallerAttemptRef.current = downloadProgress.releaseId;
-      const savedFilename = encodeURIComponent(downloadProgress.filename);
-      const documentId = "raw%3A%2Fstorage%2Femulated%2F0%2FDownload%2F" + savedFilename;
-      const installerIntent = "intent://com.android.providers.downloads.documents/document/" + documentId
-        + "#Intent;scheme=content;type=application/vnd.android.package-archive;action=android.intent.action.VIEW;launchFlags=0x10000001;end";
-      window.location.href = installerIntent;
+
+    // A website cannot force Android's PackageInstaller to open a file downloaded by
+    // the browser. Hand off to Android's generic DocumentsUI file manager at Downloads
+    // instead; this is not tied to Chrome and does not trigger another APK download.
+    if (/Android/i.test(window.navigator.userAgent)) {
+      const downloadsIntent = "intent://com.android.externalstorage.documents/document/primary%3ADownload"
+        + "#Intent;scheme=content;action=android.intent.action.VIEW;category=android.intent.category.DEFAULT;end";
+      window.location.href = downloadsIntent;
       return;
     }
-    if (isAndroidChrome) {
-      const downloadsWindow = window.open("chrome://downloads/", "_blank");
-      if (!downloadsWindow) window.alert("The direct installer handoff was blocked. Your APK is still saved as " + downloadProgress.filename + ". Open Downloads and tap that file; CrownStore will not download it again.");
-      return;
-    }
-    window.alert("Your APK is already downloaded as " + downloadProgress.filename + ". Open your browser or device Downloads and tap that saved APK to install it. CrownStore will not download it again.");
+
+    window.alert("Your APK is already downloaded as " + downloadProgress.filename + ". Open your device's Files or Downloads folder and select that saved APK to install it. CrownStore will not download it again.");
   }
 
   function cancelDownload() {
