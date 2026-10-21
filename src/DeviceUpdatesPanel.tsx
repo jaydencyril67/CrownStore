@@ -9,13 +9,14 @@ type Props = {
   apps: CrownApp[];
   launchSession: BridgeSessionRef | null;
   onConnect: (session: BridgeSessionRef) => void;
+  onDownloadApp: (app: CrownApp) => Promise<void>;
 };
 
 function version(value: string | number | null | undefined) {
   return value == null || value === "" ? "Unknown" : String(value);
 }
 
-export default function DeviceUpdatesPanel({ apps, launchSession, onConnect }: Props) {
+export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onDownloadApp }: Props) {
   const [session, setSession] = useState<BridgeSessionRef | null>(launchSession);
   const [snapshot, setSnapshot] = useState<BridgeSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
@@ -77,8 +78,7 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect }: P
 
   const installed = snapshot?.installedApps ?? [];
   const pending = snapshot?.commandStatus === "pending" || snapshot?.commandStatus === "downloading";
-  const storeApp = apps.find((app) => app.slug === "crownstore");
-  const storeApk = storeApp?.releaseId ? API_BASE + "/api/downloads/" + storeApp.releaseId : "";
+  const storeApp = apps.find((app) => app.slug === "crownstore" && app.releaseId);
 
   return <section id="device-updates" className="device-update-panel glass-panel" aria-labelledby="device-update-title">
     <div className="device-update-heading">
@@ -118,7 +118,7 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect }: P
           </div>
         </div>)}
     </div>}
-    {session && !Capacitor.isNativePlatform() && storeApk && snapshot?.session.status !== "connected" && <a className="device-install-link" href={storeApk}>Download CrownStore Android APK</a>}
+    {session && !Capacitor.isNativePlatform() && storeApp && snapshot?.session.status !== "connected" && <button className="button button-outline" type="button" onClick={() => void onDownloadApp(storeApp)}><Download size={16} /> Download CrownStore Android APK</button>}
     <div className="device-bridge-footnote">Updates use the verified CrownStore release route and must have a higher version code. Android's installer and app-signing checks still apply.</div>
   </section>;
 }
