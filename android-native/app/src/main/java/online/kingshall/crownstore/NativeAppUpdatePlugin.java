@@ -25,6 +25,14 @@ public class NativeAppUpdatePlugin extends Plugin {
     private BroadcastReceiver downloadReceiver;
     private long pendingDownloadId = -1L;
 
+    // Capacitor can decode small JavaScript numbers as Integer rather than Long.
+    private long readDownloadId(PluginCall call) {
+        Object raw = call.getData() == null ? null : call.getData().opt("downloadId");
+        if (!(raw instanceof Number)) return -1L;
+        long id = ((Number) raw).longValue();
+        return id > 0L ? id : -1L;
+    }
+
     @PluginMethod
     public void getAppInfo(PluginCall call) {
         try {
@@ -78,10 +86,10 @@ public class NativeAppUpdatePlugin extends Plugin {
 
     @PluginMethod
     public void installDownloadedApk(PluginCall call) {
-        Long downloadId = call.getLong("downloadId");
+        long downloadId = readDownloadId(call);
         String appName = call.getString("appName", "CrownStore app");
         String packageId = call.getString("packageId", "");
-        if (downloadId == null || downloadId <= 0L) {
+        if (downloadId <= 0L) {
             call.reject("A valid Android download ID is required.");
             return;
         }
@@ -154,8 +162,8 @@ public class NativeAppUpdatePlugin extends Plugin {
 
     @PluginMethod
     public void getDownloadStatus(PluginCall call) {
-        Long downloadId = call.getLong("downloadId");
-        if (downloadId == null || downloadId <= 0L) {
+        long downloadId = readDownloadId(call);
+        if (downloadId <= 0L) {
             call.reject("A valid Android download ID is required.");
             return;
         }
@@ -207,8 +215,8 @@ public class NativeAppUpdatePlugin extends Plugin {
 
     @PluginMethod
     public void cancelDownload(PluginCall call) {
-        Long downloadId = call.getLong("downloadId");
-        if (downloadId == null || downloadId <= 0L) {
+        long downloadId = readDownloadId(call);
+        if (downloadId <= 0L) {
             call.reject("A valid Android download ID is required.");
             return;
         }
