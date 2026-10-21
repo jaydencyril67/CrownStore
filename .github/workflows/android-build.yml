@@ -6,17 +6,8 @@ on:
       publish_release:
         description: "Publish a signed production APK; requires Android signing secrets"
         required: true
-        default: false
+        default: true
         type: boolean
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "public/**"
-      - "scripts/**"
-      - "package.json"
-      - "capacitor.config.ts"
-      - ".github/workflows/android-build.yml"
 
 permissions:
   contents: write
@@ -110,7 +101,7 @@ jobs:
           PY
 
       - name: Check release signing secrets
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
+        if: ${{ always() }}
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -152,19 +143,6 @@ jobs:
           if idx<0: raise SystemExit("Could not find release build type.")
           end=s.find("\n",idx)+1; s=s[:end]+"            signingConfig signingConfigs.release\n"+s[end:]; p.write_text(s)
           PY
-
-      - name: Build debug APK for testing
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.publish_release) }}
-        working-directory: android
-        run: ./gradlew --no-daemon --stacktrace --console=plain assembleDebug
-      - name: Upload debug APK
-        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.publish_release) }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: crownstore-debug-apk-${{ github.run_number }}
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 7
 
       - name: Build production APK
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
