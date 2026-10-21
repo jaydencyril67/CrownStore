@@ -92,3 +92,16 @@ body{background:#090a0c;color:#f5f1e5}
 @font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Regular.woff2") format("woff2");font-weight:100 699;font-style:normal;font-display:block}
 @font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Bold.woff2") format("woff2");font-weight:700 1000;font-style:normal;font-display:block}
 html,body,#root,*,*::before,*::after,button,input,textarea,select,option{font-family:"STIX Two Text" !important;font-synthesis:none !important}
+
+
+/* Play Store-style home shelf tiles: round app icon, name beneath, tap for details. */
+.shelf-app-card{flex:0 0 102px;min-width:0;scroll-snap-align:start}
+.shelf-app-card .shelf-app-tile{width:100%;min-height:0;display:flex;flex-direction:column;align-items:center;gap:8px;padding:7px 4px 9px;border:1px solid transparent;border-radius:15px;background:transparent;color:#f5f1e5;text-align:center;cursor:pointer;transition:background .18s,border-color .18s}
+.shelf-app-card .shelf-app-tile:hover,.shelf-app-card .shelf-app-tile:focus-visible{background:rgba(255,255,255,.035);border-color:rgba(217,182,79,.24);outline:none}
+.shelf-app-icon{width:60px;height:60px;display:grid;place-items:center;flex:0 0 60px;overflow:hidden;border-radius:50%;background:linear-gradient(145deg,rgba(217,182,79,.13),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px rgba(255,255,255,.08),0 5px 16px rgba(0,0,0,.18)}
+.shelf-app-icon .app-icon-image,.shelf-app-icon .app-icon-fallback{display:block;width:100%;height:100%;border:0;border-radius:50%;object-fit:cover}
+.shelf-app-icon .app-icon-fallback{display:grid;place-items:center}
+.shelf-app-icon .app-icon-fallback svg{width:27px;height:27px}
+.shelf-app-name{display:block;width:100%;min-width:0;overflow:hidden;color:#e9e5da;font-size:10px;font-weight:600;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:850px){.shelf-app-card{flex-basis:98px}}
+@media(max-width:620px){.shelf-app-card{flex-basis:min(29vw,102px)}.shelf-app-card .shelf-app-tile{gap:6px;padding:5px 2px 7px}.shelf-app-icon{width:52px;height:52px;flex-basis:52px}.shelf-app-icon .app-icon-fallback svg{width:23px;height:23px}.shelf-app-name{font-size:9px;line-height:1.3}}
