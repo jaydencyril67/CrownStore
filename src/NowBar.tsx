@@ -12,9 +12,9 @@ const actions: Action[] = [
   { label: "OPTION 5", icon: "M12 16v-4M12 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
 ];
 
-const ORDER: ActionLabel[] = ["HOME", "SEARCH"];
+const ORDER: Array<"HOME" | "SEARCH"> = ["HOME", "SEARCH"];
 
-export default function NowBar({ onHome, onSearch }: { onHome: () => void; onSearch: () => void }) {
+export default function NowBar({ onHome, onSearch, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; activePage?: "HOME" | "SEARCH" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
   const { view, mode } = barState;
   const barRef = useRef<HTMLDivElement | null>(null);
@@ -85,10 +85,11 @@ export default function NowBar({ onHome, onSearch }: { onHome: () => void; onSea
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
     if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
-    const index = ORDER.indexOf("HOME");
+    const index = ORDER.indexOf(activePage);
     const next = ORDER[index + (dx < 0 ? 1 : -1)];
     if (!next) return;
     swipeHandled.current = true;
+    try { window.localStorage.setItem("crownstore-nowbar-action", next); } catch {}
     if (next === "HOME") onHome(); else onSearch();
     setBarState({ view: "title", mode: "compact" });
     resetIdle();
@@ -123,7 +124,7 @@ export default function NowBar({ onHome, onSearch }: { onHome: () => void; onSea
           <button
             className="kh-nowbar-title"
             type="button"
-            aria-label="HOME page. Tap to show navigation buttons; hold to expand; swipe to navigate."
+            aria-label={activePage + " page. Tap to show navigation buttons; hold to expand; swipe to navigate."}
             onClick={() => {
               if (swipeHandled.current) { swipeHandled.current = false; return; }
               if (holdTriggered.current) { holdTriggered.current = false; return; }
@@ -139,7 +140,7 @@ export default function NowBar({ onHome, onSearch }: { onHome: () => void; onSea
             }}
           >
             <span className="kh-nowbar-orb" />
-            <span className="kh-nowbar-current">HOME</span>
+            <span className="kh-nowbar-current">{activePage}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
           </button>
         ) : (
@@ -148,7 +149,7 @@ export default function NowBar({ onHome, onSearch }: { onHome: () => void; onSea
               <div className={`kh-nowbar-slot ${mode === "expanded" ? "is-expanded" : ""}`} key={action.label}>
                 <button
                   data-nowbar-label={action.label}
-                  className={`kh-nowbar-action ${action.label === "HOME" ? "is-active" : ""}`}
+                  className={`kh-nowbar-action ${action.label === activePage ? "is-active" : ""}`}
                   type="button"
                   aria-label={action.label}
                   onClick={() => {
