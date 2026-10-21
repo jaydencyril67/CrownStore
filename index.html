@@ -13,7 +13,7 @@
       #crownstore-refresh-splash{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);width:100vw;height:100dvh;min-height:100vh;overflow:hidden;background:radial-gradient(ellipse at 75% 10%,rgba(109,40,217,.22),transparent 38%),radial-gradient(ellipse at 15% 85%,rgba(76,29,149,.16),transparent 42%),linear-gradient(180deg,#100713 0%,#0e0718 48%,#08040f 100%);color:#f4efff}
       #crownstore-refresh-splash .splash-content{display:flex;flex-direction:column;align-items:center;gap:17px;text-align:center}
       #crownstore-refresh-splash .splash-logo-circle{display:grid;place-items:center;width:92px;height:92px;flex:0 0 92px;box-sizing:border-box;border:1.5px solid rgba(237,224,255,.72);border-radius:50%;background:radial-gradient(ellipse at 0 0,rgba(255,255,255,.105),transparent 55%),linear-gradient(145deg,rgba(109,40,217,.28),rgba(10,5,20,.84));box-shadow:inset 0 1px rgba(255,255,255,.12),0 14px 38px rgba(0,0,0,.62),0 0 32px rgba(109,40,217,.12)}
-      #crownstore-refresh-splash .splash-crown{display:block;width:62px;height:62px;color:#c4b5fd;filter:drop-shadow(0 0 10px rgba(196,181,253,.32))}
+      #crownstore-refresh-splash .splash-mark{display:block;width:62px;height:62px;color:#c4b5fd;filter:drop-shadow(0 0 10px rgba(196,181,253,.32))}
       #crownstore-refresh-splash .splash-wordmark{margin:0;color:#f4efff;font-size:13px;font-weight:700;line-height:1.4;letter-spacing:.16em;text-transform:uppercase}
       #crownstore-refresh-splash .splash-powered{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 28px);margin:0;padding:0 16px;box-sizing:border-box;color:#f4efff;font-size:12px;font-weight:700;line-height:1.4;letter-spacing:.08em;opacity:.72;text-align:center;pointer-events:none}
       #crownstore-refresh-splash .splash-shimmer{position:relative;contain:paint;width:170px;height:3px;margin-top:-7px;overflow:hidden;border-radius:999px;background:rgba(139,92,246,.22);isolation:isolate}
@@ -25,7 +25,7 @@
     <div id="crownstore-refresh-splash" role="status" aria-label="CrownStore refreshing">
       <div class="splash-content">
         <div class="splash-logo-circle" aria-hidden="true">
-          <svg class="splash-crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l1 13H4L5 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg>
+          <svg class="splash-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M20 3.5 33 11v15L20 33.5 7 26V11L20 3.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m12 14.2 8-4.6 8 4.6-8 4.6-8-4.6Z" fill="currentColor"/><path d="m12 19.3 8 4.6 8-4.6M12 23.8l8 4.6 8-4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m30.8 5.2.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" fill="currentColor"/></svg>
         </div>
         <p class="splash-wordmark">CrownStore</p>
         <div class="splash-shimmer" aria-hidden="true"></div>
