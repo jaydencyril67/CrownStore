@@ -357,8 +357,9 @@ public class NativeAppUpdatePlugin extends Plugin {
             request.setDescription("Downloading the verified update from CrownStore");
             request.setMimeType("application/vnd.android.package-archive");
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            // Unique names prevent repeated updates from failing because a prior APK still exists.
             request.setDestinationInExternalFilesDir(getContext(), Environment.DIRECTORY_DOWNLOADS,
-                    "CrownStore-" + packageId.replaceAll("[^A-Za-z0-9._-]", "_") + ".apk");
+                    "CrownStore-" + packageId.replaceAll("[^A-Za-z0-9._-]", "_") + "-" + System.currentTimeMillis() + ".apk");
             request.setAllowedOverMetered(true);
             request.setAllowedOverRoaming(true);
             pendingDownloadId = manager.enqueue(request);
