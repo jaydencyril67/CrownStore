@@ -1,4 +1,4 @@
-const CACHE_NAME = "crownstore-shell-v11";
+const CACHE_NAME = "crownstore-shell-v12";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/crownstore-icon.svg?v=3", "/crownstore-maskable.svg?v=3", "/crownstore-pwa-icon.svg?v=3"];
 
 self.addEventListener("install", (event) => {
