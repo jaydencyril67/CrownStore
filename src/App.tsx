@@ -13,9 +13,10 @@ import {
   ShieldCheck, Smartphone, Sparkles, X
 } from "lucide-react";
 import type { AppsResponse, CrownApp } from "./types";
+import "./search.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://api.crownstore.kingshall.online").replace(/\/$/, "");
-type View = "HOME" | "APPS" | "UPDATES" | "ABOUT";
+type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH";
 
 function formatSize(value: number | string | null) {
   const bytes = Number(value);
@@ -468,6 +469,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try { const saved = JSON.parse(window.localStorage.getItem("crownstore-recent-searches") || "[]"); return Array.isArray(saved) ? saved.filter((item): item is string => typeof item === "string").slice(0, 8) : []; } catch { return []; }
+  });
   const [category, setCategory] = useState("All apps");
   const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
@@ -769,7 +773,23 @@ export default function App() {
 
   function navigate(next: View) {
     setView(next);
-    document.getElementById(next === "HOME" ? "home" : next === "ABOUT" ? "about" : "apps")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (next !== "SEARCH") document.getElementById(next === "HOME" ? "home" : next === "ABOUT" ? "about" : "apps")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    else window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function submitSearch(value = search) {
+    const query = value.trim();
+    if (!query) return;
+    const next = [query, ...recentSearches.filter((item) => item.toLowerCase() !== query.toLowerCase())].slice(0, 8);
+    setRecentSearches(next);
+    try { window.localStorage.setItem("crownstore-recent-searches", JSON.stringify(next)); } catch {}
+    setSearch(query);
+  }
+
+  function removeRecentSearch(value: string) {
+    const next = recentSearches.filter((item) => item !== value);
+    setRecentSearches(next);
+    try { window.localStorage.setItem("crownstore-recent-searches", JSON.stringify(next)); } catch {}
   }
 
   const updatesAvailable = apps.some((app) => Boolean(app.releaseId));
@@ -781,7 +801,16 @@ export default function App() {
       <div className="header-right-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></div>
     </header>
     <main id="home">
-      {view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
+      {view === "SEARCH" ? <section className="store-search-page" aria-label="Search CrownStore apps">
+        <div className="store-search-heading"><span className="eyebrow"><Search size={14} /> CROWNSTORE DISCOVERY</span><h1>Find your next app.</h1><p>Search official apps by name, category, description, or package ID.</p></div>
+        <form className="store-search-bar glass-panel" onSubmit={(event) => { event.preventDefault(); submitSearch(); }}>
+          <Search size={20} aria-hidden="true" /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search apps…" aria-label="Search apps" />
+          {search && <button type="button" onClick={() => setSearch("")} aria-label="Clear search"><X size={17} /></button>}
+          <button className="store-search-submit" type="submit" disabled={!search.trim()}>Search</button>
+        </form>
+        {!search.trim() && recentSearches.length > 0 && <section className="recent-searches" aria-label="Recent searches"><div className="search-section-heading"><h2>Recent searches</h2><button type="button" onClick={() => { setRecentSearches([]); try { window.localStorage.removeItem("crownstore-recent-searches"); } catch {} }}>Clear all</button></div>{recentSearches.map((term) => <div className="recent-search-row" key={term}><button className="recent-search-term" type="button" onClick={() => { submitSearch(term); }}><span className="recent-search-clock">↻</span><span>{term}</span></button><button className="recent-search-remove" type="button" aria-label={"Remove " + term} onClick={() => removeRecentSearch(term)}><X size={15} /></button></div>)}</section>}
+        {search.trim() ? <section className="search-results-section"><div className="search-section-heading"><h2>Results</h2><span>{filtered.length} {filtered.length === 1 ? "app" : "apps"}</span></div>{loading ? <div className="state-panel"><div className="loader-ring" /><strong>Searching apps</strong><span>Loading the official catalogue…</span></div> : error ? <div className="state-panel state-error"><strong>Search is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div> : filtered.length ? <div className="store-search-results">{filtered.map((app) => <div className="store-search-result" key={app.id}><button className="store-search-result-main" type="button" onClick={() => setSelectedApp(app)}><span className="store-search-result-icon"><AppIcon app={app} /></span><span className="store-search-result-copy"><strong>{app.name}</strong><small>{readableCategory(app.category || "Utilities")} · {app.versionName ? "Version " + app.versionName : "Coming soon"}</small><span>{app.shortDescription || app.description || "Official KingsHall ecosystem app."}</span></span></button><button className="store-search-result-action" type="button" onClick={() => setSelectedApp(app)}>{app.releaseId ? "View app" : "Details"}<ChevronRight size={16} /></button></div>)}</div> : <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No apps found</strong><span>Try another name, category, or package ID.</span></div>}</section> : !recentSearches.length && <div className="search-empty-prompt"><Search size={24} /><strong>Start with an app name</strong><span>Your recent searches will appear here for quick access.</span></div>}
+      </section> : view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
         {[
           { id: "recommended", title: "Recommended for you", subtitle: "Explore the official KingsHall app collection.", icon: Sparkles, select: (_app: CrownApp) => true, sort: (a: CrownApp, b: CrownApp) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name) },
           { id: "top-charts", title: "Top charts", subtitle: "Discover the apps available across CrownStore.", icon: Layers3, select: (_app: CrownApp) => true, sort: (a: CrownApp, b: CrownApp) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name) },
@@ -851,7 +880,7 @@ export default function App() {
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
-    <NowBar onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />
+    <NowBar onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} onSearch={() => navigate("SEARCH")} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
       <DownloadFeedback
         progress={downloadProgress}
