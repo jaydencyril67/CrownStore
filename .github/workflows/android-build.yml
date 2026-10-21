@@ -121,7 +121,7 @@ jobs:
             // instead of scaling the full PWA icon (which also contains its square canvas and circle).
             const artworkSvg = Buffer.from(
               '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="140 163 440 440">' +
-              defs[0] + artworkGroup[0] + '</svg>'
+              defs + artworkGroup + '</svg>'
             );
 
             const background = '#100719';
