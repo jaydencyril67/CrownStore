@@ -250,8 +250,13 @@ export default function App() {
     <nav className="kh-nowbar-dock crown-nowbar-dock" aria-label="CrownStore navigation">
       <div className={`kh-nowbar crown-nowbar ${nowbarOpen ? "is-actions" : "is-title"}`} role="group" aria-label="CrownStore quick navigation">
         <span className="kh-nowbar-rail" />
-        {nowbarOpen ? <div className="kh-nowbar-actions is-compact" aria-label="Navigation buttons">
+        {nowbarOpen ? <div className="kh-nowbar-actions is-compact crown-nowbar-placeholders" aria-label="Navigation buttons">
           <div className="kh-nowbar-slot"><button className="kh-nowbar-action is-active" type="button" aria-current="page" aria-label="Home" onClick={() => { setView("HOME"); setNowbarOpen(false); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}><span className="kh-nowbar-icon"><Home size={18} /></span><span className="kh-nowbar-label-compact">HOME</span></button></div>
+          <div className="kh-nowbar-slot"><button className="kh-nowbar-action" type="button" aria-label="Option 1"><span className="kh-nowbar-icon"><Layers3 size={18} /></span><span className="kh-nowbar-label-compact">OPTION 1</span></button></div>
+          <div className="kh-nowbar-slot"><button className="kh-nowbar-action" type="button" aria-label="Option 2"><span className="kh-nowbar-icon"><Search size={18} /></span><span className="kh-nowbar-label-compact">OPTION 2</span></button></div>
+          <div className="kh-nowbar-slot"><button className="kh-nowbar-action" type="button" aria-label="Option 3"><span className="kh-nowbar-icon"><Download size={18} /></span><span className="kh-nowbar-label-compact">OPTION 3</span></button></div>
+          <div className="kh-nowbar-slot"><button className="kh-nowbar-action" type="button" aria-label="Option 4"><span className="kh-nowbar-icon"><Sparkles size={18} /></span><span className="kh-nowbar-label-compact">OPTION 4</span></button></div>
+          <div className="kh-nowbar-slot"><button className="kh-nowbar-action" type="button" aria-label="Option 5"><span className="kh-nowbar-icon"><Info size={18} /></span><span className="kh-nowbar-label-compact">OPTION 5</span></button></div>
         </div> : <button className="kh-nowbar-title" type="button" aria-label="HOME page. Tap to show navigation button." onClick={() => setNowbarOpen(true)}><span className="kh-nowbar-orb" /><span className="kh-nowbar-current">HOME</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg></button>}
       </div>
     </nav>
