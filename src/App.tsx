@@ -820,17 +820,27 @@ export default function App() {
       return;
     }
 
-    // A website cannot force Android's PackageInstaller to open a file downloaded by
-    // the browser. Hand off to Android's generic DocumentsUI file manager at Downloads
-    // instead; this is not tied to Chrome and does not trigger another APK download.
+    // A web page cannot access the browser's saved file URI or force PackageInstaller.
+    // On Android, make a best-effort handoff to the system DocumentsUI Downloads folder.
+    // This opens the existing Downloads folder only; it never starts a second APK download.
     if (/Android/i.test(window.navigator.userAgent)) {
       const downloadsIntent = "intent://com.android.externalstorage.documents/document/primary%3ADownload"
-        + "#Intent;scheme=content;action=android.intent.action.VIEW;category=android.intent.category.DEFAULT;end";
+        + "#Intent;scheme=content;action=android.intent.action.VIEW;type=vnd.android.document/directory;category=android.intent.category.DEFAULT;end";
       window.location.href = downloadsIntent;
+
+      // Some browsers/device builds block external activity intents. Keep a clear fallback
+      // instead of leaving the Install button appearing to do nothing.
+      window.setTimeout(() => {
+        window.alert(
+          "Your APK is already downloaded as " + downloadProgress.filename +
+          ". If Files did not open, open your phone's Files app (or My Files) → Downloads, " +
+          "then tap that APK. Do not download it again."
+        );
+      }, 900);
       return;
     }
 
-    window.alert("Your APK is already downloaded as " + downloadProgress.filename + ". Open your device's Files or Downloads folder and select that saved APK to install it. CrownStore will not download it again.");
+    window.alert("Your APK is already downloaded as " + downloadProgress.filename + ". On your Android phone, open Files (or My Files) → Downloads and tap the saved APK. CrownStore will not download it again.");
   }
 
   function cancelDownload() {
