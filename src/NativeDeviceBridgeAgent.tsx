@@ -10,14 +10,15 @@ const pause = (ms: number) => new Promise<void>((resolve) => window.setTimeout(r
 
 export default function NativeDeviceBridgeAgent({ session }: Props) {
   useEffect(() => {
-    if (!Capacitor.isNativePlatform() || !session) return;
+    const activeSession = session;
+    if (!Capacitor.isNativePlatform() || !activeSession) return;
     let stopped = false;
     let activeCommandId = "";
     const listeners: Array<{ remove: () => Promise<void> }> = [];
 
     const setStatus = async (status: string, message?: string) => {
       try {
-        await bridgeFetch(session, "/api/device-bridge/sessions/" + encodeURIComponent(session.sessionId) + "/command-status", {
+        await bridgeFetch(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId) + "/command-status", {
           method: "POST", body: JSON.stringify({ status, message }),
         });
       } catch { /* The short-lived session may expire while a download is running. */ }
@@ -44,12 +45,12 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
         )).slice(0, 250);
         const inventory = await NativeAppUpdate.getInstalledApps({ packageIds });
         if (stopped) return;
-        await bridgeFetch(session, "/api/device-bridge/sessions/" + encodeURIComponent(session.sessionId) + "/report", {
+        await bridgeFetch(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId) + "/report", {
           method: "POST", body: JSON.stringify({ installedApps: inventory.apps || [] }),
         });
 
         while (!stopped) {
-          const snapshot = await bridgeFetch<BridgeSnapshot>(session, "/api/device-bridge/sessions/" + encodeURIComponent(session.sessionId));
+          const snapshot = await bridgeFetch<BridgeSnapshot>(session, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId));
           const command = snapshot.command;
           if (command && snapshot.commandStatus === "pending" && command.commandId !== activeCommandId) {
             activeCommandId = command.commandId;
