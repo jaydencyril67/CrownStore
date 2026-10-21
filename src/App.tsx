@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import NowBar from "./NowBar";
 import {
   ArrowDownToLine, ArrowRight, Bot, CheckCircle2, ChevronRight,
-  Download, Info, Layers3, MessageCircle, PackageCheck, Search,
+  Download, Info, Layers3, MessageCircle, Search,
   ShieldCheck, Smartphone, Sparkles, X
 } from "lucide-react";
 import type { AppsResponse, CrownApp } from "./types";
@@ -37,35 +37,29 @@ function StoreMark({ size = 24 }: { size?: number }) {
 }
 
 function AppIcon({ app }: { app: CrownApp }) {
-  const slug = app.slug.toLowerCase().replace(/[_\s]+/g, "-");
-  const localIcons: Record<string, string> = {
-    kingshall: "/app-icons/kingshall.svg",
-    "kings-hall": "/app-icons/kingshall.svg",
-    hallschat: "/app-icons/halls-chat.svg",
-    "halls-chat": "/app-icons/halls-chat.svg",
-    crybots: "/app-icons/crybots.svg",
-    "cry-bots": "/app-icons/crybots.svg"
-  };
-  const localIcon = localIcons[slug];
-  const [iconSrc, setIconSrc] = useState(localIcon || app.iconUrl || "");
+  // The catalogue's official icon URL is the single source of truth across web, PWA, and APK.
+  // Never guess by slug or substitute a generic/store icon: missing or broken URLs stay visible.
+  const iconUrl = typeof app.iconUrl === "string" ? app.iconUrl.trim() : "";
+  const [failedUrl, setFailedUrl] = useState("");
   useEffect(() => {
-    setIconSrc(localIcon || app.iconUrl || "");
-  }, [localIcon, app.iconUrl]);
-  if (iconSrc) {
-    return <img
-      className="app-icon-image"
-      src={iconSrc}
-      alt={app.name + " icon"}
-      loading="lazy"
-      decoding="async"
-      onError={() => {
-        if (localIcon && iconSrc !== localIcon) setIconSrc(localIcon);
-        else setIconSrc("");
-      }}
-    />;
+    setFailedUrl("");
+  }, [iconUrl]);
+
+  if (!iconUrl || failedUrl === iconUrl) {
+    const reason = !iconUrl ? "LOGO URL MISSING" : "LOGO FAILED TO LOAD";
+    return <div className="app-icon-fallback" role="img" aria-label={app.name + ": " + reason} title={app.name + ": " + reason}>
+      <span>{reason}</span>
+    </div>;
   }
-  // Never brand an unrelated app with CrownStore's own logo when its icon is missing.
-  return <div className="app-icon-fallback" aria-label={app.name + " icon unavailable"}><PackageCheck size={25} /></div>;
+
+  return <img
+    className="app-icon-image"
+    src={iconUrl}
+    alt={app.name + " official app logo"}
+    loading="eager"
+    decoding="async"
+    onError={() => setFailedUrl(iconUrl)}
+  />;
 }
 
 function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
