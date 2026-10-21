@@ -195,6 +195,29 @@ export default function App() {
       <div className="header-right-artwork"><span className="header-logo brand-mark"><Crown size={19} /></span></div>
     </header>
     <main id="home">
+      {view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
+        <div className="shelves-heading">
+          <div><div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div><h1>Your apps, <span>all in one place.</span></h1><p>Explore the KingsHall family of apps. Every shelf stays ready as the collection grows.</p></div>
+          <button className="button button-primary" onClick={() => navigate("APPS")}>Browse all apps <ArrowRight size={17} /></button>
+        </div>
+        {[
+          { id: "featured", title: "Featured apps", subtitle: "A quick look at the CrownStore collection.", slugs: ["kingshall", "halls-chat", "crybots"], icon: Crown },
+          { id: "essentials", title: "KingsHall essentials", subtitle: "Core apps for your KingsHall experience.", slugs: ["kingshall"], icon: ShieldCheck },
+          { id: "communication", title: "Connect & communicate", subtitle: "Stay connected across your community.", slugs: ["halls-chat"], icon: MessageCircle },
+          { id: "tools", title: "AI & productivity", subtitle: "Tools built to help you do more.", slugs: ["crybots"], icon: Bot },
+          { id: "more", title: "More apps to discover", subtitle: "New shelves are ready for future releases.", slugs: [], icon: Layers3 }
+        ].map((shelf) => {
+          const ShelfIcon = shelf.icon;
+          const shelfApps = apps.filter((app) => shelf.slugs.includes(app.slug));
+          return <section className="app-shelf" key={shelf.id} aria-labelledby={"shelf-" + shelf.id}>
+            <div className="shelf-heading"><div className="shelf-title-wrap"><span className="shelf-icon"><ShelfIcon size={18} /></span><div><h2 id={"shelf-" + shelf.id}>{shelf.title}</h2><p>{shelf.subtitle}</p></div></div><span className="shelf-count">{shelfApps.length} {shelfApps.length === 1 ? "app" : "apps"}</span></div>
+            {loading ? <div className="shelf-track" aria-label={"Loading " + shelf.title}>{[0,1,2].map((item) => <div className="app-shell-placeholder is-loading" key={item}><div className="shell-placeholder-top"><span className="shell-placeholder-icon" /><span className="shell-placeholder-pill" /></div><span className="shell-placeholder-line line-long" /><span className="shell-placeholder-line line-short" /><span className="shell-placeholder-action" /></div>)}</div>
+              : shelfApps.length ? <div className="shelf-track">{shelfApps.map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={setSelectedApp} /></div>)}</div>
+              : <div className="shelf-track"><div className="app-shell-placeholder"><div className="shell-placeholder-top"><span className="shell-placeholder-icon"><ShelfIcon size={24} /></span><span className="shell-placeholder-pill">Coming soon</span></div><strong>Your next app belongs here</strong><p>This shelf is ready. Apps will appear here when they are added to the CrownStore catalogue.</p><span className="shell-placeholder-action"><span className="status-dot" /> Shelf awaiting apps</span></div></div>}
+          </section>;
+        })}
+        <div className="shelf-footer-note"><ShieldCheck size={15} /> Official apps and verified Android releases, all in one trusted place.</div>
+      </section> : <>
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div>
@@ -234,6 +257,7 @@ export default function App() {
                   : <div className="state-panel"><div className="state-icon"><Crown size={23} /></div><strong>The collection is getting ready</strong><span>Official apps appear here as soon as the catalogue is configured.</span></div>}
         <div className="catalogue-footnote"><ShieldCheck size={15} /> Downloads resolve through the official CrownStore API and published release catalogue.</div>
       </section>
+      </>}
       <section className="bottom-banner"><div className="banner-icon"><Crown size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><Crown size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></footer>
