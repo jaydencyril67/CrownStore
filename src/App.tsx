@@ -174,6 +174,7 @@ function SearchAppResultRow({ app, onDetails }: { app: CrownApp; onDetails: (app
 function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload, onInstallDownloaded }: {
   app: CrownApp; onClose: () => void; download: DownloadProgress | null; isAnotherDownloadRunning: boolean;
   onDownload: (app: CrownApp) => Promise<void>; onCancelDownload: () => void; onDismissDownload: () => void;
+  onInstallDownloaded: (app: CrownApp) => void;
 }) {
   const [expandedSection, setExpandedSection] = useState<string | null>("about");
   const ready = Boolean(app.releaseId);
