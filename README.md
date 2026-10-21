@@ -32,6 +32,6 @@ The public CrownStore website for official KingsHall applications. Built with Re
 1. Open **Manage Apps** in the storefront footer and provide the Render `PUBLISHING_TOKEN`.
 2. Load the catalogue to add a new application or edit an existing entry. Use a lowercase hyphenated slug, the exact Android package ID, a GitHub source repository in `owner/repo` format, and publicly reachable HTTPS icon/screenshot URLs.
 3. Keep apps listed to make them public. Hiding an app removes it from the public catalogue without deleting its release history.
-4. Create a stable GitHub Release with the APK attached in the public `jaydencyril67/CrownStoreApk` repository, then use **Publisher** to verify and publish it. The APK is checked against the app package and manifest version before CrownStore enables downloads.
+4. Create a stable GitHub Release with the APK attached in the public `jaydencyril67/CrownStoreApk` repository, then use **Publisher** to verify and publish it. The APK is checked against the app package and manifest version before CrownStore enables downloads. 
 
 The frontend never embeds the admin token or database credentials. The administrator enters the token into the management panel, and it is held in UI state for that session. Configure ApiCrownStore's CORS allowlist to include the deployed storefront origin.
