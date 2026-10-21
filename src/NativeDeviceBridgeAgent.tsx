@@ -30,6 +30,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
         if (stopped || !activeCommandPackageId || event.packageId !== activeCommandPackageId) return;
         void setStatus(eventName === "downloadError" ? "failed" : eventName === "installPermissionRequired" ? "permission-required" : "install-ready",
           event.message || (eventName === "downloadComplete" ? "Android's installer opened; confirm its prompt." : eventName === "installPermissionRequired" ? "Allow CrownStore to install apps in Android settings, then request the update again." : "APK download or installer failed."));
+        activeCommandPackageId = "";
       }).then((handle) => {
         if (stopped) void handle.remove(); else listeners.push(handle);
       }).catch(() => {});
