@@ -37,7 +37,29 @@ function StoreMark({ size = 24 }: { size?: number }) {
 }
 
 function AppIcon({ app }: { app: CrownApp }) {
-  if (app.iconUrl) return <img className="app-icon-image" src={app.iconUrl} alt={app.name + " icon"} loading="lazy" />;
+  const localIcons: Record<string, string> = {
+    kingshall: "/app-icons/kingshall.svg",
+    "halls-chat": "/app-icons/halls-chat.svg",
+    crybots: "/app-icons/crybots.svg"
+  };
+  const localIcon = localIcons[app.slug.toLowerCase()];
+  const [iconSrc, setIconSrc] = useState(localIcon || app.iconUrl || "");
+  useEffect(() => {
+    setIconSrc(localIcon || app.iconUrl || "");
+  }, [app.slug, app.iconUrl]);
+  if (iconSrc) {
+    return <img
+      className="app-icon-image"
+      src={iconSrc}
+      alt={app.name + " icon"}
+      loading="lazy"
+      decoding="async"
+      onError={() => {
+        if (localIcon && iconSrc !== localIcon) setIconSrc(localIcon);
+        else setIconSrc("");
+      }}
+    />;
+  }
   return <div className="app-icon-fallback" aria-hidden="true"><StoreMark size={27} /></div>;
 }
 
