@@ -10,8 +10,8 @@ const pause = (ms: number) => new Promise<void>((resolve) => window.setTimeout(r
 
 export default function NativeDeviceBridgeAgent({ session }: Props) {
   useEffect(() => {
-    const activeSession = session;
-    if (!Capacitor.isNativePlatform() || !activeSession) return;
+    if (!Capacitor.isNativePlatform() || !session) return;
+    const activeSession: BridgeSessionRef = session;
     let stopped = false;
     let activeCommandId = "";
     let activeCommandPackageId = "";
