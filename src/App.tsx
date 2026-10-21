@@ -120,7 +120,7 @@ export default function App() {
             </div>
             <div className="trust-row">
               <span><ShieldCheck size={16} /> Official releases</span>
-              <span><CheckCircle2 size={16} /> Verified file checks</span>
+              <span><CheckCircle2 size={16} /> Release integrity metadata</span>
             </div>
           </div>
           <div className="hero-art" aria-label="CrownStore application collection illustration">
