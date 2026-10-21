@@ -608,7 +608,7 @@ export default function App() {
       await continueNativeInstall(app, downloadProgress.downloadId);
       return;
     }
-    if (downloadProgress && ["starting", "downloading", "installing"].includes(downloadProgress.status)) return;
+    if (downloadProgress && ["starting", "downloading", "installing", "permission"].includes(downloadProgress.status)) return;
 
     const releaseId = app.releaseId;
     const version = String(app.versionName || "latest").replace(/[^A-Za-z0-9._-]/g, "-");
@@ -1010,7 +1010,7 @@ export default function App() {
       app={selectedApp}
       onClose={() => setSelectedApp(null)}
       download={downloadProgress}
-      isAnotherDownloadRunning={Boolean(downloadProgress && ["starting", "downloading", "installing"].includes(downloadProgress.status) && downloadProgress.releaseId !== selectedApp.releaseId)}
+      isAnotherDownloadRunning={Boolean(downloadProgress && ["starting", "downloading", "installing", "permission"].includes(downloadProgress.status) && downloadProgress.releaseId !== selectedApp.releaseId)}
       onDownload={downloadRelease}
       onCancelDownload={cancelDownload}
       onDismissDownload={dismissDownload}
