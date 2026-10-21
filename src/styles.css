@@ -341,9 +341,9 @@ button,a{-webkit-tap-highlight-color:transparent}
 .crown-nowbar .kh-nowbar-title svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
 .crown-nowbar .kh-nowbar-orb{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#d9b64f;box-shadow:0 0 9px rgba(217,182,79,.75),0 0 18px rgba(217,182,79,.35)}
 .crown-nowbar .kh-nowbar-current{white-space:nowrap}
-.crown-nowbar .kh-nowbar-actions{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:100%;padding:0}
+.crown-nowbar .kh-nowbar-actions{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;justify-content:center;gap:7px;width:100%;padding:2px}
 .crown-nowbar .kh-nowbar-slot{display:flex;justify-content:center;min-width:0}
-.crown-nowbar .kh-nowbar-action{display:flex;align-items:center;justify-content:center;gap:9px;min-width:130px;min-height:44px;padding:8px 18px;border:1px solid rgba(217,182,79,.48);border-radius:15px;background:linear-gradient(145deg,rgba(217,182,79,.14),rgba(255,255,255,.025));color:#f0d985;font:600 11px/1.2 STIX,serif;letter-spacing:.12em;cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.08),0 0 12px rgba(217,182,79,.08)}
+.crown-nowbar .kh-nowbar-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:100%;min-width:0;min-height:50px;padding:7px 3px;border:1px solid rgba(217,182,79,.38);border-radius:13px;background:linear-gradient(145deg,rgba(217,182,79,.14),rgba(255,255,255,.025));color:#f0d985;font:600 9px/1.2 STIX,serif;letter-spacing:.04em;cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.08),0 0 12px rgba(217,182,79,.08)}
 .crown-nowbar .kh-nowbar-icon{display:grid;place-items:center;color:#e3c45e}
-.crown-nowbar .kh-nowbar-label-compact{white-space:nowrap}
+.crown-nowbar .kh-nowbar-label-compact{white-space:nowrap;font-size:9px}
 @media(max-width:480px){.crown-nowbar-dock{width:calc(100vw - 28px);bottom:calc(9px + env(safe-area-inset-bottom,0px))}.crown-nowbar{min-height:54px;border-radius:19px}.crown-nowbar .kh-nowbar-title{min-height:40px}}
