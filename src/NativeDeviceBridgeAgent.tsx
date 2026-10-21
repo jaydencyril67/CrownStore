@@ -22,6 +22,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
     let stopped = false;
     let activeCommandId = "";
     let activeCommandPackageId = "";
+    let pendingInstall: { packageId: string; downloadId: number } | null = null;
     const listeners: Array<{ remove: () => Promise<void> }> = [];
 
     const setStatus = async (status: string, message?: string) => {
@@ -35,6 +36,9 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
     for (const eventName of ["downloadError", "downloadComplete", "installPermissionRequired"] as const) {
       void NativeAppUpdate.addListener(eventName, (event) => {
         if (stopped || !activeCommandPackageId || event.packageId !== activeCommandPackageId) return;
+        if (eventName === "installPermissionRequired" && Number(event.downloadId) > 0) {
+          pendingInstall = { packageId: event.packageId, downloadId: Number(event.downloadId) };
+        }
         void setStatus(eventName === "downloadError" ? "failed" : eventName === "installPermissionRequired" ? "permission-required" : "install-ready",
           event.message || (eventName === "downloadComplete" ? "Android's installer opened; confirm its prompt." : eventName === "installPermissionRequired" ? "Allow CrownStore to install apps in Android settings, then request the update again." : "APK download or installer failed."));
         activeCommandPackageId = "";
@@ -66,10 +70,29 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
             activeCommandPackageId = command.packageId;
             await setStatus("downloading", "Starting the " + command.name + " update.");
             try {
-              const result = await NativeAppUpdate.downloadAndInstall({
-                url: API_BASE + command.downloadPath, appName: command.name, packageId: command.packageId,
-              });
-              if (result.requiresPermission) await setStatus("permission-required", "Allow CrownStore to install apps in Android settings, then request the update again.");
+              if (pendingInstall && pendingInstall.packageId === command.packageId) {
+                const cachedDownload = pendingInstall;
+                try {
+                  const result = await NativeAppUpdate.installDownloadedApk({
+                    downloadId: cachedDownload.downloadId, appName: command.name, packageId: command.packageId,
+                  });
+                  if (result.requiresPermission) {
+                    await setStatus("permission-required", "The APK is already downloaded. Allow CrownStore to install apps in Android settings, then tap Update again to continue without downloading it again.");
+                  } else if (result.opened) {
+                    pendingInstall = null;
+                    await setStatus("install-ready", "Android's installer opened; confirm its prompt.");
+                  } else {
+                    throw new Error("Android did not confirm that the installer opened.");
+                  }
+                } catch (error) {
+                  pendingInstall = null;
+                  throw error;
+                }
+              } else {
+                await NativeAppUpdate.downloadAndInstall({
+                  url: API_BASE + command.downloadPath, appName: command.name, packageId: command.packageId,
+                });
+              }
             } catch (error) {
               await setStatus("failed", error instanceof Error ? error.message : "Could not start the APK download.");
             }
