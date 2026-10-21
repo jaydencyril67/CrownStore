@@ -29,8 +29,7 @@ function readableCategory(value: string) {
 
 function AppIcon({ app }: { app: CrownApp }) {
   if (app.iconUrl) return <img className="app-icon-image" src={app.iconUrl} alt={app.name + " icon"} loading="lazy" />;
-  const Icon = app.slug === "halls-chat" ? MessageCircle : app.slug === "crybots" ? Bot : Crown;
-  return <div className={"app-icon-fallback icon-" + app.slug} aria-hidden="true"><Icon size={27} /></div>;
+  return <div className="app-icon-fallback" aria-hidden="true"><Crown size={27} /></div>;
 }
 
 function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
@@ -197,9 +196,14 @@ export default function App() {
           const shelfApps = apps.filter(shelf.select).sort(shelf.sort);
           return <section className="app-shelf" key={shelf.id} aria-labelledby={"shelf-" + shelf.id}>
             <div className="shelf-heading"><div className="shelf-title-wrap"><span className="shelf-icon"><ShelfIcon size={18} /></span><div><h2 id={"shelf-" + shelf.id}>{shelf.title}</h2><p>{shelf.subtitle}</p></div></div><div className="shelf-heading-actions"><span className="shelf-count">{shelfApps.length} {shelfApps.length === 1 ? "app" : "apps"}</span></div></div>
-            {loading ? <div className="shelf-track" aria-label={"Loading " + shelf.title}>{[0,1,2].map((item) => <div className="app-shell-placeholder is-loading" key={item}><div className="shell-placeholder-top"><span className="shell-placeholder-icon" /><span className="shell-placeholder-pill" /></div><span className="shell-placeholder-line line-long" /><span className="shell-placeholder-line line-short" /><span className="shell-placeholder-action" /></div>)}</div>
-              : shelfApps.length ? <div className="shelf-track">{shelfApps.map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={setSelectedApp} /></div>)}</div>
-              : <div className="shelf-track"><div className="app-shell-placeholder"><div className="shell-placeholder-top"><span className="shell-placeholder-icon"><ShelfIcon size={24} /></span><span className="shell-placeholder-pill">Coming soon</span></div><strong>{shelf.id === "recently-updated" ? "No releases published yet" : "Your next app belongs here"}</strong><p>{shelf.id === "recently-updated" ? "Verified app releases will appear here as soon as they are published." : "This shelf is ready. Matching apps will appear here when they are added to the CrownStore catalogue."}</p><span className="shell-placeholder-action"><span className="status-dot" /> Shelf awaiting apps</span></div></div>}
+            <div className="shelf-track" aria-label={shelf.title + " app slots"}>
+              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={setSelectedApp} /></div>)}
+              {Array.from({ length: Math.max(0, 50 - (loading ? 0 : shelfApps.length)) }, (_, index) => (
+                <div className="shelf-app-card shelf-empty-slot-card" key={"empty-slot-" + index} aria-hidden="true">
+                  <div className="shelf-app-tile shelf-empty-slot" />
+                </div>
+              ))}
+            </div>
           </section>;
         })}
         <div className="shelf-footer-note"><ShieldCheck size={15} /> Official apps and verified Android releases, all in one trusted place.</div>
