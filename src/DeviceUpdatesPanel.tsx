@@ -80,7 +80,7 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect }: P
   const storeApp = apps.find((app) => app.slug === "crownstore");
   const storeApk = storeApp?.releaseId ? API_BASE + "/api/downloads/" + storeApp.releaseId : "";
 
-  return <section className="device-update-panel glass-panel" aria-labelledby="device-update-title">
+  return <section id="device-updates" className="device-update-panel glass-panel" aria-labelledby="device-update-title">
     <div className="device-update-heading">
       <span className="device-update-icon"><Smartphone size={20} /></span>
       <div><span className="eyebrow">ANDROID DEVICE BRIDGE</span><h2 id="device-update-title">Installed apps &amp; updates</h2>
