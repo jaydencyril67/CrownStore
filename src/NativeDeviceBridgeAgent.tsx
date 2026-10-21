@@ -25,11 +25,11 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
       } catch { /* The short-lived session may expire while a download is running. */ }
     };
 
-    for (const eventName of ["downloadError", "downloadComplete"] as const) {
+    for (const eventName of ["downloadError", "downloadComplete", "installPermissionRequired"] as const) {
       void NativeAppUpdate.addListener(eventName, (event) => {
         if (stopped || !activeCommandPackageId || event.packageId !== activeCommandPackageId) return;
-        void setStatus(eventName === "downloadError" ? "failed" : "install-ready",
-          event.message || (eventName === "downloadComplete" ? "Android's installer opened; confirm its prompt." : "APK download or installer failed."));
+        void setStatus(eventName === "downloadError" ? "failed" : eventName === "installPermissionRequired" ? "permission-required" : "install-ready",
+          event.message || (eventName === "downloadComplete" ? "Android's installer opened; confirm its prompt." : eventName === "installPermissionRequired" ? "Allow CrownStore to install apps in Android settings, then request the update again." : "APK download or installer failed."));
       }).then((handle) => {
         if (stopped) void handle.remove(); else listeners.push(handle);
       }).catch(() => {});
