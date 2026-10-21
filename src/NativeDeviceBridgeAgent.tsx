@@ -50,7 +50,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
         });
 
         while (!stopped) {
-          const snapshot = await bridgeFetch<BridgeSnapshot>(session, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId));
+          const snapshot = await bridgeFetch<BridgeSnapshot>(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId));
           const command = snapshot.command;
           if (command && snapshot.commandStatus === "pending" && command.commandId !== activeCommandId) {
             activeCommandId = command.commandId;
