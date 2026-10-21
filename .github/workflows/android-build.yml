@@ -2,12 +2,6 @@ name: Build CrownStore Android APK
 
 on:
   workflow_dispatch:
-    inputs:
-      publish_release:
-        description: "Publish a signed production APK; requires Android signing secrets"
-        required: true
-        default: true
-        type: boolean
 
 permissions:
   contents: write
@@ -101,7 +95,6 @@ jobs:
           PY
 
       - name: Check release signing secrets
-        if: ${{ always() }}
         env:
           KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KSP: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -114,7 +107,6 @@ jobs:
           }
 
       - name: Configure persistent release signing
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -145,7 +137,6 @@ jobs:
           PY
 
       - name: Build production APK
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
         working-directory: android
         env:
           KEYSTORE_PATH: ${{ runner.temp }}/crownstore-release.keystore
@@ -155,7 +146,6 @@ jobs:
         run: ./gradlew --no-daemon --stacktrace --console=plain assembleRelease
 
       - name: Verify, checksum and publish release
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_release }}
         env:
           GH_TOKEN: ${{ github.token }}
           APP_VERSION: ${{ steps.version.outputs.app_version }}
