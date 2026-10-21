@@ -105,3 +105,19 @@ html,body,#root,*,*::before,*::after,button,input,textarea,select,option{font-fa
 .shelf-app-name{display:block;width:100%;min-width:0;overflow:hidden;color:#e9e5da;font-size:10px;font-weight:600;line-height:1.35;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:850px){.shelf-app-card{flex-basis:98px}}
 @media(max-width:620px){.shelf-app-card{flex-basis:min(29vw,102px)}.shelf-app-card .shelf-app-tile{gap:6px;padding:5px 2px 7px}.shelf-app-icon{width:52px;height:52px;flex-basis:52px}.shelf-app-icon .app-icon-fallback svg{width:23px;height:23px}.shelf-app-name{font-size:9px;line-height:1.3}}
+
+
+/* Readability pass: keep the Play Store round-icon layout, but make it comfortably readable. */
+.shelf-app-card{flex:0 0 124px}
+.shelf-app-card .shelf-app-tile{gap:10px;padding:9px 5px 11px}
+.shelf-app-icon{width:72px;height:72px;flex-basis:72px}
+.shelf-app-icon .app-icon-fallback svg{width:32px;height:32px}
+.shelf-app-name{font-size:13px;line-height:1.4}
+@media(max-width:850px){.shelf-app-card{flex-basis:116px}}
+@media(max-width:620px){
+  .shelf-app-card{flex-basis:min(32vw,116px)}
+  .shelf-app-card .shelf-app-tile{gap:8px;padding:7px 3px 9px}
+  .shelf-app-icon{width:64px;height:64px;flex-basis:64px}
+  .shelf-app-icon .app-icon-fallback svg{width:28px;height:28px}
+  .shelf-app-name{font-size:12px;line-height:1.35}
+}
