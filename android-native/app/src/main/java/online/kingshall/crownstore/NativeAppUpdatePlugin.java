@@ -77,6 +77,90 @@ public class NativeAppUpdatePlugin extends Plugin {
     }
 
     @PluginMethod
+    public void getDownloadStatus(PluginCall call) {
+        Long downloadId = call.getLong("downloadId");
+        if (downloadId == null || downloadId <= 0L) {
+            call.reject("A valid Android download ID is required.");
+            return;
+        }
+
+        DownloadManager manager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+        if (manager == null) {
+            call.reject("Android's download service is unavailable.");
+            return;
+        }
+
+        android.database.Cursor cursor = null;
+        try {
+            cursor = manager.query(new DownloadManager.Query().setFilterById(downloadId));
+            if (cursor == null || !cursor.moveToFirst()) {
+                call.reject("Android could not find this CrownStore download.");
+                return;
+            }
+
+            int statusColumn = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+            int downloadedColumn = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+            int totalColumn = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+            int reasonColumn = cursor.getColumnIndex(DownloadManager.COLUMN_REASON);
+
+            int state = statusColumn >= 0 ? cursor.getInt(statusColumn) : -1;
+            String status;
+            if (state == DownloadManager.STATUS_PENDING) status = "pending";
+            else if (state == DownloadManager.STATUS_RUNNING) status = "running";
+            else if (state == DownloadManager.STATUS_PAUSED) status = "paused";
+            else if (state == DownloadManager.STATUS_SUCCESSFUL) status = "successful";
+            else if (state == DownloadManager.STATUS_FAILED) status = "failed";
+            else status = "unknown";
+
+            long downloaded = downloadedColumn >= 0 ? cursor.getLong(downloadedColumn) : 0L;
+            long total = totalColumn >= 0 ? cursor.getLong(totalColumn) : 0L;
+            int reason = reasonColumn >= 0 ? cursor.getInt(reasonColumn) : 0;
+
+            JSObject result = new JSObject();
+            result.put("status", status);
+            result.put("bytesDownloaded", Math.max(0L, downloaded));
+            result.put("totalSize", Math.max(0L, total));
+            result.put("reason", reason);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Unable to read Android's APK download progress.", error);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+    }
+
+    @PluginMethod
+    public void cancelDownload(PluginCall call) {
+        Long downloadId = call.getLong("downloadId");
+        if (downloadId == null || downloadId <= 0L) {
+            call.reject("A valid Android download ID is required.");
+            return;
+        }
+
+        DownloadManager manager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+        if (manager == null) {
+            call.reject("Android's download service is unavailable.");
+            return;
+        }
+
+        try {
+            int removed = manager.remove(downloadId);
+            if (downloadId == pendingDownloadId) {
+                if (downloadReceiver != null) {
+                    try { getContext().unregisterReceiver(downloadReceiver); } catch (Exception ignored) {}
+                    downloadReceiver = null;
+                }
+                pendingDownloadId = -1L;
+            }
+            JSObject result = new JSObject();
+            result.put("removed", removed > 0);
+            call.resolve(result);
+        } catch (Exception error) {
+            call.reject("Unable to cancel the Android APK download.", error);
+        }
+    }
+
+    @PluginMethod
     public void downloadAndInstall(PluginCall call) {
         String url = call.getString("url");
         String appName = call.getString("appName", "CrownStore app");
