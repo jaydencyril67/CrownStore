@@ -685,6 +685,7 @@ export default function App() {
         let downloadedAt: number | null = null;
         while (!terminalStatus && !controller.signal.aborted) {
           const snapshot = await NativeAppUpdate.getDownloadStatus({ downloadId });
+          if (terminalStatus || controller.signal.aborted) break;
           const received = Math.max(0, Number(snapshot.bytesDownloaded) || 0);
           const availableSize = Math.max(0, Number(snapshot.totalSize) || 0);
           if (availableSize > 0) total = availableSize;
