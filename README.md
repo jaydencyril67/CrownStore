@@ -1,6 +1,6 @@
 # CrownStore
 
-The public CrownStore website for official KingsHall applications. Built with React, TypeScript and Vite.
+The public CrownStore website for official KingsHall applications. Built with React, TypeScript and Vite. The storefront reads its app catalogue and stable release metadata from ApiCrownStore; it does not hard-code or fabricate download links.
 
 ## Local setup
 1. Install Node.js 20 or newer.
@@ -21,6 +21,10 @@ The public CrownStore website for official KingsHall applications. Built with Re
 - Output directory: dist
 - Environment variable: VITE_API_BASE_URL=https://api.crownstore.kingshall.online
 
-Configure the API CORS allowlist to include the deployed storefront origin before launch.
+## Storefront capabilities
+- Live app catalogue with search and category filters for KingsHall, HallsChat and CryBots.
+- App details with package ID, version, build number, APK size, publication date, changelog and SHA-256 checksum when a verified release exists.
+- Direct APK downloads through the API's release-checked redirect; unreleased apps never show fake download links.
+- Token-protected publisher panel for importing and verifying official GitHub Release assets.
 
-The site uses live API data and displays clear loading, error, search and empty states. It does not invent app listings or fake download links.
+Configure ApiCrownStore's CORS allowlist to include the deployed storefront origin before launch. The frontend does not need database or GitHub publishing credentials.

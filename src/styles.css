@@ -34,3 +34,15 @@ body{background:#090a0c;color:#f5f1e5}
 .publisher-open{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.025);border-radius:9px;padding:8px 11px;color:#bcb8a9;font-size:10px;cursor:pointer}.publisher-open:hover{border-color:rgba(217,182,79,.45);color:var(--gold-light)}
 .publisher-modal{width:min(600px,100%);max-height:88vh;overflow:auto;border-radius:22px;padding:27px;position:relative}.publisher-modal h2{font:600 27px var(--serif);margin:9px 38px 8px 0}.publisher-intro{font-size:11px;line-height:1.75;color:#b6b2a6;margin:0 0 20px}.publisher-form{display:flex;flex-direction:column;gap:13px}.publisher-form label{display:flex;flex-direction:column;gap:7px;font-size:10px;color:#d2cebf}.publisher-form input,.publisher-form select,.publisher-form textarea{width:100%;min-width:0;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:11px 12px;background:rgba(0,0,0,.24);color:#f5f1e5;outline:0;font:11px Inter,sans-serif}.publisher-form select option{background:#151616;color:#f5f1e5}.publisher-form input:focus,.publisher-form select:focus,.publisher-form textarea:focus{border-color:rgba(217,182,79,.62)}.publisher-form textarea{resize:vertical;min-height:70px;line-height:1.6}.publisher-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.publisher-submit{width:100%;margin-top:3px}.publisher-message{font-size:10px;line-height:1.7;overflow-wrap:anywhere;color:var(--gold-light);background:rgba(217,182,79,.07);border:1px solid rgba(217,182,79,.18);border-radius:10px;padding:11px;margin:0}.publisher-submit:disabled{opacity:.65}
 @media(max-width:620px){.publisher-modal{padding:22px;border-radius:19px}.publisher-modal h2{font-size:23px}.publisher-fields{grid-template-columns:1fr}.publisher-open{padding:7px 8px;font-size:9px}.site-footer{grid-template-columns:1fr auto}.site-footer .footer-status{grid-column:1/-1;grid-row:3}}
+
+
+/* CrownStore catalogue refinements */
+.catalogue-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-10px 0 23px}
+.category-filters{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.category-filter{min-height:31px;padding:0 12px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.025);color:#aaa89d;font-size:10px;cursor:pointer;transition:border-color .18s,background .18s,color .18s}
+.category-filter:hover{border-color:rgba(217,182,79,.32);color:#eee9df}
+.category-filter.active{border-color:rgba(217,182,79,.38);background:rgba(217,182,79,.12);color:var(--gold-light)}
+.results-count{color:#8f8d98;font-size:10px;white-space:nowrap}
+.details-checksum{grid-column:1/-1}
+.details-checksum strong{font-family:monospace;font-size:10px;line-height:1.7;overflow-wrap:anywhere;user-select:all}
+@media(max-width:620px){.catalogue-controls{align-items:flex-start;flex-direction:column;gap:12px;margin-top:-3px;margin-bottom:19px}.category-filters{gap:6px}.category-filter{padding:0 10px;font-size:9px}}
