@@ -361,4 +361,5 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-icon{width:20px;height:20px;flex:0 0 20px}
 .kh-nowbar-icon svg{width:18px;height:18px}
 .kh-nowbar-label-compact{display:block;max-width:100%;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:600px){.kh-nowbar-dock{bottom:calc(10px + env(safe-area-inset-bottom,0px))}.kh-nowbar.is-actions{padding:7px}}
 @media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{max-width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr));padding:9px;gap:7px}.kh-nowbar-slot{min-width:92px}.kh-nowbar-action{padding-left:3px;padding-right:3px}.kh-nowbar-label-compact,.kh-nowbar-label-expanded{font-size:8px}.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr))}.kh-nowbar-dock.is-expanded .kh-nowbar-action{min-width:0}.kh-nowbar-slot:not(.is-expanded){min-width:92px;width:auto;max-width:none}.kh-nowbar-actions.is-compact{gap:12px}.kh-nowbar-action:not(.is-expanded){padding:7px 3px 6px}}
