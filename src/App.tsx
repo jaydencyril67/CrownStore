@@ -855,7 +855,7 @@ export default function App() {
 
   function navigate(next: View) {
     setView(next);
-    if (next !== "SEARCH") document.getElementById(next === "HOME" ? "home" : next === "ABOUT" ? "about" : "apps")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (next !== "SEARCH") document.getElementById(next === "HOME" ? "home" : next === "ABOUT" ? "about" : next === "UPDATES" ? "device-updates" : "apps")?.scrollIntoView({ behavior: "smooth", block: "start" });
     else window.scrollTo({ top: 0, behavior: "auto" });
   }
 
