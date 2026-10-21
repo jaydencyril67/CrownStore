@@ -14,6 +14,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
     if (!Capacitor.isNativePlatform() || !activeSession) return;
     let stopped = false;
     let activeCommandId = "";
+    let activeCommandPackageId = "";
     const listeners: Array<{ remove: () => Promise<void> }> = [];
 
     const setStatus = async (status: string, message?: string) => {
@@ -26,7 +27,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
 
     for (const eventName of ["downloadError", "downloadComplete"] as const) {
       void NativeAppUpdate.addListener(eventName, (event) => {
-        if (stopped) return;
+        if (stopped || !activeCommandPackageId || event.packageId !== activeCommandPackageId) return;
         void setStatus(eventName === "downloadError" ? "failed" : "install-ready",
           event.message || (eventName === "downloadComplete" ? "Android's installer opened; confirm its prompt." : "APK download or installer failed."));
       }).then((handle) => {
@@ -54,6 +55,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
           const command = snapshot.command;
           if (command && snapshot.commandStatus === "pending" && command.commandId !== activeCommandId) {
             activeCommandId = command.commandId;
+            activeCommandPackageId = command.packageId;
             await setStatus("downloading", "Starting the " + command.name + " update.");
             try {
               const result = await NativeAppUpdate.downloadAndInstall({
