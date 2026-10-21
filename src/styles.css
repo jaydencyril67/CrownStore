@@ -1,6 +1,6 @@
-@font-face{src:url("/fonts/STIXTwoText-Regular.woff2") format("woff2");font-weight:100 699;font-style:normal;font-display:block}
-@font-face{src:url("/fonts/STIXTwoText-Bold.woff2") format("woff2");font-weight:700 1000;font-style:normal;font-display:block}
-html,body,#root,button,input,textarea,select,option{font:inherit;font-synthesis:none}
+@font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Regular.woff2") format("woff2");font-weight:100 699;font-style:normal;font-display:block}
+@font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Bold.woff2") format("woff2");font-weight:700 1000;font-style:normal;font-display:block}
+html,body,#root,button,input,textarea,select,option{font-family:inherit;font-synthesis:none}
 .shelf-app-card .shelf-app-tile{width:100%;aspect-ratio:1/1;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:10px;border:1px solid rgba(217,182,79,.5);border-radius:13px;background:radial-gradient(ellipse at 0 0,rgba(255,255,255,.065),transparent 62%),linear-gradient(145deg,rgba(217,182,79,.09),rgba(255,255,255,.018));box-shadow:inset 0 1px rgba(255,255,255,.06),0 8px 22px rgba(0,0,0,.2);color:#f5f1e5;text-align:center;cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s}
 .shelf-app-card .shelf-app-tile:hover,.shelf-app-card .shelf-app-tile:focus-visible{background:linear-gradient(145deg,rgba(217,182,79,.16),rgba(255,255,255,.045));border-color:rgba(217,182,79,.82);box-shadow:inset 0 1px rgba(255,255,255,.09),0 5px 16px rgba(0,0,0,.2);outline:none}
 .shelf-app-card .shelf-empty-slot{cursor:default;pointer-events:none;border:1.5px solid rgba(217,182,79,.42);border-radius:10px;background:linear-gradient(145deg,rgba(217,182,79,.045),rgba(255,255,255,.012));box-shadow:inset 0 1px rgba(255,255,255,.045)}
@@ -319,17 +319,17 @@ button,a{-webkit-tap-highlight-color:transparent}
 
 
 /* Nowbar: KingsHall geometry and state layout, retaining CrownStore's gold glass styling. */
-.kh-nowbar-dock{position:fixed;z-index:80;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100vw - 32px));height:70px;min-height:70px;max-height:calc(100vh - 32px);display:flex;align-items:flex-end;justify-content:center;transform:translateX(-50%);pointer-events:none}
+.kh-nowbar-dock{position:fixed;z-index:80;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);display:flex;align-items:flex-end;justify-content:center;transform:translateX(-50%);pointer-events:none}
 .kh-nowbar-dock.is-expanded{width:fit-content;max-width:calc(100vw - 32px);height:180px;min-height:180px;max-height:calc(100vh - 32px);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.06)}
 .kh-nowbar{position:relative;display:flex;align-items:center;align-self:stretch;gap:12px;width:max-content;max-width:100%;min-width:0;padding:10px 12px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;border:2.5px solid rgba(217,182,79,.76);border-radius:20px;background:linear-gradient(180deg,rgba(29,26,17,.88),rgba(7,7,5,.86));box-shadow:0 0 0 1px rgba(255,255,255,.08),0 18px 50px rgba(0,0,0,.6),inset 0 1px rgba(255,255,255,.1);color:#eee5c8;pointer-events:auto;backdrop-filter:blur(16px) saturate(120%);-webkit-backdrop-filter:blur(16px) saturate(120%)}
 .kh-nowbar::-webkit-scrollbar{display:none}
 .kh-nowbar-rail{position:absolute;inset:50% 10px auto;height:1px;transform:translateY(-50%);pointer-events:none;background:linear-gradient(90deg,transparent,rgba(217,182,79,.2),transparent)}
-.kh-nowbar.is-title{width:max-content;max-width:100%;min-width:0;height:70px;min-height:70px;max-height:70px;box-sizing:border-box;overflow:hidden;padding:10px 12px}
+.kh-nowbar.is-title{width:max-content;max-width:100%;min-width:0;overflow:hidden;padding:10px 12px}
 .kh-nowbar-title{position:relative;z-index:1;width:max-content;max-width:100%;min-width:0;min-height:0;display:flex;flex:0 0 auto;align-items:center;justify-content:center;gap:10px;padding:2px 4px;border:0;border-radius:0;background:transparent;color:#eee5c8;white-space:nowrap;font-size:.95rem;font-weight:700;letter-spacing:.02em;cursor:pointer;transition:none;animation:none;transform:none;scale:1;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .kh-nowbar-orb{width:10px;height:10px;flex:0 0 10px;border-radius:999px;background:linear-gradient(135deg,#f4db7e,#b58a1c);box-shadow:0 0 10px rgba(217,182,79,.42)}
 .kh-nowbar-current{max-width:calc(100vw - 105px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.95rem;font-weight:700;letter-spacing:.02em}
 .kh-nowbar-title>svg{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
-.kh-nowbar.is-actions{width:max-content;max-width:100%;min-width:0;height:70px;min-height:70px;max-height:70px;box-sizing:border-box;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:10px 12px;border-radius:20px}
+.kh-nowbar.is-actions{width:max-content;max-width:100%;min-width:0;min-height:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:10px 12px;border-radius:20px}
 .kh-nowbar-actions{position:relative;z-index:1;display:flex;align-items:stretch;gap:12px;width:max-content;max-width:none;overflow:visible;white-space:nowrap}
 .kh-nowbar-slot{flex:0 0 auto;min-width:92px;display:flex;justify-content:center}
 .kh-nowbar-slot.is-expanded{min-width:0;width:max-content;max-width:100%;justify-content:center;min-height:0}
@@ -341,12 +341,12 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .kh-nowbar-label-compact{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1}
 .kh-nowbar-action.is-active{border-color:rgba(241,211,108,.88);background:linear-gradient(180deg,rgba(217,182,79,.22),rgba(217,182,79,.07));color:#fff1b8}
-.kh-nowbar-dock.is-expanded .kh-nowbar{display:grid;width:fit-content;max-width:100%;height:100%;min-height:0;grid-template-columns:repeat(3,minmax(112px,max-content));grid-auto-rows:minmax(54px,auto);align-items:stretch;align-self:flex-end;gap:8px;padding:12px;border-radius:26px;overflow-x:hidden;overflow-y:auto;white-space:normal;align-content:start}
+.kh-nowbar-dock.is-expanded .kh-nowbar{display:grid;width:fit-content;max-width:100%;height:100%;min-height:0;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(54px,auto);align-items:stretch;align-self:flex-end;gap:8px;padding:12px;border-radius:26px;overflow-x:hidden;overflow-y:auto;white-space:normal;align-content:start}
 .kh-nowbar-dock.is-expanded .kh-nowbar-rail{display:none}
 .kh-nowbar-actions.is-expanded{display:contents}
 .kh-nowbar-dock.is-expanded .kh-nowbar-slot{width:100%;min-width:0;max-width:100%;min-height:0}
-.kh-nowbar-dock.is-expanded .kh-nowbar-action{width:100%;min-width:112px;max-width:100%;min-height:40px;padding:9px 10px 8px;border-radius:12px;gap:4px}
+.kh-nowbar-dock.is-expanded .kh-nowbar-action{width:100%;min-width:0;max-width:100%;min-height:40px;padding:9px 10px 8px;border-radius:12px;gap:4px}
 .kh-nowbar-label-expanded{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1;text-align:center}
 .kh-nowbar-marquee{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:600px){.kh-nowbar-dock{bottom:calc(10px + env(safe-area-inset-bottom,0px))}.kh-nowbar.is-actions{padding:7px}}
-@media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{max-width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr));padding:9px;gap:7px}.kh-nowbar-dock.is-expanded .kh-nowbar-action{min-width:0}}
+@media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{max-width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded .kh-nowbar{padding:9px;gap:7px}}
