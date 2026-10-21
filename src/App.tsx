@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import NowBar from "./NowBar";
 import DeviceUpdatesPanel from "./DeviceUpdatesPanel";
@@ -67,6 +67,75 @@ function AppIcon({ app }: { app: CrownApp }) {
   />;
 }
 
+type DownloadStatus = "starting" | "downloading" | "complete" | "error" | "cancelled";
+type DownloadProgress = {
+  releaseId: string;
+  appName: string;
+  filename: string;
+  status: DownloadStatus;
+  loaded: number;
+  total: number;
+  error?: string;
+};
+
+function formatProgressBytes(value: number) {
+  if (!Number.isFinite(value) || value < 1) return "0 B";
+  return formatSize(value);
+}
+
+function DownloadFeedback({
+  progress, onCancel, onRetry, onDismiss
+}: {
+  progress: DownloadProgress;
+  onCancel: () => void;
+  onRetry: () => void;
+  onDismiss: () => void;
+}) {
+  const busy = progress.status === "starting" || progress.status === "downloading";
+  const percent = progress.total > 0
+    ? Math.min(100, Math.floor((progress.loaded / progress.total) * 100))
+    : null;
+  const title = progress.status === "starting" ? "Preparing download"
+    : progress.status === "downloading" ? "Downloading APK"
+    : progress.status === "complete" ? "Download ready"
+    : progress.status === "cancelled" ? "Download cancelled"
+    : "Download failed";
+  const message = progress.status === "starting" ? "Connecting securely to CrownStore…"
+    : progress.status === "downloading" ? "CrownStore is downloading the verified APK."
+    : progress.status === "complete" ? "The APK has been saved to your device. Open it from Downloads to install or update the app."
+    : progress.status === "cancelled" ? "The download was stopped. You can start it again."
+    : progress.error || "CrownStore could not finish the download. Check your connection and try again.";
+
+  return <section className={"download-feedback status-" + progress.status} role="status" aria-live="polite">
+    <div className="download-feedback-heading">
+      <span className="download-feedback-icon" aria-hidden="true">
+        {progress.status === "complete" ? <CheckCircle2 size={17} />
+          : progress.status === "error" ? <Info size={17} />
+          : <Download size={17} />}
+      </span>
+      <div className="download-feedback-copy">
+        <strong>{progress.appName} · {title}</strong>
+        <span>{message}</span>
+      </div>
+      <button className="download-feedback-dismiss" type="button" onClick={busy ? onCancel : onDismiss} aria-label={busy ? "Cancel download" : "Dismiss download status"}>
+        {busy ? "Cancel" : "Dismiss"}
+      </button>
+    </div>
+    {(busy || progress.status === "complete") && <>
+      <div className="download-progress-track" aria-label={percent === null ? "Download in progress" : "Download " + percent + "% complete"}>
+        <span className={percent === null && busy ? "is-indeterminate" : ""} style={{ width: (percent === null ? 28 : progress.status === "complete" ? 100 : percent) + "%" }} />
+      </div>
+      <div className="download-progress-meta">
+        <span>{progress.total > 0 ? formatProgressBytes(progress.loaded) + " of " + formatProgressBytes(progress.total) : formatProgressBytes(progress.loaded) + " downloaded"}</span>
+        <strong>{progress.status === "complete" ? "100%" : percent === null ? "In progress" : percent + "%"}</strong>
+      </div>
+    </>}
+    {(progress.status === "error" || progress.status === "cancelled") && <div className="download-feedback-actions">
+      <button type="button" className="button button-outline" onClick={onRetry}><Download size={15} /> Try again</button>
+    </div>}
+  </section>;
+}
+
 function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
   return <button className="shelf-app-tile" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details"}>
     <span className="shelf-app-icon"><AppIcon app={app} /></span>
@@ -74,9 +143,14 @@ function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp)
   </button>;
 }
 
-function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
+function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload }: {
+  app: CrownApp; onClose: () => void; download: DownloadProgress | null; isAnotherDownloadRunning: boolean;
+  onDownload: (app: CrownApp) => Promise<void>; onCancelDownload: () => void; onDismissDownload: () => void;
+}) {
   const [expandedSection, setExpandedSection] = useState<string | null>("about");
   const ready = Boolean(app.releaseId);
+  const currentDownload = download?.releaseId === app.releaseId ? download : null;
+  const isCurrentDownloadBusy = Boolean(currentDownload && ["starting", "downloading"].includes(currentDownload.status));
   return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="details-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="details-title">
       <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={19} /></button>
@@ -94,7 +168,22 @@ function AppDetails({ app, onClose }: { app: CrownApp; onClose: () => void }) {
         <div><span>APK size</span><strong>{formatSize(app.sizeBytes)}</strong></div>
       </div>
       {ready
-        ? <a className="button button-primary details-download" href={API_BASE + "/api/downloads/" + app.releaseId}><Download size={17} /> Download official APK</a>
+        ? <>
+          <button className="button button-primary details-download" type="button" onClick={() => void onDownload(app)} disabled={isAnotherDownloadRunning}>
+            {isCurrentDownloadBusy
+              ? <><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span>{currentDownload?.status === "starting" ? "Starting download…" : "Downloading " + (currentDownload && currentDownload.total > 0 ? Math.min(100, Math.floor(currentDownload.loaded / currentDownload.total * 100)) : 0) + "%"}
+              : isAnotherDownloadRunning ? "Another download is in progress"
+              : currentDownload?.status === "complete" ? <><CheckCircle2 size={17} /> Download again</>
+              : currentDownload?.status === "error" || currentDownload?.status === "cancelled" ? <><Download size={17} /> Retry download</>
+              : <><Download size={17} /> Download / update APK</>}
+          </button>
+          {currentDownload && <DownloadFeedback
+            progress={currentDownload}
+            onCancel={onCancelDownload}
+            onRetry={() => void onDownload(app)}
+            onDismiss={onDismissDownload}
+          />}
+        </>
         : <div className="release-note"><ShieldCheck size={17} /> The download appears here after an official stable APK is verified and published.</div>}
       <div className="details-sections">
         <details className="details-section" open={expandedSection === "about"}>
@@ -376,6 +465,8 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All apps");
   const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
+  const downloadAbortRef = useRef<AbortController | null>(null);
   const [showPublisher, setShowPublisher] = useState(false);
   const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>("HOME");
@@ -451,6 +542,104 @@ export default function App() {
     void loadApps(controller.signal);
     return () => controller.abort();
   }, []);
+
+  async function downloadRelease(app: CrownApp): Promise<void> {
+    if (!app.releaseId) return;
+    if (downloadProgress && ["starting", "downloading"].includes(downloadProgress.status)) return;
+
+    const releaseId = app.releaseId;
+    const version = String(app.versionName || "latest").replace(/[^A-Za-z0-9._-]/g, "-");
+    const filename = (app.slug || "app") + "-" + version + ".apk";
+    const controller = new AbortController();
+    downloadAbortRef.current = controller;
+    let loaded = 0;
+    let total = Number(app.sizeBytes) || 0;
+
+    setDownloadProgress({ releaseId, appName: app.name, filename, status: "starting", loaded: 0, total });
+
+    try {
+      const response = await fetch(API_BASE + "/api/downloads/" + encodeURIComponent(releaseId), {
+        method: "GET",
+        cache: "no-store",
+        signal: controller.signal,
+        headers: { Accept: "application/vnd.android.package-archive" }
+      });
+      if (!response.ok) {
+        let message = "Download failed (HTTP " + response.status + ").";
+        try {
+          const body = await response.json() as { error?: string; message?: string };
+          message = body.error || body.message || message;
+        } catch {
+          // Some proxies return a plain-text error body; keep the useful HTTP status.
+        }
+        throw new Error(message);
+      }
+      if (!response.body) throw new Error("This browser cannot stream the APK download. Try opening CrownStore in a recent browser.");
+
+      const headerLength = Number(response.headers.get("content-length") || 0);
+      if (Number.isSafeInteger(headerLength) && headerLength > 0) total = headerLength;
+      setDownloadProgress({ releaseId, appName: app.name, filename, status: "downloading", loaded: 0, total });
+
+      const reader = response.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let lastProgressUpdate = 0;
+      try {
+        while (true) {
+          const result = await reader.read();
+          if (result.done) break;
+          const chunk = result.value;
+          if (chunk && chunk.byteLength > 0) {
+            chunks.push(chunk);
+            loaded += chunk.byteLength;
+          }
+          const now = Date.now();
+          if (now - lastProgressUpdate >= 120) {
+            setDownloadProgress({ releaseId, appName: app.name, filename, status: "downloading", loaded, total });
+            lastProgressUpdate = now;
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      if (loaded < 1) throw new Error("The server returned an empty APK file.");
+      if (Number.isSafeInteger(headerLength) && headerLength > 0 && loaded !== headerLength) {
+        throw new Error("The download ended before the full APK arrived. Please retry.");
+      }
+
+      const apkBlob = new Blob(chunks as BlobPart[], { type: "application/vnd.android.package-archive" });
+      const objectUrl = URL.createObjectURL(apkBlob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+
+      setDownloadProgress({ releaseId, appName: app.name, filename, status: "complete", loaded, total: loaded });
+    } catch (error) {
+      const cancelled = controller.signal.aborted;
+      setDownloadProgress({
+        releaseId, appName: app.name, filename,
+        status: cancelled ? "cancelled" : "error",
+        loaded, total,
+        error: cancelled ? undefined : error instanceof Error ? error.message : "The APK download failed. Please try again."
+      });
+    } finally {
+      if (downloadAbortRef.current === controller) downloadAbortRef.current = null;
+    }
+  }
+
+  function cancelDownload() {
+    downloadAbortRef.current?.abort();
+  }
+
+  function dismissDownload() {
+    if (downloadProgress && ["starting", "downloading"].includes(downloadProgress.status)) return;
+    setDownloadProgress(null);
+  }
 
   const categories = useMemo(() => ["All apps", ...Array.from(new Set(apps.map((app) => app.category).filter((item): item is string => Boolean(item && item.trim())))).sort((a, b) => a.localeCompare(b))], [apps]);
   const filtered = useMemo(() => {
@@ -551,7 +740,26 @@ export default function App() {
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
     <NowBar onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />
-    {selectedApp && <AppDetails app={selectedApp} onClose={() => setSelectedApp(null)} />}
+    {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
+      <DownloadFeedback
+        progress={downloadProgress}
+        onCancel={cancelDownload}
+        onRetry={() => {
+          const app = apps.find((item) => item.releaseId === downloadProgress.releaseId);
+          if (app) void downloadRelease(app);
+        }}
+        onDismiss={dismissDownload}
+      />
+    </div>}
+    {selectedApp && <AppDetails
+      app={selectedApp}
+      onClose={() => setSelectedApp(null)}
+      download={downloadProgress}
+      isAnotherDownloadRunning={Boolean(downloadProgress && ["starting", "downloading"].includes(downloadProgress.status) && downloadProgress.releaseId !== selectedApp.releaseId)}
+      onDownload={downloadRelease}
+      onCancelDownload={cancelDownload}
+      onDismissDownload={dismissDownload}
+    />}
     {showAppManager && <AppManagerPanel onClose={() => setShowAppManager(false)} onSaved={() => void loadApps()} />}
     {showPublisher && <PublisherPanel apps={apps.filter((item) => !("isListed" in item) || item.isListed)} onPublished={() => void loadApps()} onClose={() => setShowPublisher(false)} />}
   </div>;
