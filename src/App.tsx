@@ -628,9 +628,11 @@ export default function App() {
     return () => window.cancelAnimationFrame(frame);
   }, [loading, apps.length, view]);
 
-  async function loadApps(signal?: AbortSignal) {
-    setLoading(true);
-    setError("");
+  async function loadApps(signal?: AbortSignal, silent = false) {
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
 
     const parseCatalogue = (value: unknown): AppsResponse | null => {
       let parsed = value;
@@ -701,11 +703,15 @@ export default function App() {
     } catch (error) {
       if (signal?.aborted) return;
       const browserFailure = error instanceof Error ? error.message : "Something went wrong loading CrownStore.";
-      setError(nativeFailure
-        ? browserFailure + " (Native request also failed: " + nativeFailure + ")"
-        : browserFailure);
+      if (silent) {
+        console.warn("CrownStore background catalogue refresh failed:", browserFailure);
+      } else {
+        setError(nativeFailure
+          ? browserFailure + " (Native request also failed: " + nativeFailure + ")"
+          : browserFailure);
+      }
     } finally {
-      if (!signal?.aborted) {
+      if (!signal?.aborted && !silent) {
         setLoading(false);
       }
     }
@@ -715,6 +721,54 @@ export default function App() {
     const controller = new AbortController();
     void loadApps(controller.signal);
     return () => controller.abort();
+  }, []);
+
+  // Web/PWA clients listen for completed release events only while the page is visible.
+  // Android APK clients refresh on resume instead of keeping an SSE connection open.
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      let disposed = false;
+      let subscription: { remove: () => Promise<void> } | null = null;
+      void CapacitorApp.addListener("appStateChange", ({ isActive }) => {
+        if (isActive) void loadApps(undefined, true);
+      }).then((handle) => {
+        if (disposed) void handle.remove();
+        else subscription = handle;
+      }).catch(() => {});
+      return () => {
+        disposed = true;
+        if (subscription) void subscription.remove();
+      };
+    }
+
+    let stream: EventSource | null = null;
+    const disconnect = () => {
+      stream?.close();
+      stream = null;
+    };
+    const connect = () => {
+      if (document.visibilityState !== "visible" || stream) return;
+      stream = new EventSource(API_BASE + "/api/events/releases");
+      stream.addEventListener("release-published", () => {
+        void loadApps(undefined, true);
+      });
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        disconnect();
+      } else {
+        // Catch up if a release was published while the tab was hidden.
+        void loadApps(undefined, true);
+        connect();
+      }
+    };
+
+    connect();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      disconnect();
+    };
   }, []);
 
   useEffect(() => {
