@@ -533,3 +533,22 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .native-self-update-copy small{color:#ffb4b4;font-size:.75rem}
 .native-self-update>.button{white-space:nowrap;flex:0 0 auto}
 @media(max-width:520px){.native-self-update{align-items:flex-start;flex-wrap:wrap}.native-self-update-copy{min-width:calc(100% - 60px)}.native-self-update>.button{width:100%;margin-left:52px}}
+
+
+/* Play Store-style install states for the live Android catalogue. */
+.shelf-app-card .shelf-app-tile{gap:5px;padding:6px 4px}
+.shelf-app-icon{width:44px;height:44px;flex-basis:44px}
+.shelf-app-status{display:block;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 7px;border:1px solid rgba(226,220,228,.16);border-radius:999px;background:rgba(8,4,17,.55);color:#d4cbe5;font-size:9px;font-weight:650;line-height:1.15}
+.shelf-app-status[data-state="update"]{border-color:rgba(253,224,71,.32);background:rgba(161,98,7,.12);color:#fde68a}
+.shelf-app-status[data-state="installed"]{border-color:rgba(203,213,225,.22);color:#e2e8f0}
+.shelf-app-status[data-state="checking"]{color:#c4b5fd}
+.shelf-app-status[data-state="check-error"]{border-color:rgba(248,113,113,.28);color:#fecaca}
+.store-search-result-action[data-state="update"]{color:#fde68a}
+.store-search-result-action[data-state="installed"]{color:#d4d4d8}
+.store-search-result-action[data-state="check-error"]{color:#fecaca}
+.details-status.is-installed{border-color:rgba(203,213,225,.22);color:#e2e8f0;background:rgba(148,163,184,.075)}
+.details-status.is-installed .details-status-dot{background:#cbd5e1}
+.details-status.is-error{border-color:rgba(248,113,113,.28);color:#fecaca;background:rgba(127,29,29,.12)}
+.details-status.is-error .details-status-dot{background:#fca5a5}
+.details-download:disabled{opacity:.9;cursor:default}
+@media(max-width:480px){.shelf-app-card .shelf-app-tile{gap:5px;padding:6px 3px}.shelf-app-icon{width:42px;height:42px;flex-basis:42px}.shelf-app-status{font-size:8px;padding:3px 5px}}
