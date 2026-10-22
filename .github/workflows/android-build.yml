@@ -70,7 +70,9 @@ jobs:
       - name: Generate CrownStore icon resources
         run: |
           mkdir -p assets
-          cp public/crownstore-pwa-icon.svg assets/icon.svg
+          # Launcher icon source uses the full-canvas master mark without the PWA's embedded outer circle.
+          # Keep the PWA artwork for the launch splash so app icon and splash branding remain separate.
+          cp public/crownstore-icon.svg assets/icon.svg
           cp public/crownstore-pwa-icon.svg assets/splash.svg
           npx capacitor-assets generate --android
 
