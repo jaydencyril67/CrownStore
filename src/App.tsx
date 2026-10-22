@@ -16,7 +16,7 @@ import {
 import type { AppsResponse, CrownApp } from "./types";
 import "./search.css";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://api.crownstore.kingshall.online").replace(/\/$/, "");
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH";
 
 function formatSize(value: number | string | null) {
