@@ -352,7 +352,7 @@ jobs:
             '{action:"published",repository:{full_name:$repository},release:{tag_name:$tag,draft:false,prerelease:false}}')"
 
           for attempt in 1 2 3 4 5; do
-            if curl --fail-with-body --silent --show-error \
+            if curl --connect-timeout 15 --max-time 40 --fail-with-body --silent --show-error \
               --request POST "$API_URL/api/webhooks/github/release" \
               --header "Content-Type: application/json" \
               --header "X-GitHub-Event: release" \
@@ -361,7 +361,7 @@ jobs:
               --data "$payload"; then
               exit 0
             fi
-            if [ "$attempt" -lt 5 ]; then sleep 5; fi
+            if [ "$attempt" -lt 5 ]; then sleep 10; fi
           done
           echo "::error::APK release was published, but ApiCrownStore synchronization failed after 5 attempts."
           exit 1
