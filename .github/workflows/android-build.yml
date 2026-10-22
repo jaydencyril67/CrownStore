@@ -7,6 +7,11 @@ permissions:
   contents: write
   id-token: write
 
+# Serialize manual release builds so duplicate clicks cannot race versioning or publishing.
+concurrency:
+  group: crownstore-android-release
+  cancel-in-progress: false
+
 jobs:
   android:
     runs-on: ubuntu-latest
