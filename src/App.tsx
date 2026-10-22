@@ -496,6 +496,9 @@ export default function App() {
   const [apps, setApps] = useState<CrownApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const recordDebug = (message: string) => setDebugLog((current) => [...current, new Date().toISOString() + "  " + message].slice(-80));
   const [search, setSearch] = useState("");
   const [searchPageQuery, setSearchPageQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -563,6 +566,10 @@ export default function App() {
   async function loadApps(signal?: AbortSignal) {
     setLoading(true);
     setError("");
+    setDebugLog([]);
+    recordDebug("Catalogue load started");
+    recordDebug("Platform: " + Capacitor.getPlatform() + "; native=" + Capacitor.isNativePlatform());
+    recordDebug("Request URL: " + API_BASE + "/api/apps");
 
     const parseCatalogue = (value: unknown): AppsResponse | null => {
       let parsed = value;
@@ -589,20 +596,25 @@ export default function App() {
           });
           if (signal?.aborted) return;
 
+          recordDebug("Native HTTP status: " + nativeResponse.status);
           if (nativeResponse.status >= 200 && nativeResponse.status < 300) {
             const data = parseCatalogue(nativeResponse.data);
             if (data) {
+              recordDebug("Native response parsed; apps count: " + data.apps.length);
               setApps(data.apps);
               return;
             }
             nativeFailure = "The native request returned an unexpected catalogue format.";
+            recordDebug(nativeFailure + " Response type: " + typeof nativeResponse.data + "; keys: " + (nativeResponse.data && typeof nativeResponse.data === "object" ? Object.keys(nativeResponse.data as object).join(", ") : "not an object"));
           } else {
             nativeFailure = "The native catalogue request returned HTTP " + nativeResponse.status + ".";
+            recordDebug(nativeFailure);
           }
           console.warn("CrownStore native catalogue request needs browser fallback:", nativeFailure);
         } catch (error) {
           if (signal?.aborted) return;
-          nativeFailure = error instanceof Error ? error.message : "Native catalogue request failed.";
+          nativeFailure = error instanceof Error ? error.message : String(error || "Native catalogue request failed.");
+          recordDebug("Native request error: " + nativeFailure);
           console.warn("CrownStore native catalogue request failed; trying browser fetch.", error);
         }
       }
@@ -614,6 +626,7 @@ export default function App() {
         signal,
         headers: { Accept: "application/json" }
       });
+      recordDebug("WebView fetch HTTP status: " + response.status);
       if (!response.ok) {
         throw new Error(response.status === 503
           ? "The catalogue service is temporarily unavailable. Please try again shortly."
@@ -627,17 +640,24 @@ export default function App() {
         data = null;
       }
       if (!data) {
+        recordDebug("WebView response is not valid { apps: [...] } JSON.");
         throw new Error("CrownStore received an invalid catalogue response. Please try again.");
       }
+      recordDebug("WebView response parsed; apps count: " + data.apps.length);
       setApps(data.apps);
     } catch (error) {
       if (signal?.aborted) return;
       const browserFailure = error instanceof Error ? error.message : "Something went wrong loading CrownStore.";
+      recordDebug("CATALOGUE ERROR: " + browserFailure);
+      if (nativeFailure) recordDebug("Native path detail: " + nativeFailure);
       setError(nativeFailure
         ? browserFailure + " (Native request also failed: " + nativeFailure + ")"
         : browserFailure);
     } finally {
-      if (!signal?.aborted) setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+        recordDebug("Catalogue load finished");
+      }
     }
   }
 
@@ -1096,6 +1116,21 @@ export default function App() {
       {view !== "HOME" && view !== "SEARCH" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
+    {Capacitor.isNativePlatform() && <div style={{ position: "fixed", right: 12, bottom: 76, zIndex: 9998 }}>
+      <button type="button" onClick={() => setShowDebugPanel((open) => !open)} style={{ border: "1px solid rgba(255,255,255,.35)", borderRadius: 999, padding: "9px 13px", background: "#20152f", color: "#fff", fontSize: 12, boxShadow: "0 4px 18px #0005" }}>{showDebugPanel ? "Close diagnostics" : "APK diagnostics"}</button>
+    </div>}
+    {showDebugPanel && Capacitor.isNativePlatform() && <section role="dialog" aria-label="CrownStore APK diagnostics" style={{ position: "fixed", inset: "8px", zIndex: 9999, overflow: "auto", padding: 16, borderRadius: 16, border: "1px solid rgba(255,255,255,.28)", background: "#17121f", color: "#fff", boxShadow: "0 10px 40px #0009", fontSize: 13 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}><strong style={{ fontSize: 17 }}>CrownStore APK diagnostics</strong><button type="button" onClick={() => setShowDebugPanel(false)} style={{ padding: "7px 10px" }}>Close</button></div>
+      <p style={{ overflowWrap: "anywhere" }}>API: {API_BASE + "/api/apps"}</p>
+      <p>Platform: {Capacitor.getPlatform()} · Loading: {String(loading)} · Apps in state: {apps.length}</p>
+      <p>Current error: {error || "None"}</p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
+        <button type="button" onClick={() => void loadApps()} style={{ padding: "9px 12px" }}>Retry catalogue</button>
+        <button type="button" onClick={() => { const report = ["CrownStore APK diagnostics", "Time: " + new Date().toISOString(), "Platform: " + Capacitor.getPlatform(), "API: " + API_BASE + "/api/apps", "Loading: " + loading, "Apps in state: " + apps.length, "Error: " + (error || "None"), "", ...debugLog].join("\n"); void navigator.clipboard?.writeText(report).then(() => recordDebug("Diagnostic report copied")).catch(() => recordDebug("Clipboard copy failed; select and copy the log manually.")); }} style={{ padding: "9px 12px" }}>Copy report</button>
+        <button type="button" onClick={() => setDebugLog([])} style={{ padding: "9px 12px" }}>Clear log</button>
+      </div>
+      <pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontSize: 11, lineHeight: 1.5 }}>{debugLog.length ? debugLog.join("\n") : "No diagnostics recorded yet. Tap Retry catalogue."}</pre>
+    </section>}
     <NativeDeviceBridgeAgent session={bridgeSession} />
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
     <NowBar activePage={view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} onSearch={() => navigate("SEARCH")} onUpdates={() => navigate("UPDATES")} />
