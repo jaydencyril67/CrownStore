@@ -579,7 +579,7 @@ export default function App() {
         const url = new URL(value);
         if (url.protocol !== "crownstore:") return;
         if (url.hostname === "app") {
-          const slug = (url.searchParams.get("slug") || url.pathname.replace(/^\\/+/, "")).trim().toLowerCase();
+          const slug = (url.searchParams.get("slug") || url.pathname.replace(/^\/+/, "")).trim().toLowerCase();
           if (slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
             setRequestedAppSlug(slug);
             setView("APPS");
