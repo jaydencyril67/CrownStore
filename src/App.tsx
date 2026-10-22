@@ -563,55 +563,79 @@ export default function App() {
   async function loadApps(signal?: AbortSignal) {
     setLoading(true);
     setError("");
-    try {
-      let nativeResponse: Awaited<ReturnType<typeof CapacitorHttp.get>> | null = null;
 
-      // Prefer native networking in the APK so WebView origin/CORS behaviour cannot
-      // prevent the live catalogue (and home shelves) from loading.
+    const parseCatalogue = (value: unknown): AppsResponse | null => {
+      let parsed = value;
+      // Capacitor's native HTTP bridge can expose a JSON response as text on
+      // some Android/WebView combinations. Normalize both response shapes.
+      if (typeof parsed === "string") {
+        try { parsed = JSON.parse(parsed); } catch { return null; }
+      }
+      if (!parsed || typeof parsed !== "object" || !Array.isArray((parsed as AppsResponse).apps)) return null;
+      return parsed as AppsResponse;
+    };
+
+    let nativeFailure = "";
+    try {
+      // Prefer native networking in the APK so WebView origin/CORS behaviour
+      // cannot prevent the live catalogue from loading.
       if (Capacitor.isNativePlatform()) {
         try {
-          nativeResponse = await CapacitorHttp.get({
+          const nativeResponse = await CapacitorHttp.get({
             url: API_BASE + "/api/apps",
             headers: { Accept: "application/json" },
             connectTimeout: 12000,
             readTimeout: 20000
           });
-        } catch (nativeError) {
           if (signal?.aborted) return;
-          console.warn("CrownStore native catalogue request failed; retrying with WebView fetch.", nativeError);
+
+          if (nativeResponse.status >= 200 && nativeResponse.status < 300) {
+            const data = parseCatalogue(nativeResponse.data);
+            if (data) {
+              setApps(data.apps);
+              return;
+            }
+            nativeFailure = "The native request returned an unexpected catalogue format.";
+          } else {
+            nativeFailure = "The native catalogue request returned HTTP " + nativeResponse.status + ".";
+          }
+          console.warn("CrownStore native catalogue request needs browser fallback:", nativeFailure);
+        } catch (error) {
+          if (signal?.aborted) return;
+          nativeFailure = error instanceof Error ? error.message : "Native catalogue request failed.";
+          console.warn("CrownStore native catalogue request failed; trying browser fetch.", error);
         }
       }
 
       if (signal?.aborted) return;
 
-      if (nativeResponse) {
-        if (nativeResponse.status < 200 || nativeResponse.status >= 300) {
-          const body = nativeResponse.data as { error?: string; message?: string } | null;
-          throw new Error(body?.error || body?.message ||
-            (nativeResponse.status === 503
-              ? "The catalogue service is temporarily unavailable. Please try again shortly."
-              : "CrownStore could not load the catalogue (HTTP " + nativeResponse.status + "). Please try again."));
-        }
-        const data = nativeResponse.data as AppsResponse;
-        if (!Array.isArray(data?.apps)) {
-          throw new Error("CrownStore received an invalid catalogue response. Please try again.");
-        }
-        setApps(data.apps);
-      } else {
-        // Keep the existing browser/PWA path, with the same API and response shape.
-        const response = await fetch(API_BASE + "/api/apps", {
-          signal,
-          headers: { Accept: "application/json" }
-        });
-        if (!response.ok) throw new Error(response.status === 503
+      // Browser fetch is the fallback for Android and the standard path for PWA/web.
+      const response = await fetch(API_BASE + "/api/apps", {
+        signal,
+        headers: { Accept: "application/json" }
+      });
+      if (!response.ok) {
+        throw new Error(response.status === 503
           ? "The catalogue service is temporarily unavailable. Please try again shortly."
           : "CrownStore could not load the catalogue (HTTP " + response.status + "). Please try again.");
-        const data = await response.json() as AppsResponse;
-        setApps(Array.isArray(data.apps) ? data.apps : []);
       }
+
+      let data: AppsResponse | null = null;
+      try {
+        data = parseCatalogue(await response.json());
+      } catch {
+        data = null;
+      }
+      if (!data) {
+        throw new Error("CrownStore received an invalid catalogue response. Please try again.");
+      }
+      setApps(data.apps);
     } catch (error) {
       if (signal?.aborted) return;
-      setError(error instanceof Error ? error.message : "Something went wrong loading CrownStore.");
+      const browserFailure = error instanceof Error ? error.message : "Something went wrong loading CrownStore.";
+      setError(nativeFailure
+        ? browserFailure + " (Native request also failed: " + nativeFailure + ")"
+        : browserFailure);
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
