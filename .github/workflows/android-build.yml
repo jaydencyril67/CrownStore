@@ -319,6 +319,7 @@ jobs:
         run: ./gradlew --no-daemon --stacktrace --console=plain assembleRelease
 
       - name: Verify, checksum and publish release
+        id: publish_release
         env:
           GH_TOKEN: ${{ github.token }}
           APP_VERSION: ${{ steps.version.outputs.app_version }}
@@ -329,6 +330,7 @@ jobs:
           sha256sum CrownStore.apk > CrownStore.apk.sha256
           gh release create "v$APP_VERSION" CrownStore.apk CrownStore.apk.sha256 --target "$GITHUB_SHA" --title "CrownStore $APP_VERSION" --notes "CrownStore Android production APK $APP_VERSION. Android will ask the user to approve installation."
       - name: Notify ApiCrownStore about the published APK release
+        if: ${{ always() && steps.publish_release.outcome == 'success' }}
         env:
           API_URL: ${{ vars.CROWNSTORE_API_URL || 'https://apicrownstore.kingshall.online' }}
           APP_VERSION: ${{ steps.version.outputs.app_version }}
