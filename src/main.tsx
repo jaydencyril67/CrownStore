@@ -31,10 +31,16 @@ function PwaServiceWorker() {
   return null;
 }
 
+declare global {
+  interface Window {
+    __crownStoreRefreshSplash?: boolean;
+  }
+}
+
 function RefreshSplashCleanup() {
   useEffect(() => {
     const splash = document.getElementById("crownstore-refresh-splash");
-    if (!splash || getComputedStyle(splash).display === "none") {
+    if (!splash || window.__crownStoreRefreshSplash !== true) {
       splash?.remove();
       return;
     }
