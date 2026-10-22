@@ -86,8 +86,10 @@ jobs:
           set -euo pipefail
           mkdir -p android/app/src/main/res/drawable android/app/src/main/res/drawable-nodpi android/app/src/main/res/values android/app/src/main/res/values-v31
 
-          # Use the CrownStore master mark, but compose it like the other KingsHall apps:
-          # 92dp circular holder + 72dp artwork on legacy Android and Android 12+.
+          # Match the shared KingsHall APK splash composition on every Android version:
+          # 92dp circular holder, 72dp visible artwork, centered on a transparent square canvas.
+          # Keep CrownStore's cart/crown mark and outer splash background; only the holder is black
+          # with a subtle neutral edge, matching the other apps' circular-holder treatment.
           python3 - <<'PY'
           from pathlib import Path
 
@@ -127,18 +129,18 @@ jobs:
             );
 
             const background = '#100719';
-            const circleFill = '#090510';
-            const circleStroke = '#241038';
+            const circleFill = '#000000';
+            const circleStroke = '#1a1a1a';
             const legacyCanvasPx = 512;
             const legacyHolderDp = 92;
             const artworkDp = 72;
-            const legacyArtworkPx = 400;
+            const legacyArtworkPx = Math.round(legacyCanvasPx * artworkDp / legacyHolderDp);
             const systemCanvasPx = 512;
             const systemCanvasDp = 288;
             const systemHolderPx = Math.round(legacyHolderDp / systemCanvasDp * systemCanvasPx);
             const systemArtworkPx = Math.round(artworkDp / systemCanvasDp * systemCanvasPx);
 
-            if (systemHolderPx !== 164 || systemArtworkPx !== 128 || legacyArtworkPx !== 400) {
+            if (systemHolderPx !== 164 || systemArtworkPx !== 128 || legacyArtworkPx !== 401) {
               throw new Error('CrownStore splash dimensions no longer match the shared 92dp holder / 72dp artwork system.');
             }
 
