@@ -26,17 +26,28 @@ for permission in permissions:
     if name not in manifest:
         manifest = manifest.replace("<application", permission + "\n\n    <application", 1)
 
-intent_filter = """            <intent-filter>
+deep_link_filters = {
+    "connect": """            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="crownstore" android:host="connect" />
             </intent-filter>
+""",
+    "app": """            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="crownstore" android:host="app" />
+            </intent-filter>
 """
-if 'android:scheme="crownstore"' not in manifest:
-    if "</activity>" not in manifest:
-        raise SystemExit("Could not locate the generated Android activity.")
-    manifest = manifest.replace("</activity>", intent_filter + "        </activity>", 1)
+}
+if "</activity>" not in manifest:
+    raise SystemExit("Could not locate the generated Android activity.")
+for host, intent_filter in deep_link_filters.items():
+    host_declaration = 'android:scheme="crownstore" android:host="' + host + '"'
+    if host_declaration not in manifest:
+        manifest = manifest.replace("</activity>", intent_filter + "        </activity>", 1)
 manifest_path.write_text(manifest, encoding="utf-8")
 
 activity_path = target_root / "java/online/kingshall/crownstore/MainActivity.java"
@@ -71,4 +82,4 @@ if registration not in activity:
         override = "\n    @Override\n    public void onCreate(Bundle savedInstanceState) {\n        " + registration + "\n        super.onCreate(savedInstanceState);\n    }\n"
         activity = activity[:final_brace] + override + activity[final_brace:]
 activity_path.write_text(activity, encoding="utf-8")
-print("Installed CrownStore native package scanner, trusted APK downloader/installer bridge, and crownstore://connect deep link.")
+print("Installed CrownStore native package scanner, trusted APK downloader/installer bridge, and crownstore://connect/crownstore://app deep links.")
