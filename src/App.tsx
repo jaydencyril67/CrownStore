@@ -566,6 +566,9 @@ export default function App() {
   const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>("HOME");
   const [bridgeSession, setBridgeSession] = useState<BridgeSessionRef | null>(null);
+  const [requestedAppSlug, setRequestedAppSlug] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get("app")?.trim().toLowerCase() || ""; } catch { return ""; }
+  });
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -574,7 +577,16 @@ export default function App() {
     const acceptUrl = (value: string) => {
       try {
         const url = new URL(value);
-        if (url.protocol !== "crownstore:" || url.hostname !== "connect") return;
+        if (url.protocol !== "crownstore:") return;
+        if (url.hostname === "app") {
+          const slug = (url.searchParams.get("slug") || url.pathname.replace(/^\\/+/, "")).trim().toLowerCase();
+          if (slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+            setRequestedAppSlug(slug);
+            setView("APPS");
+          }
+          return;
+        }
+        if (url.hostname !== "connect") return;
         const sessionId = url.searchParams.get("sessionId") || "";
         const secret = url.searchParams.get("secret") || "";
         if (!sessionId || !secret) return;
@@ -763,6 +775,20 @@ export default function App() {
       void stateListener.then((handle) => handle.remove()).catch(() => {});
     };
   }, [apps, isAndroidApp]);
+
+  useEffect(() => {
+    if (!requestedAppSlug || loading) return;
+    const matched = apps.find((app) => app.slug.toLowerCase() === requestedAppSlug);
+    setRequestedAppSlug("");
+    if (!matched) return;
+    setView("APPS");
+    setSelectedApp(matched);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("app");
+      window.history.replaceState({}, "", url.toString());
+    } catch { /* The selected app still opens if history cannot be updated. */ }
+  }, [requestedAppSlug, loading, apps]);
 
   async function continueNativeInstall(app: CrownApp, downloadId: number): Promise<void> {
     setDownloadProgress((current) => current?.releaseId === app.releaseId
