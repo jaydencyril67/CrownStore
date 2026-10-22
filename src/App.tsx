@@ -221,6 +221,9 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
   const currentDownload = download?.releaseId === app.releaseId ? download : null;
   const isCurrentDownloadBusy = Boolean(currentDownload && ["starting", "downloading", "installing"].includes(currentDownload.status));
   const installStateClass = installState === "update" ? "details-status is-ready" : installState === "installed" ? "details-status is-installed" : installState === "check-error" ? "details-status is-error" : "details-status";
+  const installStateLabel = installState === "update" && installedVersion
+    ? "Update available · installed v" + (installedVersion.versionName || installedVersion.versionCode)
+    : appInstallDetailsLabel(installState, app);
   return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="details-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="details-title">
       <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={19} /></button>
@@ -229,7 +232,7 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
         <div className="details-heading-copy"><span className="eyebrow">KINGSHALL ECOSYSTEM</span><h2 id="details-title">{app.name}</h2><span className="details-package">{app.packageId}</span></div>
       </div>
       <div className="details-quick-row">
-        <span className={installStateClass}><span className="details-status-dot" />{appInstallDetailsLabel(installState, app)}</span>
+        <span className={installStateClass}><span className="details-status-dot" />{installStateLabel}</span>
         <span className="details-category-chip">{readableCategory(app.category || "Utilities")}</span>
       </div>
       <p className="details-description">{app.shortDescription || app.description || "Official app in the KingsHall ecosystem."}</p>
