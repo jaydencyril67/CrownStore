@@ -6,6 +6,7 @@ import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
 import NativeSelfUpdate from "./NativeSelfUpdate";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
+import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
 import type { BridgeSessionRef } from "./native/deviceBridgeTypes";
 import {
@@ -33,6 +34,43 @@ function formatDate(value: string | null) {
 }
 function readableCategory(value: string) {
   return value.replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+type InstalledScanStatus = "checking" | "ready" | "error" | "unsupported";
+type AppInstallState = "checking" | "check-error" | "update" | "installed" | "download" | "unreleased";
+
+function getAppInstallState(app: CrownApp, installedApps: Record<string, NativeInstalledApp>, scanStatus: InstalledScanStatus): AppInstallState {
+  if (scanStatus === "checking") return "checking";
+  if (scanStatus === "error") return "check-error";
+  const installed = installedApps[app.packageId];
+  if (installed) {
+    const latestCode = Number(app.versionCode);
+    if (app.releaseId && app.versionCode != null && Number.isFinite(latestCode) && latestCode > installed.versionCode) return "update";
+    return "installed";
+  }
+  return app.releaseId ? "download" : "unreleased";
+}
+
+function appInstallBadgeLabel(state: AppInstallState): string {
+  switch (state) {
+    case "checking": return "Checking…";
+    case "check-error": return "Retry check";
+    case "update": return "Update";
+    case "installed": return "Installed";
+    case "download": return "Download";
+    case "unreleased": return "Coming soon";
+  }
+}
+
+function appInstallDetailsLabel(state: AppInstallState, app: CrownApp): string {
+  switch (state) {
+    case "checking": return "Checking installed apps…";
+    case "check-error": return "Could not check installed apps";
+    case "update": return "Update available";
+    case "installed": return app.releaseId ? "Installed · up to date" : "Installed";
+    case "download": return "Not installed · download available";
+    case "unreleased": return "Not released yet";
+  }
 }
 
 function StoreMark({ size = 24 }: { size?: number }) {
@@ -148,14 +186,15 @@ function DownloadFeedback({
   </section>;
 }
 
-function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
+function AppCard({ app, onDetails, installState }: { app: CrownApp; onDetails: (app: CrownApp) => void; installState: AppInstallState }) {
   return <button className="shelf-app-tile" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details"}>
     <span className="shelf-app-icon"><AppIcon app={app} /></span>
     <span className="shelf-app-name">{app.name}</span>
+    <span className="shelf-app-status" data-state={installState}>{appInstallBadgeLabel(installState)}</span>
   </button>;
 }
 
-function SearchAppResultRow({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
+function SearchAppResultRow({ app, onDetails, installState }: { app: CrownApp; onDetails: (app: CrownApp) => void; installState: AppInstallState }) {
   return <div className="store-search-result">
     <button className="store-search-result-main" type="button" aria-label={"Open " + app.name + " details"} onClick={() => onDetails(app)}>
       <span className="store-search-result-icon"><AppIcon app={app} /></span>
@@ -165,21 +204,23 @@ function SearchAppResultRow({ app, onDetails }: { app: CrownApp; onDetails: (app
         <span>{app.shortDescription || app.description || "Official KingsHall ecosystem app."}</span>
       </span>
     </button>
-    <button className="store-search-result-action" type="button" onClick={() => onDetails(app)} aria-label={"View " + app.name}>
-      {app.releaseId ? "View app" : "Details"}<ChevronRight size={16} />
+    <button className="store-search-result-action" data-state={installState} type="button" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details — " + appInstallBadgeLabel(installState)}>
+      {appInstallBadgeLabel(installState)}<ChevronRight size={16} />
     </button>
   </div>;
 }
 
-function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload, onInstallDownloaded }: {
+function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload, onInstallDownloaded, installState, installedVersion, onRefreshInstalledApps }: {
   app: CrownApp; onClose: () => void; download: DownloadProgress | null; isAnotherDownloadRunning: boolean;
   onDownload: (app: CrownApp) => Promise<void>; onCancelDownload: () => void; onDismissDownload: () => void;
-  onInstallDownloaded: (app: CrownApp) => void;
+  onInstallDownloaded: (app: CrownApp) => void; installState: AppInstallState;
+  installedVersion?: NativeInstalledApp; onRefreshInstalledApps: () => void;
 }) {
   const [expandedSection, setExpandedSection] = useState<string | null>("about");
   const ready = Boolean(app.releaseId);
   const currentDownload = download?.releaseId === app.releaseId ? download : null;
   const isCurrentDownloadBusy = Boolean(currentDownload && ["starting", "downloading", "installing"].includes(currentDownload.status));
+  const installStateClass = installState === "update" ? "details-status is-ready" : installState === "installed" ? "details-status is-installed" : installState === "check-error" ? "details-status is-error" : "details-status";
   return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <section className="details-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="details-title">
       <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={19} /></button>
@@ -188,7 +229,7 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
         <div className="details-heading-copy"><span className="eyebrow">KINGSHALL ECOSYSTEM</span><h2 id="details-title">{app.name}</h2><span className="details-package">{app.packageId}</span></div>
       </div>
       <div className="details-quick-row">
-        <span className={ready ? "details-status is-ready" : "details-status"}><span className="details-status-dot" />{ready ? "Stable release available" : "Not released yet"}</span>
+        <span className={installStateClass}><span className="details-status-dot" />{appInstallDetailsLabel(installState, app)}</span>
         <span className="details-category-chip">{readableCategory(app.category || "Utilities")}</span>
       </div>
       <p className="details-description">{app.shortDescription || app.description || "Official app in the KingsHall ecosystem."}</p>
@@ -196,29 +237,36 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
         <div><span>Latest version</span><strong>{app.versionName ? "v" + app.versionName : "Pending"}</strong></div>
         <div><span>APK size</span><strong>{formatSize(app.sizeBytes)}</strong></div>
       </div>
-      {ready
-        ? <>
-          <button className="button button-primary details-download" type="button" onClick={() => {
-            if (currentDownload?.status === "complete" || currentDownload?.status === "permission") onInstallDownloaded(app);
-            else void onDownload(app);
-          }} disabled={isAnotherDownloadRunning || isCurrentDownloadBusy}>
-            {isCurrentDownloadBusy
-              ? <><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span>{currentDownload?.status === "starting" ? "Starting download…" : currentDownload?.status === "installing" ? "Opening installer…" : "Downloading " + (currentDownload && currentDownload.total > 0 ? Math.min(100, Math.floor(currentDownload.loaded / currentDownload.total * 100)) : 0) + "%"} </>
-              : isAnotherDownloadRunning ? "Another download is in progress"
-              : currentDownload?.status === "complete" ? <><PackageCheck size={17} /> {currentDownload.platform === "android" ? "Open installer again" : "Install saved APK"}</>
-              : currentDownload?.status === "permission" ? <><Smartphone size={17} /> Continue installation</>
-              : currentDownload?.status === "error" || currentDownload?.status === "cancelled" ? <><Download size={17} /> Retry download</>
-              : <><Download size={17} /> Download / update APK</>}
-          </button>
-          {currentDownload && <DownloadFeedback
-            progress={currentDownload}
-            onCancel={onCancelDownload}
-            onRetry={() => void onDownload(app)}
-            onDismiss={onDismissDownload}
-            onInstall={() => onInstallDownloaded(app)}
-          />}
-        </>
-        : <div className="release-note"><ShieldCheck size={17} /> The download appears here after an official stable APK is verified and published.</div>}
+      {installState === "checking"
+        ? <button className="button button-outline details-download" type="button" disabled><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span> Checking installed apps…</button>
+        : installState === "check-error"
+          ? <button className="button button-outline details-download" type="button" onClick={onRefreshInstalledApps}><Smartphone size={17} /> Retry installed-app check</button>
+          : installState === "installed"
+            ? <button className="button button-outline details-download" type="button" disabled><CheckCircle2 size={17} /> {app.releaseId ? "Installed · up to date" : "Installed"}{installedVersion?.versionName ? " · v" + installedVersion.versionName : ""}</button>
+            : ready
+              ? <>
+                <button className="button button-primary details-download" type="button" onClick={() => {
+                  if (currentDownload?.status === "complete" || currentDownload?.status === "permission") onInstallDownloaded(app);
+                  else void onDownload(app);
+                }} disabled={isAnotherDownloadRunning || isCurrentDownloadBusy}>
+                  {isCurrentDownloadBusy
+                    ? <><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span>{currentDownload?.status === "starting" ? "Starting download…" : currentDownload?.status === "installing" ? "Opening installer…" : "Downloading " + (currentDownload && currentDownload.total > 0 ? Math.min(100, Math.floor(currentDownload.loaded / currentDownload.total * 100)) : 0) + "%"} </>
+                    : isAnotherDownloadRunning ? "Another download is in progress"
+                    : currentDownload?.status === "complete" ? <><PackageCheck size={17} /> {currentDownload.platform === "android" ? "Open installer again" : "Install saved APK"}</>
+                    : currentDownload?.status === "permission" ? <><Smartphone size={17} /> Continue installation</>
+                    : currentDownload?.status === "error" || currentDownload?.status === "cancelled" ? <><Download size={17} /> Retry download</>
+                    : installState === "update" ? <><Download size={17} /> Update to v{app.versionName || "latest"}</>
+                    : <><Download size={17} /> Download APK</>}
+                </button>
+                {currentDownload && <DownloadFeedback
+                  progress={currentDownload}
+                  onCancel={onCancelDownload}
+                  onRetry={() => void onDownload(app)}
+                  onDismiss={onDismissDownload}
+                  onInstall={() => onInstallDownloaded(app)}
+                />}
+              </>
+              : <div className="release-note"><ShieldCheck size={17} /> The download appears here after an official stable APK is verified and published.</div>}
       <div className="details-sections">
         <details className="details-section" open={expandedSection === "about"}>
           <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "about" ? null : "about"); }}><span><Info size={16} /><span><strong>About this app</strong><small>What it does and how it fits in</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
@@ -494,6 +542,11 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
 
 export default function App() {
   const [apps, setApps] = useState<CrownApp[]>([]);
+  const [installedApps, setInstalledApps] = useState<Record<string, NativeInstalledApp>>({});
+  const [installedScanStatus, setInstalledScanStatus] = useState<InstalledScanStatus>(Capacitor.getPlatform() === "android" ? "checking" : "unsupported");
+  const [installedScanError, setInstalledScanError] = useState("");
+  const installedScanRef = useRef<() => void>(() => {});
+  const isAndroidApp = Capacitor.getPlatform() === "android";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -648,6 +701,65 @@ export default function App() {
     void loadApps(controller.signal);
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!isAndroidApp) {
+      setInstalledApps({});
+      setInstalledScanStatus("unsupported");
+      setInstalledScanError("");
+      return;
+    }
+
+    let disposed = false;
+    let inFlight = false;
+    const scanInstalledApps = async () => {
+      if (disposed || inFlight) return;
+      inFlight = true;
+      setInstalledScanStatus("checking");
+      setInstalledScanError("");
+      try {
+        const packageIds = Array.from(new Set(apps
+          .map((app) => app.packageId || "")
+          .filter((id) => /^[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+$/.test(id))
+        )).slice(0, 250);
+
+        const inventory = packageIds.length
+          ? await NativeAppUpdate.getInstalledApps({ packageIds })
+          : { apps: [] as NativeInstalledApp[] };
+        if (disposed) return;
+
+        const next = Object.fromEntries((inventory.apps || []).map((item) => [item.packageId, item])) as Record<string, NativeInstalledApp>;
+        setInstalledApps(next);
+        setInstalledScanStatus("ready");
+        setDownloadProgress((current) => {
+          if (!current || current.status !== "complete") return current;
+          const catalogueApp = apps.find((item) => item.releaseId === current.releaseId);
+          const installed = catalogueApp ? next[catalogueApp.packageId] : undefined;
+          return installed && catalogueApp?.versionCode != null &&
+            installed.versionCode >= Number(catalogueApp.versionCode) ? null : current;
+        });
+      } catch (caught) {
+        if (!disposed) {
+          setInstalledScanError(caught instanceof Error ? caught.message : "CrownStore could not read installed app versions.");
+          setInstalledScanStatus("error");
+        }
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    installedScanRef.current = () => { void scanInstalledApps(); };
+    void scanInstalledApps();
+    const stateListener = CapacitorApp.addListener("appStateChange", (state) => {
+      if (state.isActive) void scanInstalledApps();
+    });
+
+    return () => {
+      disposed = true;
+      installedScanRef.current = () => {};
+      void stateListener.then((handle) => handle.remove()).catch(() => {});
+    };
+  }, [apps, isAndroidApp]);
 
   async function continueNativeInstall(app: CrownApp, downloadId: number): Promise<void> {
     setDownloadProgress((current) => current?.releaseId === app.releaseId
@@ -925,7 +1037,9 @@ export default function App() {
 
   const categories = useMemo(() => ["All apps", ...Array.from(new Set(apps.map((app) => app.category).filter((item): item is string => Boolean(item && item.trim())))).sort((a, b) => a.localeCompare(b))], [apps]);
   const filtered = useMemo(() => {
-    const base = view === "UPDATES" ? apps.filter((app) => app.releaseId) : apps;
+    const base = view === "UPDATES"
+      ? apps.filter((app) => app.releaseId && (!isAndroidApp || getAppInstallState(app, installedApps, installedScanStatus) === "update"))
+      : apps;
     const q = search.trim().toLowerCase();
     return base.filter((app) => {
       const categoryMatches = category === "All apps" || app.category?.toLowerCase() === category.toLowerCase();
@@ -935,7 +1049,7 @@ export default function App() {
       if (view === "UPDATES") return new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime();
       return a.name.localeCompare(b.name);
     });
-  }, [apps, search, category, view]);
+  }, [apps, search, category, view, installedApps, installedScanStatus, isAndroidApp]);
 
   const searchResults = useMemo(() => {
     const query = searchPageQuery.trim().toLowerCase();
@@ -1012,7 +1126,7 @@ export default function App() {
                 : error
                   ? <div className="state-panel state-error"><strong>Search is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : searchResults.length
-                    ? <div className="store-search-results">{searchResults.map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
+                    ? <div className="store-search-results">{searchResults.map((app) => <SearchAppResultRow key={app.id} app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} />)}</div>
                     : <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No apps found</strong><span>Try another name, category, or package ID.</span></div>}
             </section>
           : <section className="search-discover" aria-label="Discover apps">
@@ -1026,7 +1140,7 @@ export default function App() {
                 : error
                   ? <div className="state-panel state-error"><strong>The catalogue is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : apps.length
-                    ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
+                    ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} />)}</div>
                     : <div className="search-empty-prompt"><Search size={24} /><strong>No apps are listed yet</strong><span>Official apps will appear here when they are published to CrownStore.</span></div>}
             </section>}
       </section> : view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
@@ -1043,7 +1157,7 @@ export default function App() {
           return <section className="app-shelf" key={shelf.id} aria-labelledby={"shelf-" + shelf.id}>
             <div className="shelf-heading"><div className="shelf-title-wrap"><span className="shelf-icon"><ShelfIcon size={18} /></span><div><h2 id={"shelf-" + shelf.id}>{shelf.title}</h2><p>{shelf.subtitle}</p></div></div><div className="shelf-heading-actions"><span className="shelf-count">{shelfApps.length} {shelfApps.length === 1 ? "app" : "apps"}</span></div></div>
             <div className="shelf-track" aria-label={shelf.title + " app slots"}>
-              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={setSelectedApp} /></div>)}
+              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} /></div>)}
               {Array.from({ length: Math.max(0, 50 - (loading ? 0 : shelfApps.length)) }, (_, index) => (
                 <div className="shelf-app-card shelf-empty-slot-card" key={"empty-slot-" + index} aria-hidden="true">
                   <div className="shelf-app-tile shelf-empty-slot" />
@@ -1069,7 +1183,7 @@ export default function App() {
         <div><PackageCheck /><span><strong>Release details</strong><small>Version, size, checksum and changelog</small></span></div>
         <div><Smartphone /><span><strong>Android ready</strong><small>Direct APK downloads</small></span></div>
       </section>
-      {view === "UPDATES" && <DeviceUpdatesPanel apps={apps} launchSession={bridgeSession} onConnect={setBridgeSession} onDownloadApp={downloadRelease} />}
+      {view === "UPDATES" && !isAndroidApp && <DeviceUpdatesPanel apps={apps} launchSession={bridgeSession} onConnect={setBridgeSession} onDownloadApp={downloadRelease} />}
       <section className="apps-section" id="apps">
         <div className="section-heading">
           <div><div className="eyebrow">{view === "UPDATES" ? "LATEST PUBLISHED BUILDS" : "THE COLLECTION"}</div><h2>{view === "UPDATES" ? "Latest releases" : "Find your next app."}</h2><p>{view === "UPDATES" ? "The latest stable APKs published to CrownStore." : "Browse the official KingsHall app family."}</p></div>
@@ -1085,8 +1199,14 @@ export default function App() {
           ? <div className="state-panel"><div className="loader-ring" /><strong>Opening the collection</strong><span>Fetching published apps…</span></div>
           : error
             ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Catalogue temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
-            : filtered.length
-              ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
+            : view === "UPDATES" && isAndroidApp && installedScanStatus === "checking"
+              ? <div className="state-panel"><div className="loader-ring" /><strong>Checking your installed apps</strong><span>Comparing installed version codes with the latest verified releases…</span></div>
+              : view === "UPDATES" && isAndroidApp && installedScanStatus === "error"
+                ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Installed apps could not be checked</strong><span>{installedScanError || "CrownStore couldn't read this phone's installed app versions."}</span><button className="button button-outline" onClick={() => installedScanRef.current()}>Try again</button></div>
+                : filtered.length
+              ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} />)}</div>
+              : view === "UPDATES" && isAndroidApp && installedScanStatus === "ready" && !search.trim() && category === "All apps"
+                ? <div className="state-panel"><div className="state-icon"><CheckCircle2 size={22} /></div><strong>You’re all caught up</strong><span>Every installed CrownStore app is using the latest published version. Apps you haven’t installed remain available in the collection.</span></div>
               : view === "UPDATES" && !search.trim() && category === "All apps" && !updatesAvailable
                 ? <div className="state-panel"><div className="state-icon"><Download size={22} /></div><strong>No published updates yet</strong><span>The apps are in the catalogue, but no stable APK release has been published yet. Check back after the first release is verified.</span></div>
                 : apps.length
@@ -1125,6 +1245,9 @@ export default function App() {
       onCancelDownload={cancelDownload}
       onDismissDownload={dismissDownload}
       onInstallDownloaded={onInstallDownloaded}
+      installState={getAppInstallState(selectedApp, installedApps, installedScanStatus)}
+      installedVersion={installedApps[selectedApp.packageId]}
+      onRefreshInstalledApps={() => installedScanRef.current()}
     />}
     {showAppManager && <AppManagerPanel onClose={() => setShowAppManager(false)} onSaved={() => void loadApps()} />}
     {showPublisher && <PublisherPanel apps={apps.filter((item) => !("isListed" in item) || item.isListed)} onPublished={() => void loadApps()} onClose={() => setShowPublisher(false)} />}
