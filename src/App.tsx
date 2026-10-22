@@ -663,6 +663,7 @@ export default function App() {
             const data = parseCatalogue(nativeResponse.data);
             if (data) {
               setApps(data.apps);
+              setSelectedApp((current) => current ? data.apps.find((candidate) => candidate.slug === current.slug) ?? current : current);
               return;
             }
             nativeFailure = "The native request returned an unexpected catalogue format.";
@@ -700,6 +701,7 @@ export default function App() {
         throw new Error("CrownStore received an invalid catalogue response. Please try again.");
       }
       setApps(data.apps);
+      setSelectedApp((current) => current ? data.apps.find((candidate) => candidate.slug === current.slug) ?? current : current);
     } catch (error) {
       if (signal?.aborted) return;
       const browserFailure = error instanceof Error ? error.message : "Something went wrong loading CrownStore.";
@@ -749,6 +751,12 @@ export default function App() {
     const connect = () => {
       if (document.visibilityState !== "visible" || stream) return;
       stream = new EventSource(API_BASE + "/api/events/releases");
+      let hasOpened = false;
+      stream.addEventListener("open", () => {
+        // Reconcile once when an existing stream reconnects after a dropped connection.
+        if (hasOpened) void loadApps(undefined, true);
+        hasOpened = true;
+      });
       stream.addEventListener("release-published", () => {
         void loadApps(undefined, true);
       });
