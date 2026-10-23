@@ -219,6 +219,10 @@ export default function ProfilePage({
   const [checkingSession, setCheckingSession] = useState(() => Boolean(localStorage.getItem(TOKEN_KEY)));
   const [identity, setIdentity] = useState("");
   const [accessCode, setAccessCode] = useState("");
+  const [challengeToken, setChallengeToken] = useState("");
+  const [extraMethods, setExtraMethods] = useState<Array<"2fa" | "biometric">>([]);
+  const [extraMethod, setExtraMethod] = useState<"2fa" | "biometric" | "">("");
+  const [extraCode, setExtraCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
