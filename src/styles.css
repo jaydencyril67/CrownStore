@@ -472,6 +472,36 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 @media(max-width:520px){.device-installed-app{align-items:flex-start;flex-wrap:wrap}.device-installed-copy{min-width:calc(100% - 60px)}.device-installed-action{width:100%;margin-left:51px}.device-update-button{width:100%}}
 
 
+/* Updates page: compact, responsive layout across phone, tablet and desktop. */
+.updates-page{width:100%;min-width:0;margin-inline:auto}
+.updates-page .section-heading{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,340px);align-items:end;gap:16px;margin-bottom:14px}
+.updates-page .section-heading>div{min-width:0}
+.updates-page .section-heading h2{margin:3px 0 5px;font-size:clamp(1.25rem,3vw,1.8rem);line-height:1.15;overflow-wrap:anywhere}
+.updates-page .section-heading p{margin:0;max-width:58ch;font-size:clamp(.78rem,1.7vw,.9rem);line-height:1.45}
+.updates-page .search-box{width:100%;min-width:0;box-sizing:border-box}
+.updates-page .catalogue-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 16px;min-width:0}
+.updates-page .category-filters{display:flex;flex:1 1 auto;min-width:0;flex-wrap:wrap;gap:7px}
+.updates-page .category-filter{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.updates-page .results-count{flex:0 0 auto;white-space:nowrap}
+.updates-page .app-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));align-items:stretch;gap:12px}
+.updates-page .app-card,.updates-page .app-card button{min-width:0;max-width:100%;box-sizing:border-box}
+.updates-page .app-card{height:100%}
+.updates-page .state-panel{width:100%;max-width:100%;box-sizing:border-box;padding:clamp(16px,3vw,24px);overflow-wrap:anywhere}
+.updates-page .state-panel>span{max-width:65ch;overflow-wrap:anywhere}
+@media(max-width:640px){
+  .updates-page .section-heading{grid-template-columns:minmax(0,1fr);gap:12px}
+  .updates-page .section-heading h2{font-size:1.35rem}
+  .updates-page .search-box{max-width:none}
+  .updates-page .catalogue-controls{align-items:flex-start;flex-direction:column;gap:9px}
+  .updates-page .category-filters{width:100%;gap:6px}
+  .updates-page .category-filter{padding:7px 10px;font-size:.75rem}
+  .updates-page .app-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));gap:9px}
+}
+@media(max-width:360px){
+  .updates-page .app-grid{grid-template-columns:minmax(0,1fr)}
+  .updates-page .category-filter{font-size:.7rem;padding:6px 8px}
+}
+
 /* CrownStore APK download surface: real byte progress, cancellation and retry. */
 .download-feedback{
   min-width:0;margin-top:13px;padding:13px;border:1px solid rgba(226,220,228,.19);border-radius:14px;
