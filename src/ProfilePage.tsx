@@ -779,19 +779,20 @@ export default function ProfilePage({
     setExternalBusy(true);
     setExternalError("");
     setExternalNotice("");
+    let responseStatus = 0;
     try {
       const response = await fetch(API_BASE + "/api/auth/kingshall/external/verify-access-code", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ requestId: request.requestId, accessCode: externalAccessCode })
       });
+      responseStatus = response.status;
       const data = await response.json().catch(() => ({})) as AuthPayload;
       if (!response.ok) throw new Error(responseMessage(data, "KingsHall could not verify the Access Code."));
       saveSession(data);
     } catch (caught) {
       setExternalError(caught instanceof Error ? caught.message : "KingsHall could not verify the Access Code.");
-      const status = (caught as { response?: { status?: number } }).response?.status;
-      if ([409, 410, 423].includes(Number(status))) {
+      if ([409, 410, 423].includes(responseStatus)) {
         setExternalLogin(null);
         setExternalApproved(false);
       }
