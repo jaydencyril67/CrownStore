@@ -5,7 +5,7 @@ import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, Clock3, Download,
   Fingerprint, KeyRound, LogOut, RefreshCw, ShieldCheck,
-  Smartphone, UserRound, X
+  Smartphone, X
 } from "lucide-react";
 import type { CrownApp } from "./types";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
