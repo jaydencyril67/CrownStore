@@ -1010,7 +1010,7 @@ export default function ProfilePage({
   }
 
   function signOut() {
-    void disableCrownStorePush(token).catch(() => undefined);
+    void disableCrownStorePush(token, false).catch(() => undefined);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setToken("");
