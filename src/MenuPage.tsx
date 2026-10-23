@@ -4,8 +4,8 @@ import {
   Smartphone, Sparkles, Zap
 } from "lucide-react";
 import {
-  BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT, DEFAULT_NOTIFICATION_PREFERENCES,
-  EDGE_LIGHT_KEY, EXPAND_MODE_KEY, HEADER_LIGHTING_KEY, readNotificationPreferences,
+  BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT,
+  EDGE_LIGHT_KEY, EXPAND_MODE_KEY, readNotificationPreferences,
   requestDeviceNotificationPermission, saveNotificationPreferences, SWIPE_NAVIGATION_KEY,
   type NotificationKind, type NotificationPreferences
 } from "./notifications";
