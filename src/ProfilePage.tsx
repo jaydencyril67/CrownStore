@@ -424,6 +424,10 @@ export default function ProfilePage({
     setToken(data.token);
     setIdentity("");
     setAccessCode("");
+    setChallengeToken("");
+    setExtraMethods([]);
+    setExtraMethod("");
+    setExtraCode("");
     setBrowserAccounts([]);
     setExternalLogin(null);
     setError("");
