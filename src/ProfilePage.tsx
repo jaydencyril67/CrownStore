@@ -1132,16 +1132,19 @@ export default function ProfilePage({
         {externalNotice && <p className="profile-notice" role="status">{externalNotice}</p>}
         {externalError && <p className="profile-error" role="alert">{externalError}</p>}
         {externalLogin && <>
-          <p className="profile-external-help">Scan this QR code in KingsHall, or enter the code in External Login. It expires in five minutes.</p>
-          <div className="profile-qr"><QRCodeSVG value={JSON.stringify({ type: "kingshall-external-login-v1", requestId: externalLogin.requestId, qrToken: externalLogin.qrToken, appName: "CrownStore" })} size={174} level="M" includeMargin /></div>
-          <span className="profile-one-time-label">ONE-TIME LOGIN CODE</span>
-          <strong className="profile-one-time-code">{externalLogin.loginCode}</strong>
-          <p className="profile-external-expiry" role="timer" aria-live="off">
-            {externalSecondsRemaining > 0
-              ? `Expires in ${Math.floor(externalSecondsRemaining / 60)}:${String(externalSecondsRemaining % 60).padStart(2, "0")} · ${new Date(externalLogin.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-              : "Request expired"}
-          </p>
-          {!externalApproved ? <p className="profile-external-help" role="status">Waiting for approval from KingsHall…</p> : <form onSubmit={verifyExternalAccessCode} style={{ display: "grid", gap: 10, textAlign: "left", width: "100%" }}>
+          {!externalApproved ? <>
+            <p className="profile-external-help">Scan this QR code in KingsHall, or enter the code in External Login. It expires in five minutes.</p>
+            <div className="profile-qr"><QRCodeSVG value={JSON.stringify({ type: "kingshall-external-login-v1", requestId: externalLogin.requestId, qrToken: externalLogin.qrToken, appName: "CrownStore" })} size={174} level="M" includeMargin /></div>
+            <span className="profile-one-time-label">ONE-TIME LOGIN CODE</span>
+            <strong className="profile-one-time-code">{externalLogin.loginCode}</strong>
+            <p className="profile-external-expiry" role="timer" aria-live="off">
+              {externalSecondsRemaining > 0
+                ? `Expires in ${Math.floor(externalSecondsRemaining / 60)}:${String(externalSecondsRemaining % 60).padStart(2, "0")} · ${new Date(externalLogin.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                : "Request expired"}
+            </p>
+            <p className="profile-external-help" role="status">Waiting for approval from KingsHall…</p>
+          </> : <form onSubmit={verifyExternalAccessCode} className="profile-auth-form" style={{ display: "grid", gap: 10, textAlign: "left", width: "100%" }}>
+            <div className="profile-external-heading"><span><KeyRound size={18} /></span><div><h2>Device approved</h2><p>Enter the Access Code for the KingsHall account that approved this sign-in.</p></div></div>
             <label htmlFor="crownstore-external-access-code" style={{ fontSize: 12, fontWeight: 800 }}>KingsHall Access Code</label>
             <input id="crownstore-external-access-code" type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{6}" maxLength={6} required value={externalAccessCode} onChange={event => setExternalAccessCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter six-digit Access Code" style={{ width: "100%", minHeight: 48, boxSizing: "border-box", borderRadius: 13, border: "1px solid var(--profile-line, rgba(255,255,255,.2))", background: "var(--profile-surface, rgba(255,255,255,.06))", color: "inherit", padding: "12px 14px", fontSize: 15, outline: "none" }} />
             <button className="profile-secondary-button" type="submit" disabled={externalBusy || externalAccessCode.length !== 6}>{externalBusy ? <span className="profile-spinner" /> : "Verify Access Code & Sign in"}</button>
