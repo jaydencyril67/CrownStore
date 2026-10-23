@@ -45,6 +45,9 @@ type AuthPayload = {
   qrToken?: string;
   expiresAt?: string;
   appName?: string;
+  requiresExtraSecurity?: boolean;
+  challengeToken?: string;
+  methods?: Array<"2fa" | "biometric">;
 };
 
 type ExternalLoginStart = {
