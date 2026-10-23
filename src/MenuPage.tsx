@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import {
   BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT,
-  EDGE_LIGHT_KEY, EXPAND_MODE_KEY, readNotificationPreferences,
+  EDGE_LIGHT_KEY, EDGE_LIGHT_ENABLED_KEY, EDGE_LIGHT_COLOR_KEY, EDGE_LIGHT_MODE_KEY, EXPAND_MODE_KEY, readNotificationPreferences,
   requestDeviceNotificationPermission, saveNotificationPreferences, SWIPE_NAVIGATION_KEY,
   type NotificationKind, type NotificationPreferences
 } from "./notifications";
@@ -43,16 +43,24 @@ function getBoolean(key: string, fallback = true): boolean {
 function readEdge(): EdgeSettings {
   try {
     const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as Partial<EdgeSettings>;
-    const mode = EDGE_MODES.some((item) => item.value === saved.mode) ? saved.mode! : "stable-light";
+    const storedMode = window.localStorage.getItem(EDGE_LIGHT_MODE_KEY) ?? saved.mode;
+    const storedColor = window.localStorage.getItem(EDGE_LIGHT_COLOR_KEY) ?? saved.color;
+    const storedEnabled = window.localStorage.getItem(EDGE_LIGHT_ENABLED_KEY);
+    const mode = EDGE_MODES.some((item) => item.value === storedMode) ? storedMode as EdgeSettings["mode"] : "stable-light";
     return {
-      enabled: saved.enabled === true,
-      color: typeof saved.color === "string" && /^#[0-9a-f]{6}$/i.test(saved.color) ? saved.color : DEFAULT_ACCENT,
+      enabled: storedEnabled === null ? saved.enabled === true : storedEnabled === "true",
+      color: typeof storedColor === "string" && /^#[0-9a-f]{6}$/i.test(storedColor) ? storedColor : DEFAULT_ACCENT,
       mode
     };
   } catch { return { enabled: false, color: DEFAULT_ACCENT, mode: "stable-light" }; }
 }
 function writeEdge(value: EdgeSettings) {
-  try { window.localStorage.setItem(EDGE_LIGHT_KEY, JSON.stringify(value)); } catch {}
+  try {
+    window.localStorage.setItem(EDGE_LIGHT_KEY, JSON.stringify(value));
+    window.localStorage.setItem(EDGE_LIGHT_ENABLED_KEY, String(value.enabled));
+    window.localStorage.setItem(EDGE_LIGHT_COLOR_KEY, value.color);
+    window.localStorage.setItem(EDGE_LIGHT_MODE_KEY, value.mode);
+  } catch {}
   window.dispatchEvent(new CustomEvent("crownstore:nowbar-settings-changed", { detail: value }));
 }
 function writeBoolean(key: string, value: boolean, event = "crownstore:nowbar-settings-changed") {
