@@ -114,11 +114,11 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onD
     {message && <p className="device-feedback" role="status">{message}</p>}
     {error && <p className="device-feedback is-error" role="alert"><AlertCircle size={15} /> {error}</p>}
     {snapshot?.commandStatus && snapshot.commandStatus !== "none" && <p className={"device-command-status " + (snapshot.commandStatus === "failed" ? "is-error" : "")} role="status">
-      {snapshot.commandStatus === "pending" ? "Update request waiting for CrownStore Android…" :
-        snapshot.commandStatus === "downloading" ? "APK downloading through Android Download Manager…" :
-        snapshot.commandStatus === "permission-required" ? "Allow CrownStore to install apps in Android settings, then request the update again." :
-        snapshot.commandStatus === "install-ready" ? "Android's installer has opened. Review its prompt to finish." :
-        snapshot.commandStatus === "failed" ? (snapshot.commandMessage || "The update did not start.") : "Update handoff completed."}
+      {snapshot.commandStatus === "pending" ? "Starting update…" :
+        snapshot.commandStatus === "downloading" ? "Downloading…" :
+        snapshot.commandStatus === "permission-required" ? "Allow installation in Android settings, then try again." :
+        snapshot.commandStatus === "install-ready" ? "Confirm installation on your phone." :
+        snapshot.commandStatus === "failed" ? "Update failed. Please try again." : "Update complete."}
     </p>}
     {session && snapshot?.session.status === "waiting" && <div className="device-waiting"><span className="loader-ring" /><span>Connecting…</span></div>}
     {session && snapshot?.session.status === "connected" && <div className="device-installed-list">
