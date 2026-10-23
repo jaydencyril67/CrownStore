@@ -772,7 +772,7 @@ export default function ProfilePage({
     }
   }
 
-  async function verifyExternalAccessCode(event: React.FormEvent<HTMLFormElement>) {
+  async function verifyExternalAccessCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const request = externalLogin;
     if (!request || !externalApproved || externalAccessCode.length !== 6 || externalBusy) return;
