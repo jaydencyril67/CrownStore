@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
-import { addCrownNotification, readNotificationPreferences, type NotificationKind } from "./notifications";
+import { addCrownNotification, mergeCrownNotifications, readNotificationPreferences, type NotificationKind } from "./notifications";
 import { loadCrownStoreAccountNotificationPreferences, refreshCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
 
 const SESSION_KEY = "crownstore-profile-token";
@@ -9,6 +9,22 @@ const VALID_KINDS: NotificationKind[] = ["appUpdates", "downloads", "security", 
 
 function currentToken(): string {
   try { return window.localStorage.getItem(SESSION_KEY) || ""; } catch { return ""; }
+}
+
+async function syncAccountInbox(token = currentToken()): Promise<void> {
+  if (!token) return;
+  const apiBase = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
+  try {
+    const response = await fetch(apiBase + "/api/notifications", {
+      headers: { Accept: "application/json", Authorization: "Bearer " + token },
+      cache: "no-store"
+    });
+    if (!response.ok) return;
+    const result = await response.json().catch(() => ({})) as { notifications?: Parameters<typeof mergeCrownNotifications>[0] };
+    if (Array.isArray(result.notifications)) mergeCrownNotifications(result.notifications);
+  } catch {
+    // Local notifications remain usable during an API/network interruption.
+  }
 }
 
 function notificationKind(value: unknown): NotificationKind {
@@ -77,6 +93,7 @@ export default function PushNotificationAgent() {
           }
           if (readNotificationPreferences().channels.device) await refreshCrownStorePush(token);
           else await syncCrownStorePushPreferences(token);
+          await syncAccountInbox(token);
           return;
         }
         await syncCrownStorePushPreferences(token);
@@ -93,15 +110,18 @@ export default function PushNotificationAgent() {
     };
     const onSessionChange = () => void syncCurrentAccount(true);
     const onPreferencesChange = () => void syncCurrentAccount(false);
+    const onAccountNotificationsChange = () => void syncAccountInbox();
     window.addEventListener("storage", onStorage);
     window.addEventListener("crownstore:profile-session-changed", onSessionChange);
     window.addEventListener("crownstore:notification-preferences-changed", onPreferencesChange);
+    window.addEventListener("crownstore:account-notifications-changed", onAccountNotificationsChange);
 
     return () => {
       disposed = true;
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("crownstore:profile-session-changed", onSessionChange);
       window.removeEventListener("crownstore:notification-preferences-changed", onPreferencesChange);
+      window.removeEventListener("crownstore:account-notifications-changed", onAccountNotificationsChange);
       listeners.forEach((listener) => void listener.remove());
     };
   }, []);
