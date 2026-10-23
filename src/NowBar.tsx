@@ -50,16 +50,17 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
       const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as { enabled?: boolean; color?: string; mode?: string };
       const modes: EdgeMode[] = ["stable-light", "stable", "blink-light", "blink", "pulse-light", "pulse", "color-light", "color"];
       // Prefer the dedicated keys (same pattern as KingsHall); fall back to the combined key for older installs.
-      const storedMode = window.localStorage.getItem(EDGE_LIGHT_MODE_KEY) ?? saved.mode;
+      const dedicatedMode = window.localStorage.getItem(EDGE_LIGHT_MODE_KEY);
+      const storedMode = modes.includes(dedicatedMode as EdgeMode) ? dedicatedMode : saved.mode;
       const storedColor = window.localStorage.getItem(EDGE_LIGHT_COLOR_KEY) ?? saved.color;
       const storedEnabled = window.localStorage.getItem(EDGE_LIGHT_ENABLED_KEY);
-      const mode: EdgeMode = modes.includes(storedMode as EdgeMode) ? storedMode as EdgeMode : "stable-light";
+      const mode: EdgeMode = modes.includes(storedMode as EdgeMode) ? storedMode as EdgeMode : "stable";
       return {
         enabled: storedEnabled === null ? saved.enabled === true : storedEnabled === "true",
         color: typeof storedColor === "string" && /^#[0-9a-f]{6}$/i.test(storedColor) ? storedColor : "#c4b5fd",
         mode
       };
-    } catch { return { enabled: false, color: "#c4b5fd", mode: "stable-light" }; }
+    } catch { return { enabled: false, color: "#c4b5fd", mode: "stable" }; }
   };
   const readColor = (key: string, fallback: string) => {
     try { const saved = window.localStorage.getItem(key); return saved && /^#[0-9a-f]{6}$/i.test(saved) ? saved : fallback; } catch { return fallback; }
