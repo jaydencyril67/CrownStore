@@ -43,16 +43,19 @@ function getBoolean(key: string, fallback = true): boolean {
 function readEdge(): EdgeSettings {
   try {
     const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as Partial<EdgeSettings>;
-    const storedMode = window.localStorage.getItem(EDGE_LIGHT_MODE_KEY) ?? saved.mode;
+    const dedicatedMode = window.localStorage.getItem(EDGE_LIGHT_MODE_KEY);
+    const validMode = (value: unknown): value is EdgeSettings["mode"] =>
+      typeof value === "string" && EDGE_MODES.some((item) => item.value === value);
+    const storedMode = validMode(dedicatedMode) ? dedicatedMode : saved.mode;
     const storedColor = window.localStorage.getItem(EDGE_LIGHT_COLOR_KEY) ?? saved.color;
     const storedEnabled = window.localStorage.getItem(EDGE_LIGHT_ENABLED_KEY);
-    const mode = EDGE_MODES.some((item) => item.value === storedMode) ? storedMode as EdgeSettings["mode"] : "stable-light";
+    const mode = validMode(storedMode) ? storedMode : "stable";
     return {
       enabled: storedEnabled === null ? saved.enabled === true : storedEnabled === "true",
       color: typeof storedColor === "string" && /^#[0-9a-f]{6}$/i.test(storedColor) ? storedColor : DEFAULT_ACCENT,
       mode
     };
-  } catch { return { enabled: false, color: DEFAULT_ACCENT, mode: "stable-light" }; }
+  } catch { return { enabled: false, color: DEFAULT_ACCENT, mode: "stable" }; }
 }
 function writeEdge(value: EdgeSettings) {
   try {
