@@ -74,8 +74,12 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
           // Refresh the server's installed-version snapshot periodically, so the PWA
           // reflects installs and updates without asking the user to press Scan again.
           if (Date.now() - lastInventoryReportAt >= 30000) {
-            await reportInventory();
-            lastInventoryReportAt = Date.now();
+            try {
+              await reportInventory();
+              lastInventoryReportAt = Date.now();
+            } catch {
+              // Keep the command/status polling alive; retry the inventory report next cycle.
+            }
           }
           const snapshot = await bridgeFetch<BridgeSnapshot>(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId));
           const command = snapshot.command;
