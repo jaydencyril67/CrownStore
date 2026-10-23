@@ -1235,7 +1235,7 @@ export default function App() {
     const releaseVersion = String(app.versionName || "latest");
     addCrownNotification({
       id: "download:" + app.packageId + ":" + releaseVersion,
-      externalKey: "download:" + app.packageId + ":" + releaseVersion,
+      externalKey: "download:" + app.slug + ":" + releaseVersion,
       kind: "downloads",
       title: app.name + " is ready",
       body: "The " + releaseVersion + " APK has been downloaded and is ready for installation.",
