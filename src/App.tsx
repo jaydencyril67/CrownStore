@@ -794,6 +794,7 @@ export default function App() {
   const isAndroidApp = Capacitor.getPlatform() === "android";
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
   const [search, setSearch] = useState("");
   const [searchPageQuery, setSearchPageQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -813,6 +814,17 @@ export default function App() {
       return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" ? saved : "HOME";
     } catch { return "HOME"; }
   });
+
+  useEffect(() => {
+    const updateOnlineStatus = () => setIsOnline(navigator.onLine);
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    updateOnlineStatus();
+    return () => {
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
+    };
+  }, []);
 
   useEffect(() => {
     try { window.localStorage.setItem("crownstore-current-view", view); } catch { /* Keep navigation working when storage is unavailable. */ }
@@ -1517,7 +1529,7 @@ export default function App() {
     <div className="ambient ambient-one" /><div className="ambient ambient-two" />
     <header className="app-header glass-panel" aria-label="CrownStore">
       <span className="header-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></span>
-      <div className="header-brand"><div className="header-brand-copy"><p className="header-brand-title">CrownStore</p></div></div>
+      <div className={"header-brand" + (!isOnline ? " header-brand-offline" : "")} aria-live="polite"><div className="header-brand-copy"><p className="header-brand-title">{isOnline ? "CrownStore" : "NO INTERNET"}</p>{!isOnline && <p className="header-brand-subtitle">Check your connection</p>}</div></div>
       <div className="header-right-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></div>
     </header>
     <main id="home">
