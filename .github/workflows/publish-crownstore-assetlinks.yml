@@ -87,7 +87,7 @@ jobs:
             printf '  `android:apk-key-hash:%s`\n' "$ANDROID_KEY_HASH"
             printf '\n'
             printf '%s\n' '- RP ID: `crownstore.kingshall.online`'
-            printf '%s\n' "- Certificate fingerprint: `$CERT_SHA256`"
+            printf ' - Certificate fingerprint: `%s`\n' "$CERT_SHA256"
             printf '%s\n' '- This workflow does not build or publish an APK and does not modify KingsHall, CryBots or HallsChat.'
           } >> "$GITHUB_STEP_SUMMARY"
           echo "CROWNSTORE_ANDROID_KEY_HASH=$ANDROID_KEY_HASH" >> "$GITHUB_ENV"
