@@ -51,17 +51,6 @@ function getAppInstallState(app: CrownApp, installedApps: Record<string, NativeI
   return app.releaseId ? "download" : "unreleased";
 }
 
-function appInstallBadgeLabel(state: AppInstallState): string {
-  switch (state) {
-    case "checking": return "Checking…";
-    case "check-error": return "Retry check";
-    case "update": return "Update";
-    case "installed": return "Installed";
-    case "download": return "Download";
-    case "unreleased": return "Coming soon";
-  }
-}
-
 function appInstallDetailsLabel(state: AppInstallState, app: CrownApp): string {
   switch (state) {
     case "checking": return "Checking installed apps…";
