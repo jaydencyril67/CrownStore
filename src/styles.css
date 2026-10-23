@@ -585,7 +585,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .native-self-update-copy p{margin:0;color:var(--text-muted,rgba(255,255,255,.67));font-size:.77rem;line-height:1.45}
 .native-self-update-copy small{color:#ffb4b4;font-size:.75rem}
 .native-self-update>.button{white-space:nowrap;flex:0 0 auto}
-@media(max-width:520px){.native-self-update{align-items:flex-start;flex-wrap:wrap}.native-self-update-copy{min-width:calc(100% - 60px)}.native-self-update>.button{width:100%;margin-left:52px}}
+@media(max-width:520px){.native-self-update{align-items:flex-start;flex-wrap:wrap}.native-self-update-copy{min-width:calc(100% - 60px)}.native-self-update>.button{width:auto;max-width:calc(100% - 52px);margin-left:52px;flex:0 1 auto;align-self:flex-start}}
 
 
 /* Play Store-style install states for the live Android catalogue. */
