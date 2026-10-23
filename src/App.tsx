@@ -287,8 +287,6 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
   const [reviewLoading, setReviewLoading] = useState(true);
   const [reviewLoadError, setReviewLoadError] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
-  const [reviewName, setReviewName] = useState("");
-  const [reviewTitle, setReviewTitle] = useState("");
   const [reviewBody, setReviewBody] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewNotice, setReviewNotice] = useState("");
@@ -332,13 +330,9 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
       const own = payload.myReview;
       if (own) {
         setReviewRating(own.rating);
-        setReviewName(own.displayName === "CrownStore user" ? "" : own.displayName);
-        setReviewTitle(own.title || "");
         setReviewBody(own.body || "");
       } else {
         setReviewRating(5);
-        setReviewName("");
-        setReviewTitle("");
         setReviewBody("");
       }
     }).catch(() => {
@@ -376,9 +370,9 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
         "POST",
         {
           reviewerToken,
-          displayName: reviewName.trim(),
+          displayName: "CrownStore user",
           rating: reviewRating,
-          title: reviewTitle.trim(),
+          title: "",
           body: cleanBody
         }
       );
@@ -389,8 +383,6 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
       setReviewPayload(refreshed);
       if (refreshed.myReview) {
         setReviewRating(refreshed.myReview.rating);
-        setReviewName(refreshed.myReview.displayName === "CrownStore user" ? "" : refreshed.myReview.displayName);
-        setReviewTitle(refreshed.myReview.title || "");
         setReviewBody(refreshed.myReview.body || "");
       }
     } catch (error) {
@@ -509,11 +501,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
       <form className="app-review-form" onSubmit={(event) => void submitReview(event)}>
         <div className="app-review-form-heading"><h3>{reviewPayload?.myReview ? "Update your review" : "Rate this app"}</h3><span>One review per browser</span></div>
         <div className="app-review-rating-picker" role="group" aria-label="Your rating">
-          {[1, 2, 3, 4, 5].map((value) => <button className="review-rating-star" key={value} type="button" aria-label={"Rate " + value + " out of 5"} aria-pressed={reviewRating === value} onClick={() => setReviewRating(value)} style={{ color: value <= reviewRating ? "#facc15" : "var(--text-muted, #8b8798)" }}><Star size={20} fill={value <= reviewRating ? "#facc15" : "none"} stroke={value <= reviewRating ? "#facc15" : "currentColor"} /></button>)}
-        </div>
-        <div className="app-review-fields">
-          <label className="app-review-field"><span>Your name (optional)</span><input value={reviewName} onChange={(event) => setReviewName(event.target.value)} maxLength={40} autoComplete="nickname" placeholder="CrownStore user" /></label>
-          <label className="app-review-field"><span>Review headline (optional)</span><input value={reviewTitle} onChange={(event) => setReviewTitle(event.target.value)} maxLength={100} placeholder="Sum it up in a few words" /></label>
+          {[1, 2, 3, 4, 5].map((value) => <button className="review-rating-star" key={value} type="button" aria-label={"Rate " + value + " out of 5"} aria-pressed={reviewRating === value} onClick={() => setReviewRating(value)}><Star size={22} fill={value <= reviewRating ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.35} /></button>)}
         </div>
         <label className="app-review-field"><span>Your review</span><textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} minLength={8} maxLength={1600} required placeholder="What did you like, or what could be better?" /></label>
         <div className="app-review-form-actions"><span>{reviewBody.trim().length}/1,600 characters</span><button className="button button-primary" type="submit" disabled={reviewSubmitting || reviewBody.trim().length < 8}>{reviewSubmitting ? "Saving…" : <><Send size={15} /> {reviewPayload?.myReview ? "Update review" : "Post review"}</>}</button></div>
