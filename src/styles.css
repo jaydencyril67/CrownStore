@@ -374,10 +374,10 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-slot.is-expanded{min-width:0;width:max-content;max-width:100%;justify-content:center;min-height:0}
 .kh-nowbar-action{width:100%;min-height:40px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 6px 6px;border:1px solid rgba(139,92,246,.36);border-radius:12px;background:linear-gradient(180deg,rgba(139,92,246,.1),rgba(9,11,14,.96));color:#a78bfa;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 
-.kh-nowbar-action svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.kh-nowbar-action svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .kh-nowbar-action span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kh-nowbar-icon{width:20px;height:20px;display:grid;place-items:center;flex:0 0 20px}
-.kh-nowbar-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.kh-nowbar-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .kh-nowbar-label-compact{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1}
 .kh-nowbar-action .kh-nowbar-label-compact{font-size:.58rem;letter-spacing:.04em}
 .kh-nowbar-action.is-active{border-color:rgba(241,211,108,.88);background:linear-gradient(180deg,rgba(139,92,246,.22),rgba(139,92,246,.07));color:#fff1b8}
