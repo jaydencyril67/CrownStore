@@ -1259,7 +1259,7 @@ export default function App() {
           <div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div>
           <h1>All your apps.<br /><span>One royal home.</span></h1>
           <p className="hero-description">Discover the apps built for the KingsHall ecosystem. Official Android releases, clear version details and direct downloads—all in one trusted place.</p>
-          <div className="hero-actions"><button className="button button-primary" onClick={() => navigate("APPS")}>Explore applications <ArrowRight size={17} /></button><button className="button button-quiet" onClick={() => navigate("ABOUT")}>How it works <ChevronRight size={16} /></button></div>
+          
           <div className="trust-row"><span><ShieldCheck size={16} /> Official releases</span><span><CheckCircle2 size={16} /> Verified APK metadata</span></div>
         </div>
         <div className="hero-art"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-glow" /><div className="hero-crown"><StoreMark size={61} /><span>CROWNSTORE</span></div><div className="floating-chip chip-one"><Smartphone size={17} /> Android apps</div><div className="floating-chip chip-two"><ShieldCheck size={17} /> Verified builds</div><div className="floating-chip chip-three"><ArrowDownToLine size={17} /> Direct downloads</div></div>
