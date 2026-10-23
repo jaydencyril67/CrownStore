@@ -161,7 +161,7 @@ async function createCrownStorePasskey(options: Record<string, any>): Promise<Re
 
 type ProfileSecurityStatus = {
   twoFactor: { configured: boolean; enabled: boolean; pending?: boolean };
-  biometric: { configured: boolean; enabled: boolean; credentialCount: number };
+  biometric: { configured: boolean; enabled: boolean; credentialCount: number; credentials?: Array<{ id: string; createdAt?: string | null }> };
 };
 
 type DownloadHistoryEntry = {
@@ -939,10 +939,10 @@ export default function ProfilePage({
     } finally { setSecurityBusy(false); }
   }
 
-  async function removeBiometricPasskey() {
+  async function removeBiometricPasskey(credentialId: string) {
     setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/unbind");
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/remove", { credentialId });
       setSecurityNotice(String(data.message || "Passkey removed."));
       await refreshProfileSecurity();
     } catch (caught) {
@@ -1149,12 +1149,16 @@ export default function ProfilePage({
               <span className={securityStatus?.biometric.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.biometric.configured ? "Passkey configured" : "No passkey configured"}</span>
               <span className={securityStatus?.biometric.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.biometric.enabled ? "Required at sign-in" : "Sign-in requirement off"}</span>
             </div>
-            {!securityStatus?.biometric.configured && <button className="profile-secondary-button" type="button" disabled={securityBusy} onClick={() => void registerBiometricPasskey()}>{securityBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} Configure passkey on this device</button>}
-            {securityStatus?.biometric.configured && <div className="profile-security-actions">
-              <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your KingsHall account.</p>
-              <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={securityBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{securityBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable biometric at sign-in" : "Enable biometric at sign-in"}</button>
-              <button className="profile-text-button" type="button" disabled={securityBusy} onClick={() => void removeBiometricPasskey()}>Remove passkey and disable biometric security</button>
-            </div>}
+            <div className="profile-security-actions">
+              <button className="profile-secondary-button" type="button" disabled={securityBusy || !securityStatus || securityStatus.biometric.enabled || securityStatus.biometric.credentialCount >= 5} onClick={() => void registerBiometricPasskey()}>{securityBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus?.biometric.configured ? "Add another passkey" : "Configure passkey on this device"}</button>
+              {securityStatus?.biometric.enabled && <p className="profile-security-meta">Disable biometric sign-in protection before adding another passkey. You can still remove individual passkeys below.</p>}
+              {securityStatus?.biometric.configured && <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={securityBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{securityBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable biometric at sign-in" : "Enable biometric at sign-in"}</button>}
+              {securityStatus?.biometric.configured && <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your KingsHall account. You can bind up to five.</p>}
+              {(securityStatus?.biometric.credentials || []).map((credential, index) => <div className="profile-security-passkey" key={credential.id}>
+                <div><strong>Bound passkey {index + 1}</strong><span>{credential.createdAt ? "Added " + new Date(credential.createdAt).toLocaleDateString() : "Added date unavailable"}</span></div>
+                <button className="profile-text-button" type="button" disabled={securityBusy} onClick={() => void removeBiometricPasskey(credential.id)}>Unbind passkey</button>
+              </div>)}
+            </div>
           </div>
         </>}
       </section>
