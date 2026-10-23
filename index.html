@@ -108,14 +108,12 @@
     </div>
     <script>
       (function () {
-        var navigation = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-        var legacyReload = performance.navigation && performance.navigation.type === 1;
-        var isRefresh = (navigation && navigation.type === 'reload') || legacyReload;
-        window.__crownStoreRefreshSplash = Boolean(isRefresh);
-        if (isRefresh) {
-          var splash = document.getElementById('crownstore-refresh-splash');
-          if (splash) splash.style.display = 'flex';
-        }
+        // Always bridge the native/browser launch splash into the branded refresh splash.
+        // Do not depend on navigation.type: Android WebView/PWA launches may report "navigate"
+        // even when the user expects the custom splash immediately after the system splash.
+        window.__crownStoreRefreshSplash = true;
+        var splash = document.getElementById('crownstore-refresh-splash');
+        if (splash) splash.style.display = 'flex';
       })();
     </script>
     <div id="root"></div>
