@@ -201,17 +201,33 @@
 }
 
 
-/* Home page: use the details page's open, content-first layout instead of nested cards. */
+/* Home shelves: one authoritative vertical app-row layout for desktop and mobile. */
 .home-shelves{
-  width:min(100%,1100px);margin:0 auto;padding:16px clamp(14px,3vw,28px) 150px;
-  display:grid;gap:30px;box-sizing:border-box;
+  width:min(100%,1100px);
+  margin:0 auto;
+  padding:16px clamp(14px,3vw,28px) 150px;
+  display:grid;
+  gap:30px;
+  box-sizing:border-box;
 }
 .home-shelves .app-shelf{
-  min-width:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;
+  min-width:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
 }
 .home-shelves .shelf-heading{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
-  padding:0 0 12px;margin:0 0 14px;border-bottom:1px solid rgba(255,255,255,.09);
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  padding:0 0 12px;
+  margin:0 0 8px;
+  border-bottom:1px solid rgba(255,255,255,.09);
 }
 .home-shelves .shelf-title-wrap{display:flex;align-items:center;gap:10px;min-width:0}
 .home-shelves .shelf-icon{
@@ -222,39 +238,159 @@
 .home-shelves .shelf-title-wrap p{margin:5px 0 0;color:#a99fba;font-size:10px;line-height:1.5}
 .home-shelves .shelf-count{color:#bca9dc;font-size:10px;white-space:nowrap}
 .home-shelves .shelf-track{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:14px 12px;
-  overflow:visible;padding:0;scrollbar-width:none;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  width:100%;
+  overflow:visible;
+  padding:0;
+  background:transparent;
 }
 .home-shelves .shelf-app-card{
-  min-width:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  margin:0;
+  padding:0;
+  border:0;
+  border-bottom:1px solid rgba(226,220,228,.12);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
 }
 .home-shelves .shelf-app-tile{
-  width:100%;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:9px;
-  padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:inherit;text-align:left;
+  width:100%;
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-columns:76px minmax(0,1fr) 18px;
+  align-items:center;
+  column-gap:12px;
+  padding:12px 0;
+  margin:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:inherit;
+  text-align:left;
 }
 .home-shelves .shelf-app-icon{
-  width:100%;aspect-ratio:1;display:grid;place-items:center;overflow:hidden;
-  border:1px solid rgba(226,220,228,.13);border-radius:18px;background:rgba(255,255,255,.025);
+  display:block;
+  width:76px;
+  height:76px;
+  min-width:76px;
+  aspect-ratio:1;
+  align-self:center;
+  overflow:hidden;
+  box-sizing:border-box;
+  border:1px solid rgba(255,255,255,.82);
+  border-radius:15px;
+  background:transparent;
   box-shadow:none;
 }
-.home-shelves .shelf-app-icon .app-icon-image,.home-shelves .shelf-app-icon .app-icon-fallback{
-  width:100%;height:100%;object-fit:contain;border-radius:inherit;
+.home-shelves .shelf-app-icon .app-icon-image,
+.home-shelves .shelf-app-icon .app-icon-fallback{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  border:0;
+  border-radius:inherit;
+  background:transparent;
+  box-shadow:none;
+}
+.home-shelves .shelf-app-copy{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:3px;
+  min-width:0;
+  margin:0;
+  padding:0;
 }
 .home-shelves .shelf-app-name{
-  display:-webkit-box;width:100%;min-height:2.6em;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;
-  color:#eee7fb;font-size:11px;font-weight:550;line-height:1.35;overflow-wrap:anywhere;
+  display:block;
+  width:100%;
+  min-height:0;
+  margin:0;
+  padding:0;
+  color:#f0e8fc;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.3;
+  overflow-wrap:anywhere;
+}
+.home-shelves .shelf-app-meta{
+  display:block;
+  min-width:0;
+  margin:0;
+  padding:0;
+  color:#bca9dc;
+  font-size:10px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+.home-shelves .shelf-app-description{
+  display:-webkit-box;
+  max-width:70ch;
+  min-width:0;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  color:#a99fba;
+  font-size:11px;
+  font-weight:400;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+.home-shelves .shelf-app-chevron{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  color:#8f7cad;
 }
 .home-shelves .shelf-empty-slot-card{display:none}
 .home-shelves .shelf-footer-note{
-  display:flex;align-items:center;gap:8px;padding:13px 0 0;border-top:1px solid rgba(255,255,255,.08);
-  border-radius:0;background:none;box-shadow:none;color:#a99fba;font-size:10px;line-height:1.5;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:13px 0 0;
+  border:0;
+  border-top:1px solid rgba(255,255,255,.08);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  color:#a99fba;
+  font-size:10px;
+  line-height:1.5;
 }
 .home-shelves .shelf-footer-note svg{color:#b49ae9;flex:0 0 auto}
-.home-shelves .shelf-app-tile:focus-visible{outline:2px solid rgba(196,181,253,.8);outline-offset:4px}
-@media(max-width:420px){
+.home-shelves .shelf-app-tile:focus-visible{outline:2px solid rgba(196,181,253,.8);outline-offset:3px}
+@media(max-width:600px){
   .home-shelves{gap:25px}
-  .home-shelves .shelf-track{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px 10px}
-  .home-shelves .shelf-app-icon{border-radius:15px}
+  .home-shelves .shelf-heading{align-items:flex-start;margin-bottom:6px;padding-bottom:10px}
+  .home-shelves .shelf-track{gap:0;row-gap:0}
+  .home-shelves .shelf-app-tile{
+    grid-template-columns:66px minmax(0,1fr) 16px;
+    column-gap:10px;
+    padding:10px 0;
+  }
+  .home-shelves .shelf-app-icon{
+    width:66px;
+    height:66px;
+    min-width:66px;
+    max-width:66px;
+    border-radius:13px;
+  }
+  .home-shelves .shelf-app-copy{gap:2px}
+  .home-shelves .shelf-app-name{font-size:12px}
+  .home-shelves .shelf-app-description{font-size:10px;line-height:1.35}
 }
 
 
