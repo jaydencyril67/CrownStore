@@ -528,7 +528,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
         : reviewLoadError
           ? <div className="app-review-empty"><MessageCircle size={22} /><strong>Reviews unavailable</strong><span>Try reopening this page in a moment.</span></div>
           : (reviewPayload?.reviews || []).length > 0
-            ? <div className="app-review-list">{(reviewPayload?.reviews || []).slice(0, 12).map((review) => <article className="app-review-card" key={review.id}>
+            ? <div className="app-review-list">{(reviewPayload?.reviews || []).map((review) => <article className="app-review-card" key={review.id}>
                 <div className="app-review-card-heading">
                   <div className="app-review-author"><span className="app-review-avatar">{(review.displayName || "C").trim().charAt(0).toUpperCase()}</span><div className="app-review-author-copy"><strong>{review.displayName || "CrownStore user"}</strong><span>{formatDate(review.createdAt)}{review.updatedAt && review.createdAt !== review.updatedAt ? " · Edited" : ""}</span></div></div>
                   <RatingStars rating={Number(review.rating) || 0} size={12} />
@@ -1134,12 +1134,12 @@ export default function App() {
     setRequestedAppSlug("");
     if (!matched) return;
     setView("APPS");
-    setSelectedApp(matched);
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("app");
       window.history.replaceState({}, "", url.toString());
     } catch { /* The selected app still opens if history cannot be updated. */ }
+    openAppDetails(matched);
   }, [requestedAppSlug, loading, apps]);
 
   async function continueNativeInstall(app: CrownApp, downloadId: number): Promise<void> {
