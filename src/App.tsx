@@ -1488,8 +1488,22 @@ export default function App() {
       window.history.pushState({ crownStoreDetail: true, slug: app.slug }, "", nextUrl);
       detailHistoryPushedRef.current = true;
     }
+
+    // Show the catalogue copy immediately, then refresh all app metadata from Neon
+    // whenever details opens. Reviews are independently reloaded by AppDetailsPage.
     setSelectedApp(app);
     window.scrollTo({ top: 0, behavior: "auto" });
+    const requestedSlug = app.slug;
+    void requestStoreJson<{ app: CrownApp }>(
+      API_BASE + "/api/apps/" + encodeURIComponent(requestedSlug) + "?_=" + Date.now()
+    ).then((payload) => {
+      const freshApp = payload?.app;
+      if (!freshApp || freshApp.slug !== requestedSlug) return;
+      setApps((current) => current.map((item) => item.slug === requestedSlug ? freshApp : item));
+      setSelectedApp((current) => current?.slug === requestedSlug ? freshApp : current);
+    }).catch((error) => {
+      console.warn("CrownStore could not refresh app details from the database:", error);
+    });
   }
 
   function closeAppDetails() {
