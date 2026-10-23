@@ -552,7 +552,16 @@ export default function App() {
   const nativeDownloadIdRef = useRef<number | null>(null);
   const [showPublisher, setShowPublisher] = useState(false);
   const [showAppManager, setShowAppManager] = useState(false);
-  const [view, setView] = useState<View>("HOME");
+  const [view, setView] = useState<View>(() => {
+    try {
+      const saved = window.localStorage.getItem("crownstore-current-view");
+      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" ? saved : "HOME";
+    } catch { return "HOME"; }
+  });
+
+  useEffect(() => {
+    try { window.localStorage.setItem("crownstore-current-view", view); } catch { /* Keep navigation working when storage is unavailable. */ }
+  }, [view]);
   const [bridgeSession, setBridgeSession] = useState<BridgeSessionRef | null>(null);
   const [requestedAppSlug, setRequestedAppSlug] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("app")?.trim().toLowerCase() || ""; } catch { return ""; }
@@ -591,14 +600,9 @@ export default function App() {
     return () => { disposed = true; if (subscription) void subscription.remove(); };
   }, []);
 
-  // Always open the storefront at its first section and reset each horizontal
-  // shelf to its first app instead of restoring an old mid-scroll position.
+  // Let the browser restore the user's previous scroll position on refresh.
   useEffect(() => {
-    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
-    window.scrollTo(0, 0);
-    document.querySelectorAll<HTMLElement>(".shelf-track").forEach((track) => {
-      track.scrollLeft = 0;
-    });
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "auto";
   }, []);
 
   // Catalogue data arrives asynchronously. Reset shelves again after the real
