@@ -80,15 +80,15 @@ jobs:
           path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
           PY
           {
-            echo "### CrownStore WebAuthn association"
-            echo ""
-            echo "- Set ApiCrownStore Render `WEBAUTHN_ANDROID_ORIGIN` to:"
-            echo ""
-            echo "  `android:apk-key-hash:$ANDROID_KEY_HASH`"
-            echo ""
-            echo "- RP ID: `crownstore.kingshall.online`"
-            echo "- Certificate fingerprint: `$CERT_SHA256`"
-            echo "- This workflow does not build or publish an APK and does not modify KingsHall, CryBots or HallsChat."
+            printf '%s\n' '### CrownStore WebAuthn association'
+            printf '\n'
+            printf '%s\n' '- Set ApiCrownStore Render `WEBAUTHN_ANDROID_ORIGIN` to:'
+            printf '\n'
+            printf '  `android:apk-key-hash:%s`\n' "$ANDROID_KEY_HASH"
+            printf '\n'
+            printf '%s\n' '- RP ID: `crownstore.kingshall.online`'
+            printf '%s\n' "- Certificate fingerprint: `$CERT_SHA256`"
+            printf '%s\n' '- This workflow does not build or publish an APK and does not modify KingsHall, CryBots or HallsChat.'
           } >> "$GITHUB_STEP_SUMMARY"
           echo "CROWNSTORE_ANDROID_KEY_HASH=$ANDROID_KEY_HASH" >> "$GITHUB_ENV"
 
