@@ -31,46 +31,26 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onD
 
   useEffect(() => { setSession(launchSession); }, [launchSession?.sessionId, launchSession?.secret]);
 
-  useEffect(() => {
-    if (!session) return;
-    try {
-      const saved = window.localStorage.getItem("crownstore-device-snapshot");
-      if (saved) setSnapshot(JSON.parse(saved) as BridgeSnapshot);
-    } catch {}
-    let stopped = false;
-    let inFlight = false;
-    const poll = async () => {
-      if (stopped || inFlight) return;
-      inFlight = true;
-      try {
-        const next = await readBridgeSnapshot(session);
-        if (!stopped) {
-          setSnapshot(next);
-          try { window.localStorage.setItem("crownstore-device-snapshot", JSON.stringify(next)); } catch {}
-          setError("");
-        }
-      } catch (caught) {
-        if (!stopped) setError("Connection interrupted.");
-      } finally { inFlight = false; }
-    };
-    void poll();
-    const timer = window.setInterval(() => void poll(), 2200);
-    return () => { stopped = true; window.clearInterval(timer); };
-  }, [session?.sessionId, session?.secret]);
+  // Status is fetched only when the user taps Scan; no background PWA polling.
+  async function refreshStatus(activeSession: BridgeSessionRef) {
+    const next = await readBridgeSnapshot(activeSession);
+    setSnapshot(next);
+    try { window.localStorage.setItem("crownstore-device-snapshot", JSON.stringify(next)); } catch {}
+    setError("");
+  }
+
 
   async function connect() {
     setBusy(true); setError(""); setMessage("");
     try {
-      const created = await createBridgeSession();
-      setSession(created);
-      onConnect(created);
-      if (!Capacitor.isNativePlatform()) {
-        window.location.assign(created.deepLink);
-      } else {
-        setMessage("Scanning…");
+      if (!session) {
+        setError("Connect this PWA to CrownStore Android once before scanning.");
+        return;
       }
-    } catch (caught) {
-      setError("Couldn’t connect. Please try again.");
+      await refreshStatus(session);
+      setMessage("Status refreshed.");
+    } catch {
+      setError("Couldn’t fetch device status. Reconnect Android and try again.");
     } finally { setBusy(false); }
   }
 
@@ -99,8 +79,8 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onD
     </div>
     <div className="device-bridge-actions">
       <button className="button button-primary" type="button" onClick={() => void connect()} disabled={busy}>
-        {busy ? <><RefreshCw size={16} className="device-spin" /> Connecting…</> :
-          <><Wifi size={16} /> {session ? "Reconnect Android" : "Connect Android"}</>}
+        {busy ? <><RefreshCw size={16} className="device-spin" /> Scanning…</> :
+          <><Wifi size={16} /> Scan apps</> }
       </button>
       {snapshot?.session.status === "connected" && <span className="device-connected"><CheckCircle2 size={15} /> Connected</span>}
     </div>
