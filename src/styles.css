@@ -639,3 +639,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 /* Keep the Updates hero title exactly aligned with the Home shelf heading scale. */
 .updates-hero h1{font-size:23px;line-height:1.2;letter-spacing:0}
 @media(max-width:700px){.updates-hero h1{font-size:14px;line-height:1.2;letter-spacing:0}}
+
+
+/* Match the Updates "Latest releases" heading to the Home "Recommended for you" heading. */
+.updates-page .section-heading h2{font-size:23px;line-height:1.2;letter-spacing:0;font-weight:500}
+@media(max-width:700px){.updates-page .section-heading h2{font-size:14px;line-height:1.2;letter-spacing:0}}
