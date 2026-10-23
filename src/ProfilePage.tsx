@@ -11,6 +11,7 @@ import type { CrownApp } from "./types";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { NativeProfileUsage } from "./native/nativeProfileUsage";
 import "./profile.css";
+import VerificationBadge from "./VerificationBadge";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 const TOKEN_KEY = "crownstore-profile-token";
@@ -880,7 +881,7 @@ export default function ProfilePage({
         <div className="profile-avatar">{safePhoto ? <img src={safePhoto} alt="" /> : <span>{initials}</span>}</div>
         <div className="profile-identity-copy">
           <span className="profile-eyebrow">KINGSHALL ACCOUNT</span>
-          <h1 id="profile-page-title">{glassTitle}</h1>
+          <div className="profile-identity-title-row"><h1 id="profile-page-title">{glassTitle}</h1>{user.verificationStatus === "verified" && <VerificationBadge size={20} title="Verified by KingsHall" />}</div>
           {user.username && <p className="profile-username">@{user.username}</p>}
           <p className="profile-email">{user.email}</p>
           <span className={"profile-verification " + (user.verificationStatus === "verified" ? "is-verified" : "")}>
@@ -892,7 +893,7 @@ export default function ProfilePage({
       <section className="profile-section profile-account-details">
         <div className="profile-section-heading"><h2>Account details</h2><span>Synced with KingsHall</span></div>
         <div className="profile-detail-list">
-          <div><span>Full name</span><strong>{displayName(user)}</strong></div>
+          <div><span>Full name</span><strong className="profile-detail-name">{displayName(user)}{user.verificationStatus === "verified" && <VerificationBadge size={17} title="Verified by KingsHall" />}</strong></div>
           <div><span>Email</span><strong>{user.email || "Not provided"}</strong></div>
           <div><span>Username</span><strong>{user.username ? "@" + user.username : "Not set"}</strong></div>
           <div><span>Verification</span><strong>{user.verificationStatus === "verified" ? "Verified" : user.verificationStatus === "pending" ? "Pending review" : "Not verified"}</strong></div>
