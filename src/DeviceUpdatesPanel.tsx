@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Download, RefreshCw, Smartphone, Wifi } from "lucide-react";
 import type { BridgeSessionRef, BridgeSnapshot, InstalledCatalogueApp } from "./native/deviceBridgeTypes";
-import { bridgeFetch } from "./native/deviceBridge";
+import { bridgeFetch, readBridgeSnapshot } from "./native/deviceBridge";
 
 type Props = {
   launchSession: BridgeSessionRef | null;
