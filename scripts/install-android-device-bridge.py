@@ -64,19 +64,17 @@ activity_path = target_root / "java/online/kingshall/crownstore/MainActivity.jav
 if not activity_path.exists():
     raise SystemExit("Expected generated MainActivity.java was not found.")
 activity = activity_path.read_text(encoding="utf-8")
-plugin_import = "import online.kingshall.crownstore.NativeAppUpdatePlugin;"
-extra_plugin_imports = [
+plugin_imports = [
+    "import online.kingshall.crownstore.NativeAppUpdatePlugin;",
     "import online.kingshall.crownstore.KingsHallAccountPlugin;",
     "import online.kingshall.crownstore.NativeProfileUsagePlugin;",
 ]
-if plugin_import not in activity:
-    marker = "import com.getcapacitor.BridgeActivity;"
-    if marker not in activity:
-        raise SystemExit("Could not safely locate the BridgeActivity import.")
-    activity = activity.replace(marker, marker + "\n" + plugin_import, 1)
-    for extra_import in extra_plugin_imports:
-        if extra_import not in activity:
-            activity = activity.replace(marker + "\n" + plugin_import, marker + "\n" + plugin_import + "\n" + extra_import, 1)
+bridge_import = "import com.getcapacitor.BridgeActivity;"
+if bridge_import not in activity:
+    raise SystemExit("Could not safely locate the BridgeActivity import.")
+missing_imports = [line for line in plugin_imports if line not in activity]
+if missing_imports:
+    activity = activity.replace(bridge_import, bridge_import + "\n" + "\n".join(missing_imports), 1)
 
 # Android WebView draws native scroll indicators independently of page CSS.
 # Disable both axes at the native layer while preserving normal touch scrolling.
@@ -87,32 +85,31 @@ for import_line in ("import android.view.View;", "import android.webkit.WebView;
             raise SystemExit("Could not locate the MainActivity package declaration.")
         activity = activity[:package_end + 1] + "\n" + import_line + activity[package_end + 1:]
 
-registration = "registerPlugin(NativeAppUpdatePlugin.class);"
-extra_registrations = [
+registrations_to_add = [
+    "registerPlugin(NativeAppUpdatePlugin.class);",
     "registerPlugin(KingsHallAccountPlugin.class);",
     "registerPlugin(NativeProfileUsagePlugin.class);",
 ]
-if registration not in activity:
-    marker = "super.onCreate(savedInstanceState);"
-    if marker in activity:
-        registrations = "\n        ".join([registration] + extra_registrations)
-        activity = activity.replace(marker, registrations + "\n        " + marker, 1)
-    else:
-        # A new Capacitor project may start with an empty BridgeActivity subclass.
-        class_marker = "public class MainActivity extends BridgeActivity {"
-        if class_marker not in activity:
-            raise SystemExit("Could not locate a Java MainActivity extending BridgeActivity.")
-        # All profile plugins are registered together when onCreate is generated below.
-        if "import android.os.Bundle;" not in activity:
-            package_marker = "package online.kingshall.crownstore;"
-            if package_marker not in activity:
-                raise SystemExit("Could not locate the MainActivity package declaration.")
-            activity = activity.replace(package_marker, package_marker + "\n\nimport android.os.Bundle;", 1)
-        final_brace = activity.rfind("}")
-        if final_brace < 0:
-            raise SystemExit("Could not locate the end of MainActivity.")
-        override = "\n    @Override\n    public void onCreate(Bundle savedInstanceState) {\n        " + registration + "\n        super.onCreate(savedInstanceState);\n    }\n"
-        activity = activity[:final_brace] + override + activity[final_brace:]
+marker = "super.onCreate(savedInstanceState);"
+if marker in activity:
+    missing_registrations = [line for line in registrations_to_add if line not in activity]
+    if missing_registrations:
+        activity = activity.replace(marker, "\n        ".join(missing_registrations) + "\n        " + marker, 1)
+elif not all(line in activity for line in registrations_to_add):
+    # A new Capacitor project may start with an empty BridgeActivity subclass.
+    class_marker = "public class MainActivity extends BridgeActivity {"
+    if class_marker not in activity:
+        raise SystemExit("Could not locate a Java MainActivity extending BridgeActivity.")
+    if "import android.os.Bundle;" not in activity:
+        package_marker = "package online.kingshall.crownstore;"
+        if package_marker not in activity:
+            raise SystemExit("Could not locate the MainActivity package declaration.")
+        activity = activity.replace(package_marker, package_marker + "\n\nimport android.os.Bundle;", 1)
+    final_brace = activity.rfind("}")
+    if final_brace < 0:
+        raise SystemExit("Could not locate the end of MainActivity.")
+    override = "\n    @Override\n    public void onCreate(Bundle savedInstanceState) {\n        " + "\n        ".join(registrations_to_add) + "\n        super.onCreate(savedInstanceState);\n    }\n"
+    activity = activity[:final_brace] + override + activity[final_brace:]
 
 scrollbar_setup = """        // Match CryBots: hide native scrollbars without disabling scrolling.
         if (getBridge() != null && getBridge().getWebView() != null) {
