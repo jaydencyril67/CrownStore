@@ -9,6 +9,7 @@ export type CrownNotification = {
   readAt: string | null;
   externalKey?: string;
   appSlug?: string;
+  url?: string;
   versionName?: string;
   details?: Record<string, unknown>;
 };
