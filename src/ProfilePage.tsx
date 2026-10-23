@@ -78,7 +78,7 @@ function base64UrlToBytes(value: string): Uint8Array {
 function bytesToBase64Url(value: ArrayBuffer): string {
   let binary = "";
   new Uint8Array(value).forEach((byte) => { binary += String.fromCharCode(byte); });
-  return window.btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/, "");
+  return window.btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 async function authenticateCrownStorePasskey(options: Record<string, any>): Promise<Record<string, any>> {
@@ -806,7 +806,7 @@ export default function ProfilePage({
           </div>}
           {extraMethod === "2fa" && <form className="profile-access-form" onSubmit={verifyExtra2fa}>
             <label htmlFor="crownstore-extra-2fa">Six-digit authenticator code</label>
-            <input id="crownstore-extra-2fa" value={extraCode} onChange={(event) => setExtraCode(event.target.value.replace(/\\D/g, "").slice(0, 6))} type="password" inputMode="numeric" autoComplete="one-time-code" placeholder="••••••" minLength={6} maxLength={6} pattern="[0-9]{6}" required />
+            <input id="crownstore-extra-2fa" value={extraCode} onChange={(event) => setExtraCode(event.target.value.replace(/\D/g, "").slice(0, 6))} type="password" inputMode="numeric" autoComplete="one-time-code" placeholder="••••••" minLength={6} maxLength={6} pattern="[0-9]{6}" required />
             <button className="profile-primary-button" type="submit" disabled={busy || extraCode.length !== 6}>{busy ? <span className="profile-spinner" /> : "Verify authenticator code"}</button>
           </form>}
           {extraMethod === "biometric" && <div className="profile-passkey-action">
