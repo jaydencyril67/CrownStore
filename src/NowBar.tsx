@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState, type TouchEvent, type ReactNode } from "react";
-import { Home, Search, Download, Sparkles, CircleHelp, Menu, Crosshair, ListFilter, Plus, UserRound } from "lucide-react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type TouchEvent, type ReactNode } from "react";
+import { Home, Search, Download, Sparkles, CircleHelp, Menu, Bell, Crosshair, ListFilter, Plus, UserRound } from "lucide-react";
+import { BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, EDGE_LIGHT_KEY, EXPAND_MODE_KEY, SWIPE_NAVIGATION_KEY } from "./notifications";
 
-type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "OPTION 4" | "OPTION 5" | "OPTION 6" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
+type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
 type Action = { label: ActionLabel; icon: ReactNode };
 
 const actions: Action[] = [
@@ -10,8 +11,8 @@ const actions: Action[] = [
   { label: "UPDATES", icon: <Download size={18} /> },
   { label: "PROFILE", icon: <UserRound size={18} /> },
   { label: "OPTION 4", icon: <Sparkles size={18} /> },
-  { label: "OPTION 5", icon: <CircleHelp size={18} /> },
-  { label: "OPTION 6", icon: <Menu size={18} /> },
+  { label: "NOTIFICATIONS", icon: <Bell size={18} /> },
+  { label: "MENU", icon: <Menu size={18} /> },
   { label: "OPTION 7", icon: <Crosshair size={18} /> },
   { label: "OPTION 8", icon: <ListFilter size={18} /> },
   { label: "OPTION 9", icon: <ListFilter size={18} /> },
@@ -21,9 +22,26 @@ const actions: Action[] = [
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
 
-export default function NowBar({ onHome, onSearch, onUpdates, onProfile, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "DETAILS" }) {
+export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotifications, onMenu, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; onNotifications: () => void; onMenu: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "DETAILS" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
   const [pressing, setPressing] = useState(false);
+  const readEdgeSettings = () => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as { enabled?: boolean; color?: string; mode?: string };
+      return { enabled: saved.enabled === true, color: typeof saved.color === "string" && /^#[0-9a-f]{6}$/i.test(saved.color) ? saved.color : "#c4b5fd", mode: saved.mode || "stable" };
+    } catch { return { enabled: false, color: "#c4b5fd", mode: "stable" }; }
+  };
+  const readColor = (key: string, fallback: string) => {
+    try { const saved = window.localStorage.getItem(key); return saved && /^#[0-9a-f]{6}$/i.test(saved) ? saved : fallback; } catch { return fallback; }
+  };
+  const readEnabled = (key: string, fallback: boolean) => {
+    try { const saved = window.localStorage.getItem(key); return saved === null ? fallback : saved === "true"; } catch { return fallback; }
+  };
+  const [edgeSettings, setEdgeSettings] = useState(readEdgeSettings);
+  const [buttonColor, setButtonColor] = useState(() => readColor(BUTTON_COLOR_KEY, "#c4b5fd"));
+  const [buttonColorEnabled, setButtonColorEnabled] = useState(() => readEnabled(BUTTON_COLOR_ENABLED_KEY, false));
+  const [expandModeEnabled, setExpandModeEnabled] = useState(() => readEnabled(EXPAND_MODE_KEY, true));
+  const [swipeNavigationEnabled, setSwipeNavigationEnabled] = useState(() => readEnabled(SWIPE_NAVIGATION_KEY, true));
   const { view, mode } = barState;
   const barRef = useRef<HTMLDivElement | null>(null);
   const holdTimer = useRef<number | null>(null);
@@ -31,6 +49,22 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, activeP
   const holdTriggered = useRef(false);
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const swipeHandled = useRef(false);
+
+  useEffect(() => {
+    const refreshSettings = () => {
+      setEdgeSettings(readEdgeSettings());
+      setButtonColor(readColor(BUTTON_COLOR_KEY, "#c4b5fd"));
+      setButtonColorEnabled(readEnabled(BUTTON_COLOR_ENABLED_KEY, false));
+      setExpandModeEnabled(readEnabled(EXPAND_MODE_KEY, true));
+      setSwipeNavigationEnabled(readEnabled(SWIPE_NAVIGATION_KEY, true));
+    };
+    window.addEventListener("storage", refreshSettings);
+    window.addEventListener("crownstore:nowbar-settings-changed", refreshSettings);
+    return () => {
+      window.removeEventListener("storage", refreshSettings);
+      window.removeEventListener("crownstore:nowbar-settings-changed", refreshSettings);
+    };
+  }, []);
 
   const stopHold = () => {
     setPressing(false);
@@ -46,6 +80,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, activeP
   };
 
   const startHold = () => {
+    if (!expandModeEnabled) return;
     holdTriggered.current = false;
     setPressing(true);
     if (holdTimer.current !== null) window.clearTimeout(holdTimer.current);
@@ -78,22 +113,23 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, activeP
   }, []);
 
   const activate = (label: ActionLabel) => {
-    if (label !== "HOME" && label !== "SEARCH" && label !== "UPDATES" && label !== "PROFILE") return;
+    if (!["HOME", "SEARCH", "UPDATES", "PROFILE", "NOTIFICATIONS", "MENU"].includes(label)) return;
     try { window.localStorage.setItem("crownstore-nowbar-action", label); } catch {}
     resetIdle();
     setBarState({ view: "title", mode: "compact" });
-    if (label === "HOME") onHome(); else if (label === "SEARCH") onSearch(); else if (label === "UPDATES") onUpdates(); else onProfile();
+    if (label === "HOME") onHome(); else if (label === "SEARCH") onSearch(); else if (label === "UPDATES") onUpdates(); else if (label === "PROFILE") onProfile(); else if (label === "NOTIFICATIONS") onNotifications(); else onMenu();
   };
 
   const finishSwipe = (event: TouchEvent<HTMLDivElement>) => {
     const start = swipeStart.current;
     swipeStart.current = null;
-    if (!start || event.changedTouches.length !== 1) return;
+    if (!swipeNavigationEnabled || !start || event.changedTouches.length !== 1) return;
     const touch = event.changedTouches[0];
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
     if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
-    const currentPage: "HOME" | "SEARCH" | "UPDATES" = activePage === "SEARCH" || activePage === "UPDATES" ? activePage : "HOME";
+    if (activePage !== "HOME" && activePage !== "SEARCH" && activePage !== "UPDATES") return;
+    const currentPage: "HOME" | "SEARCH" | "UPDATES" = activePage;
     const index = ORDER.indexOf(currentPage);
     const next = ORDER[index + (dx < 0 ? 1 : -1)];
     if (!next) return;
@@ -105,7 +141,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, activeP
   };
 
   return (
-    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""}`}>
+    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""}`} data-edge-mode={edgeSettings.enabled ? edgeSettings.mode : "off"} data-button-light={buttonColorEnabled ? "true" : "false"} style={{ "--crownstore-edge-color": edgeSettings.color, "--crownstore-button-color": buttonColor } as CSSProperties}>
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
@@ -161,7 +197,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, activeP
                   aria-label={action.label}
                   onClick={() => {
                     if (holdTriggered.current) { holdTriggered.current = false; return; }
-                    if (action.label === "HOME" || action.label === "SEARCH" || action.label === "UPDATES" || action.label === "PROFILE") activate(action.label);
+                    if (["HOME", "SEARCH", "UPDATES", "PROFILE", "NOTIFICATIONS", "MENU"].includes(action.label)) activate(action.label);
                   }}
                 >
                   <span className="kh-nowbar-icon">{action.icon}</span>
