@@ -159,7 +159,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
                 >
                   <span className="kh-nowbar-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={action.icon} /></svg></span>
                   {mode === "compact" && <span className="kh-nowbar-label-compact">{action.label}</span>}
-                  {mode === "expanded" && <span className="kh-nowbar-label-expanded">{action.label}</span>}
+                  {mode === "expanded" && <span className="kh-nowbar-label-expanded">{action.label.length > 12 ? <span className="kh-nowbar-marquee">{action.label.toUpperCase()} · {action.label.toUpperCase()}</span> : action.label}</span>}
                 </button>
               </div>
             ))}
