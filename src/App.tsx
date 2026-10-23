@@ -1166,8 +1166,15 @@ export default function App() {
 
   function navigate(next: View) {
     setView(next);
-    if (next !== "SEARCH") document.getElementById(next === "HOME" ? "home" : next === "ABOUT" ? "about" : next === "UPDATES" ? (isAndroidApp ? "apps" : "device-updates") : "apps")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    else window.scrollTo({ top: 0, behavior: "auto" });
+    // Wait until React renders the destination before looking up its scroll target.
+    window.requestAnimationFrame(() => {
+      if (next !== "SEARCH") {
+        const targetId = next === "HOME" ? "home" : next === "ABOUT" ? "about" : next === "UPDATES" ? (isAndroidApp ? "apps" : "device-updates") : "apps";
+        document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }
+    });
   }
 
   function submitSearch(value = searchPageQuery) {
