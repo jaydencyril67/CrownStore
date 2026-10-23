@@ -912,10 +912,10 @@ export default function ProfilePage({
     setTwoFactorEnforcementBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
       const data = await requestProfileSecurity("/api/security/2fa/login-setting", { enabled });
-      setSecurityNotice(String(data.message || "Authenticator sign-in setting updated."));
+      setSecurityNotice(String(data.message || "Authenticator setting updated."));
       await refreshProfileSecurity();
     } catch (caught) {
-      setSecurityError(caught instanceof Error ? caught.message : "Unable to update authenticator sign-in protection.");
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to update authenticator protection.");
     } finally { setTwoFactorEnforcementBusy(false); }
   }
 
@@ -1139,9 +1139,9 @@ export default function ProfilePage({
       <section className="profile-section profile-security-section" aria-labelledby="profile-security-title">
         <div className="profile-section-heading">
           <h2 id="profile-security-title">Account security</h2>
-          <span>{securityLoading ? "Checking…" : "Synced with KingsHall"}</span>
+          <span>{securityLoading ? "Checking…" : "CrownStore profile"}</span>
         </div>
-        <p className="profile-security-intro">Configure two-factor authentication and passkey/biometric sign-in for this KingsHall account. These settings apply across CrownStore web, PWA and APK, and are enforced by KingsHall during sign-in.</p>
+        <p className="profile-security-intro">Configure two-factor authentication and passkey/biometric security for this CrownStore profile. These settings are stored by ApiCrownStore and remain separate from your KingsHall account security settings.</p>
         {securityError && <p className="profile-error" role="alert">{securityError}</p>}
         {securityNotice && <p className="profile-notice" role="status">{securityNotice}</p>}
         {securityLoading && !securityStatus ? <p className="profile-empty">Loading security settings…</p> : <>
@@ -1149,7 +1149,7 @@ export default function ProfilePage({
             <div className="profile-security-item-heading"><span className="profile-security-icon"><ShieldCheck size={19} /></span><div><h3>Authenticator app (2FA)</h3><p>Use a time-based six-digit code from Google Authenticator, Authy or another compatible app.</p></div></div>
             <div className="profile-security-status-row">
               <span className={securityStatus?.twoFactor.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.twoFactor.configured ? "Configured" : securityStatus?.twoFactor.pending ? "Setup pending" : "Not configured"}</span>
-              <span className={securityStatus?.twoFactor.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.twoFactor.enabled ? "Required at sign-in" : "Sign-in requirement off"}</span>
+              <span className={securityStatus?.twoFactor.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.twoFactor.enabled ? "Protection enabled" : "Protection off"}</span>
             </div>
             {!securityStatus?.twoFactor.configured && <button className="profile-secondary-button" type="button" disabled={twoFactorSetupBusy} onClick={() => void beginTwoFactorSetup()}>{twoFactorSetupBusy ? <span className="profile-spinner" /> : <KeyRound size={15} />} {securityStatus?.twoFactor.pending ? "Restart authenticator setup" : "Configure authenticator"}</button>}
             {twoFactorSetupUri && <form className="profile-security-setup" onSubmit={verifyTwoFactorSetup}>
@@ -1163,7 +1163,7 @@ export default function ProfilePage({
               <button className="profile-text-button" type="button" disabled={twoFactorCancelBusy} onClick={() => void cancelTwoFactorSetup()}>Cancel setup</button>
             </form>}
             {securityStatus?.twoFactor.configured && <div className="profile-security-actions">
-              <button className={securityStatus.twoFactor.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={twoFactorEnforcementBusy} onClick={() => void changeTwoFactorEnforcement(!securityStatus.twoFactor.enabled)}>{twoFactorEnforcementBusy ? <span className="profile-spinner" /> : <ShieldCheck size={15} />} {securityStatus.twoFactor.enabled ? "Disable 2FA at sign-in" : "Enable 2FA at sign-in"}</button>
+              <button className={securityStatus.twoFactor.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={twoFactorEnforcementBusy} onClick={() => void changeTwoFactorEnforcement(!securityStatus.twoFactor.enabled)}>{twoFactorEnforcementBusy ? <span className="profile-spinner" /> : <ShieldCheck size={15} />} {securityStatus.twoFactor.enabled ? "Disable 2FA protection" : "Enable 2FA protection"}</button>
               <label htmlFor="crown-profile-totp-remove">Authenticator code required to remove 2FA</label>
               <input id="crown-profile-totp-remove" value={twoFactorRemovalCode} onChange={(event) => setTwoFactorRemovalCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" />
               <button className="profile-text-button" type="button" disabled={twoFactorRemoveBusy || twoFactorRemovalCode.length !== 6} onClick={() => void removeTwoFactor()}>Remove authenticator</button>
@@ -1174,13 +1174,13 @@ export default function ProfilePage({
             <div className="profile-security-item-heading"><span className="profile-security-icon"><Fingerprint size={19} /></span><div><h3>Passkey / biometric security</h3><p>Register a device passkey. Your fingerprint, face or device-unlock check is handled by the device; CrownStore does not receive biometric templates.</p></div></div>
             <div className="profile-security-status-row">
               <span className={securityStatus?.biometric.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.biometric.configured ? "Passkey configured" : "No passkey configured"}</span>
-              <span className={securityStatus?.biometric.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.biometric.enabled ? "Required at sign-in" : "Sign-in requirement off"}</span>
+              <span className={securityStatus?.biometric.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.biometric.enabled ? "Protection enabled" : "Protection off"}</span>
             </div>
             <div className="profile-security-actions">
               {!securityStatus?.biometric.configured && <button className="profile-secondary-button" type="button" disabled={biometricRegisterBusy || !securityStatus} onClick={() => void registerBiometricPasskey()}>{biometricRegisterBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} Configure passkey on this device</button>}
               {securityStatus?.biometric.enabled && <p className="profile-security-meta">A passkey is already configured. Remove the existing passkey before configuring another.</p>}
-              {securityStatus?.biometric.configured && <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={biometricEnforcementBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{biometricEnforcementBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable biometric at sign-in" : "Enable biometric at sign-in"}</button>}
-              {securityStatus?.biometric.configured && <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your CrownStore profile. Remove all existing passkeys before configuring another.</p>}
+              {securityStatus?.biometric.configured && <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={biometricEnforcementBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{biometricEnforcementBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable biometric protection" : "Enable biometric protection"}</button>}
+              {securityStatus?.biometric.configured && <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your CrownStore profile. Remove the existing passkey before configuring another.</p>}
               {(securityStatus?.biometric.credentials || []).map((credential, index) => <div className="profile-security-passkey" key={credential.id}>
                 <div><strong>Bound passkey {index + 1}</strong><span>{credential.createdAt ? "Added " + new Date(credential.createdAt).toLocaleDateString() : "Added date unavailable"}</span></div>
                 <button className="profile-text-button" type="button" disabled={biometricRemoveBusy} onClick={() => void removeBiometricPasskey(credential.id)}>Unbind passkey</button>
