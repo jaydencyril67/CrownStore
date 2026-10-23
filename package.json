@@ -18,7 +18,8 @@
     "@fontsource/stix-two-text": "^5.2.6",
     "@capacitor/android": "^7.6.9",
     "@capacitor/app": "^7.0.1",
-    "@capacitor/core": "^7.6.9"
+    "@capacitor/core": "^7.6.9",
+    "qrcode.react": "^4.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",
