@@ -33,6 +33,8 @@ export type BridgeSnapshot = {
   session: { sessionId: string; status: "waiting" | "connected"; expiresAt: string };
   installedApps: InstalledCatalogueApp[];
   command: BridgeCommand | null;
+  scanRequestId?: string | null;
+  scanCompletedId?: string | null;
   commandStatus: "none" | "pending" | "downloading" | "install-ready" | "permission-required" | "failed" | "complete";
   commandMessage: string | null;
 };
