@@ -14,7 +14,7 @@ export type CrownNotification = {
 };
 
 export type NotificationPreferences = {
-  channels: { inApp: boolean; device: boolean };
+  channels: { inApp: boolean; device: boolean; email: boolean };
   types: Record<NotificationKind, boolean>;
   headerLightingEnabled: boolean;
   headerLightingColor: string;
@@ -35,7 +35,7 @@ export const HEADER_LIGHTING_KEY = "crownstore-header-lighting";
 export const DEFAULT_ACCENT = "#c4b5fd";
 
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  channels: { inApp: true, device: false },
+  channels: { inApp: true, device: false, email: false },
   types: { appUpdates: true, downloads: true, security: true, storeNotices: true },
   headerLightingEnabled: false,
   headerLightingColor: DEFAULT_ACCENT
@@ -61,7 +61,8 @@ export function readNotificationPreferences(): NotificationPreferences {
   return {
     channels: {
       inApp: channels.inApp !== false,
-      device: channels.device === true
+      device: channels.device === true,
+      email: channels.email === true
     },
     types: {
       appUpdates: types.appUpdates !== false,
@@ -103,6 +104,25 @@ function persistNotifications(next: CrownNotification[]): void {
     // Notifications remain available in memory for the current render.
   }
   window.dispatchEvent(new CustomEvent("crownstore:notifications-changed", { detail: next }));
+}
+
+export function mergeCrownNotifications(incoming: CrownNotification[]): void {
+  const merged = [...readNotifications()];
+  for (const item of incoming) {
+    if (!item || typeof item.id !== "string" || typeof item.title !== "string" ||
+        typeof item.body !== "string" ||
+        !["appUpdates", "downloads", "security", "storeNotices"].includes(item.kind)) continue;
+    const index = merged.findIndex(existing => existing.id === item.id ||
+      Boolean(item.externalKey && existing.externalKey === item.externalKey));
+    if (index >= 0) {
+      // The server owns read state and timestamps for account-linked notifications.
+      merged[index] = { ...merged[index], ...item };
+    } else {
+      merged.push(item);
+    }
+  }
+  merged.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  persistNotifications(merged.slice(0, 100));
 }
 
 export function addCrownNotification(
