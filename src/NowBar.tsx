@@ -182,15 +182,23 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
   };
 
   return (
-    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""} ${"kh-nowbar-light-" + (edgeSettings.enabled ? edgeSettings.mode : "stable-light")}`}>
+    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""} ${"kh-nowbar-light-" + (edgeSettings.enabled ? edgeSettings.mode : "stable-light")}`} style={{
+      "--kh-nowbar-accent": edgeSettings.enabled ? edgeSettings.color : "rgba(220,226,234,.18)",
+      "--kh-nowbar-glow": edgeSettings.enabled ? edgeSettings.color + "66" : "transparent",
+      "--kh-light-accent": edgeSettings.enabled ? edgeSettings.color : "rgba(220,226,234,.18)",
+      "--kh-light-glow": edgeSettings.enabled ? edgeSettings.color + "66" : "transparent"
+    } as CSSProperties}>
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
-        style={{
-          "--kh-light-accent": edgeSettings.enabled ? edgeSettings.color : "rgba(220,226,234,.18)",
-          "--kh-light-glow": edgeSettings.enabled ? edgeSettings.color + "66" : "transparent",
+        style={edgeSettings.enabled ? ({
+          "--kh-light-accent": edgeSettings.color,
+          "--kh-light-glow": edgeSettings.color + "66",
+          borderColor: edgeSettings.color,
+          ...(edgeSettings.mode === "stable-light" ? { boxShadow: "0 18px 50px rgba(0,0,0,.82)" } : {}),
+          ...(edgeSettings.mode === "stable" ? { boxShadow: `0 0 0 1px rgba(255,255,255,.12), 0 0 24px ${edgeSettings.color}, 0 18px 50px rgba(0,0,0,.82), inset 0 1px 0 rgba(255,255,255,.12)` } : {}),
           willChange: "border-color, box-shadow, filter"
-        } as CSSProperties}
+        } as CSSProperties) : undefined}
         data-nowbar-edge-style={edgeSettings.enabled ? edgeSettings.mode : undefined}
         role="button"
         tabIndex={0}
