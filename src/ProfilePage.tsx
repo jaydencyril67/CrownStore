@@ -63,6 +63,61 @@ type NativeKingsHallAccountPlugin = {
   chooseAccount(): Promise<{ email?: string; cancelled?: boolean; noAccount?: boolean }>;
 };
 const DeviceAccount = registerPlugin<NativeKingsHallAccountPlugin>("KingsHallAccount");
+type NativeWebAuthnPlugin = {
+  get(options: { options: string }): Promise<{ responseJson: string }>;
+};
+const NativeWebAuthn = registerPlugin<NativeWebAuthnPlugin>("NativeWebAuthn");
+
+function base64UrlToBytes(value: string): Uint8Array {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+  const binary = window.atob(padded);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function bytesToBase64Url(value: ArrayBuffer): string {
+  let binary = "";
+  new Uint8Array(value).forEach((byte) => { binary += String.fromCharCode(byte); });
+  return window.btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/, "");
+}
+
+async function authenticateCrownStorePasskey(options: Record<string, any>): Promise<Record<string, any>> {
+  if (Capacitor.getPlatform() === "android" && Capacitor.isPluginAvailable("NativeWebAuthn")) {
+    const result = await NativeWebAuthn.get({ options: JSON.stringify(options) });
+    try {
+      return JSON.parse(result.responseJson) as Record<string, any>;
+    } catch {
+      throw new Error("Android returned an invalid passkey response.");
+    }
+  }
+
+  if (!window.PublicKeyCredential || !navigator.credentials) {
+    throw new Error("Passkey sign-in is not supported in this browser. Choose the authenticator code or external-device sign-in instead.");
+  }
+  const publicKey: PublicKeyCredentialRequestOptions = {
+    ...options,
+    challenge: base64UrlToBytes(String(options.challenge)).buffer,
+    allowCredentials: (Array.isArray(options.allowCredentials) ? options.allowCredentials : []).map((credential: Record<string, any>) => ({
+      ...credential,
+      id: base64UrlToBytes(String(credential.id)).buffer
+    }))
+  };
+  const credential = await navigator.credentials.get({ publicKey }) as PublicKeyCredential | null;
+  if (!credential) throw new Error("Passkey authentication was cancelled.");
+  const response = credential.response as AuthenticatorAssertionResponse;
+  return {
+    id: credential.id,
+    rawId: bytesToBase64Url(credential.rawId),
+    type: credential.type,
+    response: {
+      clientDataJSON: bytesToBase64Url(response.clientDataJSON),
+      authenticatorData: bytesToBase64Url(response.authenticatorData),
+      signature: bytesToBase64Url(response.signature),
+      userHandle: response.userHandle ? bytesToBase64Url(response.userHandle) : null
+    },
+    clientExtensionResults: credential.getClientExtensionResults()
+  };
+}
 
 type DownloadHistoryEntry = {
   packageId: string;
