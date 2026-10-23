@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="circle-bg" x1="12" y1="8" x2="500" y2="504" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#241038"/>
+      <stop offset="1" stop-color="#090510"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ddd6fe"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- HallsChat's native launcher-icon structure: a full-canvas circular backdrop
+       extending beyond the 512px canvas, with the app artwork inside a nested SVG. -->
+  <circle cx="256" cy="256" r="363" fill="url(#circle-bg)"/>
+
+  <svg x="27.2" y="27.2" width="457.6" height="457.6" viewBox="0 0 512 512" overflow="hidden">
+    <g transform="translate(-2 14.5)" fill="none" stroke="url(#metal)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M98 112h52l37 235h188l43-157H176"/>
+      <path d="m176 166 40-64 51 60 48-72 44 70 51-23-43 151H197l-21-122Z" fill="url(#metal)" stroke-width="13"/>
+      <path d="M222 221h133" stroke="#24133f" stroke-opacity=".75" stroke-width="12"/>
+      <circle cx="224" cy="401" r="17" fill="url(#metal)" stroke="none"/>
+      <circle cx="355" cy="401" r="17" fill="url(#metal)" stroke="none"/>
+    </g>
+  </svg>
+</svg>
