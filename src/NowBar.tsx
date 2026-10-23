@@ -4,6 +4,27 @@ import { BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, EDGE_LIGHT_KEY, EXPAND_MODE
 
 type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "OPTION 4" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
 type Action = { label: ActionLabel; icon: ReactNode };
+type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
+
+function getEdgeAnimation(mode: EdgeMode): string | undefined {
+  switch (mode) {
+    case "stable-light":
+    case "stable":
+      return undefined;
+    case "blink-light":
+      return "kh-light-edge-blink 3.2s ease-in-out infinite";
+    case "blink":
+      return "kh-light-glow-blink 3.2s ease-in-out infinite";
+    case "pulse-light":
+      return "kh-light-edge-pulse 3.2s ease-in-out infinite";
+    case "pulse":
+      return "kh-light-glow-pulse 3.2s ease-in-out infinite";
+    case "color-light":
+      return "kh-light-rainbow-edge 6s ease-in-out infinite";
+    case "color":
+      return "kh-light-rainbow-glow 6s ease-in-out infinite";
+  }
+}
 
 const actions: Action[] = [
   { label: "HOME", icon: <Home size={18} /> },
@@ -24,10 +45,12 @@ const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"
 export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotifications, onMenu, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; onNotifications: () => void; onMenu: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "DETAILS" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
   const [pressing, setPressing] = useState(false);
-  const readEdgeSettings = () => {
+  const readEdgeSettings = (): { enabled: boolean; color: string; mode: EdgeMode } => {
     try {
       const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as { enabled?: boolean; color?: string; mode?: string };
-      return { enabled: saved.enabled === true, color: typeof saved.color === "string" && /^#[0-9a-f]{6}$/i.test(saved.color) ? saved.color : "#c4b5fd", mode: saved.mode || "stable" };
+      const modes: EdgeMode[] = ["stable-light", "stable", "blink-light", "blink", "pulse-light", "pulse", "color-light", "color"];
+      const mode: EdgeMode = modes.includes(saved.mode as EdgeMode) ? saved.mode as EdgeMode : "stable";
+      return { enabled: saved.enabled === true, color: typeof saved.color === "string" && /^#[0-9a-f]{6}$/i.test(saved.color) ? saved.color : "#c4b5fd", mode };
     } catch { return { enabled: false, color: "#c4b5fd", mode: "stable" }; }
   };
   const readColor = (key: string, fallback: string) => {
@@ -42,6 +65,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
   const [expandModeEnabled, setExpandModeEnabled] = useState(() => readEnabled(EXPAND_MODE_KEY, true));
   const [swipeNavigationEnabled, setSwipeNavigationEnabled] = useState(() => readEnabled(SWIPE_NAVIGATION_KEY, true));
   const { view, mode } = barState;
+  const edgeAnimation = getEdgeAnimation(edgeSettings.mode);
   const barRef = useRef<HTMLDivElement | null>(null);
   const holdTimer = useRef<number | null>(null);
   const idleTimer = useRef<number | null>(null);
@@ -140,10 +164,21 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
   };
 
   return (
-    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""} kh-nowbar-light-${edgeSettings.enabled ? edgeSettings.mode : "stable-light"}`} data-button-light={buttonColorEnabled ? "true" : "false"} style={{ "--kh-light-accent": edgeSettings.enabled ? edgeSettings.color : "rgba(220,226,234,.18)", "--kh-light-glow": edgeSettings.enabled ? edgeSettings.color + "66" : "transparent", "--crownstore-button-color": buttonColor } as CSSProperties}>
+    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""} ${edgeSettings.enabled ? "kh-nowbar-edge-enabled kh-nowbar-light-" + edgeSettings.mode : ""}`}>
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
+        style={edgeSettings.enabled ? ({
+          "--kh-light-accent": edgeSettings.color,
+          "--kh-light-glow": edgeSettings.color + "66",
+          borderColor: edgeSettings.color,
+          ...(edgeSettings.mode === "stable-light" ? { boxShadow: "0 18px 50px rgba(0,0,0,.82)" } : {}),
+          ...(edgeSettings.mode === "stable" ? { boxShadow: `0 0 0 1px rgba(255,255,255,.12), 0 0 24px ${edgeSettings.color}, 0 18px 50px rgba(0,0,0,.82), inset 0 1px 0 rgba(255,255,255,.12)` } : {}),
+          animation: edgeAnimation,
+          animationFillMode: "both",
+          willChange: "border-color, box-shadow, filter"
+        } as CSSProperties) : undefined}
+        data-nowbar-edge-style={edgeSettings.enabled ? edgeSettings.mode : undefined}
         role="button"
         tabIndex={0}
         aria-label={view === "title" ? `${activePage} page. Tap to show navigation buttons; hold to expand; swipe to navigate.` : "Navigation buttons. Tap to show current page."}
@@ -192,6 +227,12 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
                 <button
                   data-nowbar-label={action.label}
                   className={`kh-nowbar-action ${action.label === activePage ? "is-active" : ""}`}
+                  style={buttonColorEnabled ? ({
+                    borderColor: buttonColor,
+                    borderWidth: "1.5px",
+                    color: buttonColor,
+                    boxShadow: `0 0 0 1px ${buttonColor}66, 0 0 10px ${buttonColor}55, inset 0 0 5px ${buttonColor}1f`
+                  } as CSSProperties) : undefined}
                   type="button"
                   aria-label={action.label}
                   onClick={() => {
