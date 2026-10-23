@@ -1,21 +1,22 @@
-import { useEffect, useLayoutEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type TouchEvent, type ReactNode } from "react";
+import { Home, Search, Download, Sparkles, CircleHelp, Menu, Crosshair, ListFilter, Plus } from "lucide-react";
 
 type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "OPTION 3" | "OPTION 4" | "OPTION 5" | "OPTION 6" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
-type Action = { label: ActionLabel; icon: string };
+type Action = { label: ActionLabel; icon: ReactNode };
 
 const actions: Action[] = [
-  { label: "HOME", icon: "M3 10.5 12 3l9 7.5M5.5 9v11h13V9M9 20v-6h6v6" },
-  { label: "SEARCH", icon: "M21 21l-4.3-4.3M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" },
-  { label: "UPDATES", icon: "M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4" },
-  { label: "OPTION 3", icon: "M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4" },
-  { label: "OPTION 4", icon: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3ZM19 16l1 2.5 2 1-2 1-1 2.5-1-2.5-2-1 2-1 1-2.5" },
-  { label: "OPTION 5", icon: "M12 16v-4M12 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
-  { label: "OPTION 6", icon: "M4 6h16M4 12h16M4 18h16" },
-  { label: "OPTION 7", icon: "M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" },
-  { label: "OPTION 8", icon: "M4 7h16M4 12h10M4 17h16M17 10l3 2-3 2" },
-  { label: "OPTION 9", icon: "M4 7h16M4 12h10M4 17h16M17 10l3 2-3 2" },
-  { label: "OPTION 10", icon: "M12 3v18M3 12h18" },
-  { label: "OPTION 11", icon: "M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4" },
+  { label: "HOME", icon: <Home size={18} /> },
+  { label: "SEARCH", icon: <Search size={18} /> },
+  { label: "UPDATES", icon: <Download size={18} /> },
+  { label: "OPTION 3", icon: <Download size={18} /> },
+  { label: "OPTION 4", icon: <Sparkles size={18} /> },
+  { label: "OPTION 5", icon: <CircleHelp size={18} /> },
+  { label: "OPTION 6", icon: <Menu size={18} /> },
+  { label: "OPTION 7", icon: <Crosshair size={18} /> },
+  { label: "OPTION 8", icon: <ListFilter size={18} /> },
+  { label: "OPTION 9", icon: <ListFilter size={18} /> },
+  { label: "OPTION 10", icon: <Plus size={18} /> },
+  { label: "OPTION 11", icon: <Download size={18} /> },
 ];
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
@@ -162,7 +163,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
                     if (action.label === "HOME" || action.label === "SEARCH" || action.label === "UPDATES") activate(action.label);
                   }}
                 >
-                  <span className="kh-nowbar-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={action.icon} /></svg></span>
+                  <span className="kh-nowbar-icon">{action.icon}</span>
                   {mode === "compact" && <span className="kh-nowbar-label-compact">{action.label}</span>}
                   {mode === "expanded" && <span className="kh-nowbar-label-expanded">{action.label.length > 12 ? <span className="kh-nowbar-marquee">{action.label.toUpperCase()} · {action.label.toUpperCase()}</span> : action.label}</span>}
                 </button>
