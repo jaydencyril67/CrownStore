@@ -721,6 +721,10 @@ export default function ProfilePage({
     setUser(null);
     setIdentity("");
     setAccessCode("");
+    setChallengeToken("");
+    setExtraMethods([]);
+    setExtraMethod("");
+    setExtraCode("");
     setError("");
     setNotice("");
     setExternalLogin(null);
