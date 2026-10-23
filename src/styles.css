@@ -644,3 +644,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 /* Match the Updates "Latest releases" heading to the Home "Recommended for you" heading. */
 .updates-page .section-heading h2{font-size:23px;line-height:1.2;letter-spacing:0;font-weight:500}
 @media(max-width:700px){.updates-page .section-heading h2{font-size:14px;line-height:1.2;letter-spacing:0}}
+
+
+/* Match both Updates headings to the Search page's "Find your next app" headline scale. */
+.updates-hero h1,.updates-page .section-heading h2{font-size:clamp(43px,5.1vw,67px);line-height:1.12;letter-spacing:-1.7px;font-weight:500}
+@media(max-width:700px){.updates-hero h1,.updates-page .section-heading h2{font-size:clamp(32px,8.5vw,42px);line-height:1.12;letter-spacing:-.8px}}
