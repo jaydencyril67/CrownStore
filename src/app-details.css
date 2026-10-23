@@ -404,3 +404,35 @@
   .home-shelves .shelf-app-name {font-size:12px!important}
   .home-shelves .shelf-app-description {font-size:10px}
 }
+
+
+/* Tighten home app list: larger logos and compact row spacing. */
+.home-shelves .shelf-app-tile {
+  grid-template-columns:76px minmax(0,1fr) 18px!important;
+  column-gap:12px!important;
+  padding:7px 0!important;
+}
+.home-shelves .shelf-app-icon {
+  width:76px!important;
+  height:76px!important;
+  min-width:76px!important;
+  border-radius:15px!important;
+}
+.home-shelves .shelf-app-copy {gap:2px!important}
+.home-shelves .shelf-app-name {line-height:1.3!important}
+.home-shelves .shelf-app-description {line-height:1.35!important;-webkit-line-clamp:2}
+.home-shelves .shelf-app-card {border-bottom-color:rgba(226,220,228,.075)!important}
+@media(max-width:420px) {
+  .home-shelves .shelf-app-tile {
+    grid-template-columns:66px minmax(0,1fr) 16px!important;
+    column-gap:10px!important;
+    padding:6px 0!important;
+  }
+  .home-shelves .shelf-app-icon {
+    width:66px!important;
+    height:66px!important;
+    min-width:66px!important;
+    border-radius:13px!important;
+  }
+  .home-shelves .shelf-app-copy {gap:2px!important}
+}
