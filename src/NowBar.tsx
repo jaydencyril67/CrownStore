@@ -186,16 +186,11 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
-        style={edgeSettings.enabled ? ({
-          "--kh-light-accent": edgeSettings.color,
-          "--kh-light-glow": edgeSettings.color + "66",
-          borderColor: edgeSettings.color,
-          ...(edgeSettings.mode === "stable-light" ? { boxShadow: "0 18px 50px rgba(0,0,0,.82)" } : {}),
-          ...(edgeSettings.mode === "stable" ? { boxShadow: `0 0 0 1px rgba(255,255,255,.12), 0 0 24px ${edgeSettings.color}, 0 18px 50px rgba(0,0,0,.82), inset 0 1px 0 rgba(255,255,255,.12)` } : {}),
-          animation: edgeAnimation,
-          animationFillMode: "both",
+        style={{
+          "--kh-light-accent": edgeSettings.enabled ? edgeSettings.color : "rgba(220,226,234,.18)",
+          "--kh-light-glow": edgeSettings.enabled ? edgeSettings.color + "66" : "transparent",
           willChange: "border-color, box-shadow, filter"
-        } as CSSProperties) : undefined}
+        } as CSSProperties}
         data-nowbar-edge-style={edgeSettings.enabled ? edgeSettings.mode : undefined}
         role="button"
         tabIndex={0}
