@@ -76,11 +76,40 @@ jobs:
       - name: Generate CrownStore icon resources
         run: |
           mkdir -p assets
-          # Launcher icon source uses the full-canvas master mark without the PWA's embedded outer circle.
-          # Keep the PWA artwork for the launch splash so app icon and splash branding remain separate.
           cp public/crownstore-icon.svg assets/icon.svg
           cp public/crownstore-pwa-icon.svg assets/splash.svg
           npx capacitor-assets generate --android
+
+      - name: Match CrownStore APK launcher icons to the PWA master icon
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const sharp = require('sharp');
+
+          const root = 'android/app/src/main/res';
+          const source = 'public/crownstore-pwa-icon.svg';
+          const densities = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
+
+          (async () => {
+            for (const [density, size] of Object.entries(densities)) {
+              const dir = path.join(root, 'mipmap-' + density);
+              fs.mkdirSync(dir, { recursive: true });
+              for (const name of ['ic_launcher.png', 'ic_launcher_round.png']) {
+                await sharp(source).resize(size, size, { fit: 'fill' }).png().toFile(path.join(dir, name));
+              }
+              const foreground = path.join(dir, 'ic_launcher_foreground.png');
+              if (fs.existsSync(foreground)) fs.rmSync(foreground);
+            }
+            const adaptiveDir = path.join(root, 'mipmap-anydpi-v26');
+            for (const name of ['ic_launcher.xml', 'ic_launcher_round.xml']) {
+              const file = path.join(adaptiveDir, name);
+              if (fs.existsSync(file)) fs.rmSync(file);
+            }
+            console.log('CrownStore APK launcher icons now use the complete PWA master artwork at every density, matching the other KingsHall APKs.');
+          })().catch(error => { console.error(error); process.exit(1); });
+          NODE
 
       - name: Sync native plugin and deep link
         run: |
@@ -130,23 +159,23 @@ jobs:
             // Crop to the actual cart/crown artwork so its visible scale matches the other APKs,
             // instead of scaling the full PWA icon (which also contains its square canvas and circle).
             const artworkSvg = Buffer.from(
-              '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="140 163 440 440">' +
+              '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="130 130 500 500">' +
               defs + artworkGroup + '</svg>'
             );
 
             const background = '#100719';
-            const circleFill = '#000000';
-            const circleStroke = '#1a1a1a';
+            const circleFill = '#090510';
+            const circleStroke = '#241038';
             const legacyCanvasPx = 512;
             const legacyHolderDp = 92;
             const artworkDp = 72;
-            const legacyArtworkPx = Math.round(legacyCanvasPx * artworkDp / legacyHolderDp);
+            const legacyArtworkPx = Math.round(legacyCanvasPx * artworkDp / legacyHolderDp * 500 / 454);
             const systemCanvasPx = 512;
             const systemCanvasDp = 288;
             const systemHolderPx = Math.round(legacyHolderDp / systemCanvasDp * systemCanvasPx);
-            const systemArtworkPx = Math.round(artworkDp / systemCanvasDp * systemCanvasPx);
+            const systemArtworkPx = Math.round(artworkDp / systemCanvasDp * systemCanvasPx * 500 / 454);
 
-            if (systemHolderPx !== 164 || systemArtworkPx !== 128 || legacyArtworkPx !== 401) {
+            if (systemHolderPx !== 164 || systemArtworkPx !== 141 || legacyArtworkPx !== 452) {
               throw new Error('CrownStore splash dimensions no longer match the shared 92dp holder / 72dp artwork system.');
             }
 
@@ -195,7 +224,7 @@ jobs:
                 alphaAt(auditSystem, 0, 0) !== 0 || alphaAt(auditSystem, 256, 256) === 0) {
               throw new Error('CrownStore splash image failed size, transparency, or center-art validation.');
             }
-            console.log('Created and validated CrownStore splash: 92dp circle holder + 72dp artwork on legacy Android and Android 12+.');
+            console.log('Created and validated CrownStore splash: 92dp circle holder + 72dp visible cart/crown artwork on legacy Android and Android 12+.');
             console.log('CrownStore native splash background: ' + background);
           })().catch(error => { console.error(error); process.exit(1); });
           NODE
