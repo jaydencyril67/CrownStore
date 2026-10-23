@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Download, RefreshCw, Smartphone, Wifi } from "lucide-react";
-import type { CrownApp } from "./types";
 import type { BridgeSessionRef, BridgeSnapshot, InstalledCatalogueApp } from "./native/deviceBridgeTypes";
-import { bridgeFetch, createBridgeSession, readBridgeSnapshot } from "./native/deviceBridge";
+import { bridgeFetch } from "./native/deviceBridge";
 
 type Props = {
-  apps: CrownApp[];
   launchSession: BridgeSessionRef | null;
   onConnect: (session: BridgeSessionRef) => void;
-  onDownloadApp: (app: CrownApp) => Promise<void>;
 };
 
 function version(value: string | number | null | undefined) {
@@ -17,12 +14,7 @@ function version(value: string | number | null | undefined) {
 
 export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) {
   const [session, setSession] = useState<BridgeSessionRef | null>(launchSession);
-  const [snapshot, setSnapshot] = useState<BridgeSnapshot | null>(() => {
-    try {
-      const saved = window.localStorage.getItem("crownstore-device-snapshot");
-      return saved ? JSON.parse(saved) as BridgeSnapshot : null;
-    } catch { return null; }
-  });
+  const [snapshot, setSnapshot] = useState<BridgeSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState("");
   const [message, setMessage] = useState("");
@@ -30,11 +22,12 @@ export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) 
 
   useEffect(() => { setSession(launchSession); }, [launchSession?.sessionId, launchSession?.secret]);
 
-  // Status is fetched only when the user taps Scan; no background PWA polling.
+  // One click starts a live scan request; the API responds only after Android reports fresh data.
   async function refreshStatus(activeSession: BridgeSessionRef) {
-    const next = await readBridgeSnapshot(activeSession);
+    const next = await bridgeFetch<BridgeSnapshot>(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId) + "/scan", {
+      method: "POST", body: JSON.stringify({}),
+    });
     setSnapshot(next);
-    try { window.localStorage.setItem("crownstore-device-snapshot", JSON.stringify(next)); } catch {}
     setError("");
   }
 
@@ -69,7 +62,6 @@ export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) 
 
   const installed = snapshot?.installedApps ?? [];
   const pending = snapshot?.commandStatus === "pending" || snapshot?.commandStatus === "downloading";
-  const storeApp = apps.find((app) => app.slug === "crownstore" && app.releaseId);
 
   return <section id="device-updates" className="device-update-panel glass-panel" aria-labelledby="device-update-title">
     <div className="device-update-heading">
@@ -107,6 +99,5 @@ export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) 
           </div>
         </div>)}
     </div>}
-    {session && !Capacitor.isNativePlatform() && storeApp && snapshot?.session.status !== "connected" && <button className="button button-outline" type="button" onClick={() => void onDownloadApp(storeApp)}><Download size={16} /> Download CrownStore Android APK</button>}
   </section>;
 }
