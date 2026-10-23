@@ -49,7 +49,10 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
 
   return <section className="notifications-page" aria-label="CrownStore notifications">
     <div className="notifications-heading">
-      <button className="menu-back" type="button" onClick={onBack}><ArrowLeft size={16} /> Back to Menu</button>
+      <div className="app-detail-topbar">
+        <button className="app-detail-back app-detail-back-icon" type="button" onClick={onBack} aria-label="Back to Menu" title="Back to Menu"><ArrowLeft size={18} /></button>
+        <span className="app-detail-top-label">NOTIFICATIONS</span>
+      </div>
       <span className="eyebrow"><Bell size={14} /> CROWNSTORE ALERTS</span>
       <h1>Notifications</h1>
       <p>Release updates and important alerts from CrownStore, collected in one place.</p>
