@@ -9,7 +9,7 @@ import {
   saveNotificationPreferences, SWIPE_NAVIGATION_KEY,
   type NotificationKind, type NotificationPreferences
 } from "./notifications";
-import { disableCrownStorePush, enableCrownStorePush } from "./pushNotifications";
+import { disableCrownStorePush, enableCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
 
 type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
 type EdgeSettings = { enabled: boolean; color: string; mode: EdgeMode };
@@ -149,7 +149,21 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
         return;
       }
     }
-    savePreferences({ ...preferences, channels: { ...preferences.channels, [channel]: enabled } });
+    const next = { ...preferences, channels: { ...preferences.channels, [channel]: enabled } };
+    savePreferences(next);
+    if ((channel === "inApp" || channel === "email") && token) {
+      try {
+        await syncCrownStorePushPreferences(token, undefined, {
+          inApp: next.channels.inApp,
+          email: next.channels.email
+        });
+      } catch (caught) {
+        setNotice(caught instanceof Error
+          ? "Saved on this device, but CrownStore could not sync your account notification channels: " + caught.message
+          : "Saved on this device, but account notification channels could not be synced.");
+        return;
+      }
+    }
     if (channel === "device") setNotice(enabled
       ? "Push notifications are enabled for this signed-in KingsHall account."
       : "Push notifications are disabled on this device.");
