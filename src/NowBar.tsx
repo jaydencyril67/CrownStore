@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type TouchEvent } from "react";
 
-type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "OPTION 3" | "OPTION 4" | "OPTION 5";
+type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "OPTION 3" | "OPTION 4" | "OPTION 5" | "OPTION 6" | "OPTION 7" | "OPTION 8";
 type Action = { label: ActionLabel; icon: string };
 
 const actions: Action[] = [
@@ -10,6 +10,9 @@ const actions: Action[] = [
   { label: "OPTION 3", icon: "M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4" },
   { label: "OPTION 4", icon: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3ZM19 16l1 2.5 2 1-2 1-1 2.5-1-2.5-2-1 2-1 1-2.5" },
   { label: "OPTION 5", icon: "M12 16v-4M12 8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" },
+  { label: "OPTION 6", icon: "M4 6h16M4 12h16M4 18h16" },
+  { label: "OPTION 7", icon: "M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" },
+  { label: "OPTION 8", icon: "M4 7h16M4 12h10M4 17h16M17 10l3 2-3 2" },
 ];
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
