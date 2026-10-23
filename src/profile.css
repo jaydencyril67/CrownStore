@@ -105,3 +105,11 @@
 .profile-passkey-action{display:grid;gap:10px}
 .profile-extra-security>.profile-text-button{justify-self:center}
 .profile-extra-security .profile-external-help{margin:0}
+
+/* Keep profile loading indicators independent while respecting the device's reduced-motion setting. */
+@media (prefers-reduced-motion: reduce) {
+  .profile-page .profile-spinner {
+    animation: none !important;
+    transform: none !important;
+  }
+}
