@@ -1,5 +1,5 @@
 /* CrownStore app search page — native catalogue data, Play Store-inspired layout. */
-.store-search-page{width:min(100%,900px);margin:0 auto;padding:clamp(20px,5vw,48px) 0 140px;min-height:62vh}
+.store-search-page{width:min(100%,900px);margin:0 auto;padding:clamp(20px,5vw,48px) clamp(16px,2.5vw,28px) 140px;min-height:62vh}
 .store-search-heading{margin:0 0 22px}
 .store-search-heading .eyebrow{display:inline-flex;align-items:center;gap:7px}
 .store-search-heading h1{font:500 clamp(30px,5vw,43px)/1.12 var(--serif);letter-spacing:-.6px;margin:13px 0 9px;color:#f4efff}
