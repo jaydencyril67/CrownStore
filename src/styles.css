@@ -216,7 +216,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   .shelf-app-meta,.shelf-app-description{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
 .site-shell>main{padding-top:66px}
 .glass-panel{background:var(--glass-surface);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
