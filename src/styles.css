@@ -207,28 +207,12 @@ button,a{-webkit-tap-highlight-color:transparent}
   .catalogue-controls{align-items:flex-start;flex-direction:column;gap:12px;margin-top:-3px;margin-bottom:19px}
   .category-filters{gap:6px}
   .category-filter{padding:0 10px;font-size:9px}
-  .home-shelves{margin:0;padding:11px 9px 0}
-  .shelves-heading{align-items:stretch;flex-direction:column;gap:10px;margin-bottom:14px;padding:5px 0 11px}
   .shelves-heading h1{font-size:clamp(32px,9vw,41px);margin-top:13px}
   .shelves-heading p{font-size:12px}
   .shelves-heading>.button{width:100%}
-  .app-shelf{margin-bottom:15px}
-  .shelf-heading{align-items:flex-start;gap:4px}
-  .shelf-title-wrap{gap:5px}
-  .shelf-icon{width:18px;height:18px;border-radius:6px}
-  .shelf-heading h2{font-size:14px}
-  .shelf-heading p{font-size:11px}
   .shelf-count{font-size:10px;padding:4px 7px}
   .shelf-track{gap:6px}
   .shelf-app-card{flex-basis:min(28.8vw,104px)}
-
-  
-  
-  
-  
-  
-  
-  .shelf-footer-note{text-align:center;line-height:1.7}
   .shelf-app-card .shelf-app-tile{gap:8px;padding:7px 3px 9px}
   .shelf-app-icon{width:52px;height:52px;flex-basis:52px}
   .shelf-app-icon .app-icon-fallback svg{width:28px;height:28px}
@@ -338,21 +322,21 @@ button,a{-webkit-tap-highlight-color:transparent}
  .details-section-body{padding:0 10px 12px}
 }
 .details-checksum strong{font-size:10px;line-height:1.7;overflow-wrap:anywhere;user-select:all}
-.home-shelves{width:100%;max-width:1176px;box-sizing:border-box;margin:0 auto;padding:28px 16px 0}
-.shelves-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:35px;padding:12px 0 25px;border-bottom:1px solid rgba(255,255,255,.09)}
+.home-shelves{width:100%;max-width:1176px;box-sizing:border-box;margin:0 auto;padding:16px 16px 8px}
+.shelves-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:16px;padding:6px 0 12px;border-bottom:1px solid rgba(255,255,255,.09)}
 .shelves-heading h1{font:500 clamp(32px,4vw,46px)/1.12 var(--serif);letter-spacing:-.7px;margin:15px 0 10px}
 .shelves-heading h1 span{color:var(--gold-light)}
 .shelves-heading p{max-width:570px;color:var(--muted);font-size:13px;line-height:1.75;margin:0}
 .shelves-heading>.button{flex-shrink:0;min-height:43px}
-.app-shelf{min-width:0;margin:0 0 35px}
-.shelf-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:15px}
+.app-shelf{min-width:0;margin:0 0 16px}
+.shelf-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:8px}
 .shelf-title-wrap{display:flex;align-items:center;gap:12px;min-width:0}
 .shelf-icon{width:39px;height:39px;flex-shrink:0;display:grid;place-items:center;border:1px solid rgba(139,92,246,.22);border-radius:13px;color:var(--gold-light);background:linear-gradient(145deg,rgba(139,92,246,.12),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.06)}
-.shelf-heading h2{font:500 23px/1.2 var(--serif);margin:0 0 5px;color:#f4efff}
+.shelf-heading h2{font:500 23px/1.2 var(--serif);margin:0 0 2px;color:#f4efff}
 .updates-hero h1{font:500 23px/1.2 var(--serif);letter-spacing:0;margin:23px 0 18px}
 .updates-hero h1 span{font-style:normal}
 @media(max-width:700px){.updates-hero h1{font-size:14px;letter-spacing:0}}
-.shelf-heading p{font-size:11px;color:var(--muted);line-height:1.5;margin:0}
+.shelf-heading p{font-size:11px;color:var(--muted);line-height:1.35;margin:0}
 .shelf-count{flex-shrink:0;font-size:10px;color:#aaa89d;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.025);padding:6px 10px;border-radius:999px}
 .shelf-heading-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .shelf-see-all{display:inline-flex;align-items:center;gap:3px;border:0;background:transparent;color:var(--gold-light);font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;padding:7px 0 7px 5px}
@@ -362,8 +346,20 @@ button,a{-webkit-tap-highlight-color:transparent}
 .shelf-app-card{flex:0 0 112px;min-width:0;scroll-snap-align:start}
 .shelf-app-card .app-card{height:100%;box-sizing:border-box}
 
-.shelf-footer-note{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:22px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#969387}
+.shelf-footer-note{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#969387}
 .shelf-footer-note svg{color:var(--gold-light)}
+
+@media(max-width:620px){
+  .home-shelves{padding:8px 9px 4px}
+  .shelves-heading{align-items:stretch;flex-direction:column;gap:6px;margin-bottom:10px;padding:3px 0 8px}
+  .app-shelf{margin-bottom:12px}
+  .shelf-heading{align-items:flex-start;gap:4px;margin-bottom:6px}
+  .shelf-title-wrap{gap:5px}
+  .shelf-icon{width:18px;height:18px;border-radius:6px}
+  .shelf-heading h2{font-size:14px;line-height:1.2;margin:0 0 2px}
+  .shelf-heading p{font-size:11px;line-height:1.25}
+  .shelf-footer-note{text-align:center;padding-top:10px;line-height:1.4}
+}
 
 
 /* Nowbar: KingsHall geometry and state layout, retaining CrownStore's gold glass styling. */
@@ -746,59 +742,3 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
   .site-shell .app-meta{flex-wrap:wrap}
 }
 
-
-/* Compact home shelves: prevent later desktop rules from reintroducing oversized vertical gaps. */
-.home-shelves{
-  padding-top:16px;
-  padding-bottom:8px;
-}
-.shelves-heading{
-  margin-bottom:16px;
-  padding:6px 0 12px;
-}
-.app-shelf{
-  margin:0 0 16px;
-}
-.shelf-heading{
-  margin-bottom:8px;
-}
-.shelf-heading h2{
-  margin-bottom:2px;
-}
-.shelf-heading p{
-  line-height:1.35;
-}
-.shelf-footer-note{
-  padding-top:12px;
-}
-@media(max-width:620px){
-  .home-shelves{
-    padding:8px 9px 4px;
-  }
-  .shelves-heading{
-    gap:6px;
-    margin-bottom:10px;
-    padding:3px 0 8px;
-  }
-  .app-shelf{
-    margin-bottom:12px;
-  }
-  .shelf-heading{
-    gap:4px;
-    margin-bottom:6px;
-  }
-  .shelf-title-wrap{
-    gap:5px;
-  }
-  .shelf-heading h2{
-    line-height:1.2;
-    margin:0 0 2px;
-  }
-  .shelf-heading p{
-    line-height:1.25;
-  }
-  .shelf-footer-note{
-    padding-top:10px;
-    line-height:1.4;
-  }
-}
