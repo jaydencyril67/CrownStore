@@ -1603,7 +1603,7 @@ export default function App() {
       <div className={"header-brand" + (!isOnline ? " header-brand-offline" : "")} aria-live="polite"><div className="header-brand-copy"><p className="header-brand-title">{isOnline ? "CrownStore" : "NO INTERNET"}</p>{!isOnline && <p className="header-brand-subtitle">Check your connection</p>}</div></div>
       <span className="header-right-artwork" aria-label={unreadAlerts > 0 ? unreadAlerts + " unread notifications" : "Notifications"}>
         <span className="header-logo brand-mark"><StoreMark size={19} /></span>
-        {unreadAlerts > 0 && <span className="notification-header-badge" style={notificationPreferences.badgeColorEnabled ? { backgroundColor: notificationPreferences.badgeColor } : undefined} aria-label={unreadAlerts + " unread notifications"}>{unreadAlerts > 99 ? "99+" : unreadAlerts}</span>}
+        {unreadAlerts > 0 && <span className="notification-header-badge" style={{ backgroundColor: notificationPreferences.headerLightingColor }} aria-label={unreadAlerts + " unread notifications"}>{unreadAlerts > 99 ? "99+" : unreadAlerts}</span>}
       </span>
     </header>
     <main id="home">
