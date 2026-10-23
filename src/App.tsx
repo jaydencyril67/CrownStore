@@ -562,7 +562,21 @@ export default function App() {
   useEffect(() => {
     try { window.localStorage.setItem("crownstore-current-view", view); } catch { /* Keep navigation working when storage is unavailable. */ }
   }, [view]);
-  const [bridgeSession, setBridgeSession] = useState<BridgeSessionRef | null>(null);
+  const [bridgeSession, setBridgeSession] = useState<BridgeSessionRef | null>(() => {
+    try {
+      const saved = window.localStorage.getItem("crownstore-device-bridge-session");
+      if (!saved) return null;
+      const parsed = JSON.parse(saved) as BridgeSessionRef;
+      return parsed?.sessionId && parsed?.secret ? parsed : null;
+    } catch { return null; }
+  });
+
+  useEffect(() => {
+    try {
+      if (bridgeSession) window.localStorage.setItem("crownstore-device-bridge-session", JSON.stringify(bridgeSession));
+      else window.localStorage.removeItem("crownstore-device-bridge-session");
+    } catch { /* Keep the bridge usable if browser storage is unavailable. */ }
+  }, [bridgeSession]);
   const [requestedAppSlug, setRequestedAppSlug] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("app")?.trim().toLowerCase() || ""; } catch { return ""; }
   });
