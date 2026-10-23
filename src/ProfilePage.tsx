@@ -534,6 +534,8 @@ export default function ProfilePage({
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + data.token },
       body: JSON.stringify({ event: "login" })
+    }).then((response) => {
+      if (response.ok) window.dispatchEvent(new Event("crownstore:account-notifications-changed"));
     }).catch(() => undefined);
     setUser(data.user);
     setToken(data.token);
