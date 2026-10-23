@@ -135,14 +135,26 @@ async function createCrownStorePasskey(options: Record<string, any>): Promise<Re
   if (!window.PublicKeyCredential || !navigator.credentials) {
     throw new Error("Passkey registration is not supported in this browser. Use a supported browser or the CrownStore APK.");
   }
+  // The options are supplied by KingsHall at runtime; TS cannot infer required WebAuthn
+  // members (rp and pubKeyCredParams) from a spread Record<string, any>.
   const publicKey = {
     ...options,
+    rp: options.rp,
+    pubKeyCredParams: options.pubKeyCredParams,
     challenge: base64UrlToBytes(String(options.challenge)).buffer as ArrayBuffer,
-    user: { ...options.user, id: base64UrlToBytes(String(options.user?.id)).buffer as ArrayBuffer },
+    user: {
+      ...options.user,
+      id: base64UrlToBytes(String(options.user?.id)).buffer as ArrayBuffer
+    },
     excludeCredentials: (Array.isArray(options.excludeCredentials) ? options.excludeCredentials : []).map((credential: Record<string, any>) => ({
-      ...credential, type: "public-key" as const, id: base64UrlToBytes(String(credential.id)).buffer as ArrayBuffer
+      ...credential,
+      type: "public-key" as const,
+      id: base64UrlToBytes(String(credential.id)).buffer as ArrayBuffer
     }))
-  } as PublicKeyCredentialCreationOptions;
+  } as unknown as PublicKeyCredentialCreationOptions;
+  if (!publicKey.rp || !Array.isArray(publicKey.pubKeyCredParams) || !publicKey.pubKeyCredParams.length) {
+    throw new Error("KingsHall returned incomplete passkey registration options. Refresh and try again.");
+  }
   const credential = await navigator.credentials.create({ publicKey }) as PublicKeyCredential | null;
   if (!credential) throw new Error("Passkey registration was cancelled.");
   const response = credential.response as AuthenticatorAttestationResponse;
