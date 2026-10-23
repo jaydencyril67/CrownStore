@@ -15,13 +15,30 @@ target.parent.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(source, target)
 
 # Keep KingsHall account selection and Android app-usage insights in the native layer.
-for plugin_name in ("KingsHallAccountPlugin.java", "NativeProfileUsagePlugin.java"):
+for plugin_name in ("KingsHallAccountPlugin.java", "NativeProfileUsagePlugin.java", "NativeWebAuthnPlugin.java"):
     plugin_source = Path("android-native/app/src/main/java/online/kingshall/crownstore") / plugin_name
     plugin_target = target_root / "java/online/kingshall/crownstore" / plugin_name
     if not plugin_source.is_file():
         raise SystemExit("Native CrownStore profile plugin source is missing: " + str(plugin_source))
     plugin_target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(plugin_source, plugin_target)
+
+
+# Android Credential Manager provides the native passkey dialog used by KingsHall sign-in.
+gradle_path = root / "app/build.gradle"
+if not gradle_path.is_file():
+    raise SystemExit("Generated Android app/build.gradle was not found.")
+gradle = gradle_path.read_text(encoding="utf-8")
+dependency_marker = "dependencies {"
+if dependency_marker not in gradle:
+    raise SystemExit("Could not locate the generated Android dependencies block.")
+for dependency in (
+    '    implementation "androidx.credentials:credentials:1.6.0"',
+    '    implementation "androidx.credentials:credentials-play-services-auth:1.6.0"',
+):
+    if dependency.strip() not in gradle:
+        gradle = gradle.replace(dependency_marker, dependency_marker + "\\n" + dependency, 1)
+gradle_path.write_text(gradle, encoding="utf-8")
 
 manifest_path = target_root / "AndroidManifest.xml"
 manifest = manifest_path.read_text(encoding="utf-8")
@@ -68,6 +85,7 @@ plugin_imports = [
     "import online.kingshall.crownstore.NativeAppUpdatePlugin;",
     "import online.kingshall.crownstore.KingsHallAccountPlugin;",
     "import online.kingshall.crownstore.NativeProfileUsagePlugin;",
+    "import online.kingshall.crownstore.NativeWebAuthnPlugin;",
 ]
 bridge_import = "import com.getcapacitor.BridgeActivity;"
 if bridge_import not in activity:
@@ -89,6 +107,7 @@ registrations_to_add = [
     "registerPlugin(NativeAppUpdatePlugin.class);",
     "registerPlugin(KingsHallAccountPlugin.class);",
     "registerPlugin(NativeProfileUsagePlugin.class);",
+    "registerPlugin(NativeWebAuthnPlugin.class);",
 ]
 marker = "super.onCreate(savedInstanceState);"
 if marker in activity:
@@ -127,4 +146,4 @@ if "webView.setVerticalScrollBarEnabled(false);" not in activity:
     activity = activity.replace(marker, marker + "\n" + scrollbar_setup.rstrip(), 1)
 
 activity_path.write_text(activity, encoding="utf-8")
-print("Installed CrownStore account picker, Android usage insights, package scanner, trusted APK downloader/installer bridge, hidden WebView scrollbars, and CrownStore deep links.")
+print("Installed CrownStore account picker, Android usage insights, passkey authentication, package scanner, trusted APK downloader/installer bridge, hidden WebView scrollbars, and CrownStore deep links.")
