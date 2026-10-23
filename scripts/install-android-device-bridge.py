@@ -95,10 +95,8 @@ extra_registrations = [
 if registration not in activity:
     marker = "super.onCreate(savedInstanceState);"
     if marker in activity:
-        activity = activity.replace(marker, registration + "\n        " + marker, 1)
-        for extra_registration in extra_registrations:
-            if extra_registration not in activity:
-                activity = activity.replace(registration + "\n        " + marker, registration + "\n        " + extra_registration + "\n        " + marker, 1)
+        registrations = "\n        ".join([registration] + extra_registrations)
+        activity = activity.replace(marker, registrations + "\n        " + marker, 1)
     else:
         # A new Capacitor project may start with an empty BridgeActivity subclass.
         class_marker = "public class MainActivity extends BridgeActivity {"
