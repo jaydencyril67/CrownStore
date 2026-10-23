@@ -127,7 +127,10 @@ export default function MenuPage({ onBack, onOpenNotifications }: { onBack: () =
 
   return <section className="menu-page" aria-label="CrownStore menu and preferences">
     <div className="menu-page-heading">
-      <button className="menu-back" type="button" onClick={onBack}><ArrowLeft size={16} /> Back</button>
+      <div className="app-detail-topbar">
+        <button className="app-detail-back app-detail-back-icon" type="button" onClick={onBack} aria-label="Back to CrownStore" title="Back to CrownStore"><ArrowLeft size={18} /></button>
+        <span className="app-detail-top-label">MENU</span>
+      </div>
       <span className="eyebrow"><Settings2 size={14} /> CROWNSTORE CONTROL CENTER</span>
       <h1>Menu</h1>
       <p>Personalize navigation, lighting and the alerts you receive from CrownStore.</p>
