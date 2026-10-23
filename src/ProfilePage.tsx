@@ -96,10 +96,10 @@ async function authenticateCrownStorePasskey(options: Record<string, any>): Prom
   }
   const publicKey: PublicKeyCredentialRequestOptions = {
     ...options,
-    challenge: base64UrlToBytes(String(options.challenge)).buffer,
+    challenge: base64UrlToBytes(String(options.challenge)).buffer as ArrayBuffer,
     allowCredentials: (Array.isArray(options.allowCredentials) ? options.allowCredentials : []).map((credential: Record<string, any>) => ({
       ...credential,
-      id: base64UrlToBytes(String(credential.id)).buffer
+      id: base64UrlToBytes(String(credential.id)).buffer as ArrayBuffer
     }))
   };
   const credential = await navigator.credentials.get({ publicKey }) as PublicKeyCredential | null;
