@@ -52,17 +52,6 @@ function getAppInstallState(app: CrownApp, installedApps: Record<string, NativeI
   return app.releaseId ? "download" : "unreleased";
 }
 
-function appInstallDetailsLabel(state: AppInstallState, app: CrownApp): string {
-  switch (state) {
-    case "checking": return "Checking installed apps…";
-    case "check-error": return "Could not check installed apps";
-    case "update": return "Update available";
-    case "installed": return app.releaseId ? "Installed · up to date" : "Installed";
-    case "download": return "Not installed · download available";
-    case "unreleased": return "Not released yet";
-  }
-}
-
 function StoreMark({ size = 24 }: { size?: number }) {
   return <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true" focusable="false">
     <path d="M4.5 6.5H9L12.2 26.7H29.5L33.2 13.2H13.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
