@@ -74,12 +74,20 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
   async function markOneRead(item: CrownNotification) {
     if (!item.readAt) markNotificationRead(item.id);
     const token = sessionToken();
-    if (token && isServerNotificationId(item.id)) {
+    if (token) {
       try {
-        await fetch(API_BASE + "/api/notifications/" + encodeURIComponent(item.id) + "/read", {
-          method: "PATCH",
-          headers: { Authorization: "Bearer " + token }
-        });
+        if (isServerNotificationId(item.id)) {
+          await fetch(API_BASE + "/api/notifications/" + encodeURIComponent(item.id) + "/read", {
+            method: "PATCH",
+            headers: { Authorization: "Bearer " + token }
+          });
+        } else if (item.externalKey) {
+          await fetch(API_BASE + "/api/notifications/read-by-key", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ externalKey: item.externalKey })
+          });
+        }
       } catch { /* Keep the local read state if sync is temporarily unavailable. */ }
     }
   }
