@@ -280,6 +280,7 @@ export default function ProfilePage({
   const [extraMethod, setExtraMethod] = useState<"2fa" | "biometric" | "">("");
   const [extraCode, setExtraCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkingAccounts, setCheckingAccounts] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [showNoAccountModal, setShowNoAccountModal] = useState(false);
@@ -451,6 +452,7 @@ export default function ProfilePage({
     if (busy) return;
     const startedAt = Date.now();
     setBusy(true);
+    setCheckingAccounts(true);
     setError("");
     setNotice("");
     try {
@@ -496,6 +498,7 @@ export default function ProfilePage({
       setError(caught instanceof Error ? caught.message : "Unable to select a KingsHall account.");
     } finally {
       setBusy(false);
+      setCheckingAccounts(false);
     }
   }
 
@@ -917,7 +920,7 @@ export default function ProfilePage({
       <div className="profile-signout-bottom"><button className="profile-text-button" type="button" onClick={signOut}><LogOut size={15} /> Sign out of CrownStore</button></div>
     </div>}
 
-    {busy && !identity && <div className="profile-loading-backdrop" role="status" aria-live="polite"><div className="profile-loading-dialog"><span className="profile-spinner" /><strong>Checking KingsHall accounts</strong><span>Your sign-in is being prepared.</span></div></div>}
+    {checkingAccounts && <div className="profile-loading-backdrop" role="status" aria-live="polite"><div className="profile-loading-dialog"><span className="profile-spinner" /><strong>Checking KingsHall accounts</strong><span>Your sign-in is being prepared.</span></div></div>}
     {showNoAccountModal && <div className="profile-modal-backdrop" role="presentation" onClick={() => setShowNoAccountModal(false)}>
       <section className="profile-no-account-modal" role="alertdialog" aria-modal="true" aria-labelledby="profile-no-account-title" onClick={(event) => event.stopPropagation()}>
         <span className="profile-auth-emblem"><KeyRound size={23} /></span>
