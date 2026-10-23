@@ -1172,13 +1172,13 @@ export default function App() {
 
   function navigate(next: View) {
     setView(next);
-    // Wait until React renders the destination before looking up its scroll target.
+    // Updates and Search always open at the page top, regardless of the previous scroll position.
     window.requestAnimationFrame(() => {
-      if (next !== "SEARCH") {
-        const targetId = next === "HOME" ? "home" : next === "ABOUT" ? "about" : next === "UPDATES" ? (isAndroidApp ? "apps" : "device-updates") : "apps";
-        document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else {
+      if (next === "UPDATES" || next === "SEARCH") {
         window.scrollTo({ top: 0, behavior: "auto" });
+      } else {
+        const targetId = next === "HOME" ? "home" : next === "ABOUT" ? "about" : "apps";
+        document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });
   }
