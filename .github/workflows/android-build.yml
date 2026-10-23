@@ -76,11 +76,19 @@ jobs:
       - name: Generate CrownStore icon resources
         run: |
           mkdir -p assets
-          cp public/crownstore-icon.svg assets/icon.svg
+          # Keep the launcher icon source separate from the native launch-splash artwork.
+          cp public/crownstore-app-icon.svg assets/icon.svg
           cp public/crownstore-pwa-icon.svg assets/splash.svg
           npx capacitor-assets generate --android
 
-      - name: Match CrownStore APK launcher icons to the PWA master icon
+      - name: Sync native plugin and deep link
+        run: |
+          npx cap sync android
+          python3 scripts/install-android-device-bridge.py
+
+      - name: Match CrownStore APK launcher icons to the HallsChat structure
+        env:
+          APP_ICON_SVG: public/crownstore-app-icon.svg
         run: |
           set -euo pipefail
           node - <<'NODE'
@@ -88,33 +96,42 @@ jobs:
           const path = require('path');
           const sharp = require('sharp');
 
-          const root = 'android/app/src/main/res';
-          const source = 'public/crownstore-pwa-icon.svg';
-          const densities = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
-
           (async () => {
-            for (const [density, size] of Object.entries(densities)) {
-              const dir = path.join(root, 'mipmap-' + density);
-              fs.mkdirSync(dir, { recursive: true });
-              for (const name of ['ic_launcher.png', 'ic_launcher_round.png']) {
-                await sharp(source).resize(size, size, { fit: 'fill' }).png().toFile(path.join(dir, name));
+            const svgPath = process.env.APP_ICON_SVG;
+            const svg = fs.readFileSync(svgPath);
+            const densities = {
+              'mipmap-mdpi': { icon: 48, foreground: 108 },
+              'mipmap-hdpi': { icon: 72, foreground: 162 },
+              'mipmap-xhdpi': { icon: 96, foreground: 216 },
+              'mipmap-xxhdpi': { icon: 144, foreground: 324 },
+              'mipmap-xxxhdpi': { icon: 192, foreground: 432 }
+            };
+            const root = 'android/app/src/main/res';
+            for (const [folder, sizes] of Object.entries(densities)) {
+              const dir = path.join(root, folder);
+              if (!fs.existsSync(dir)) {
+                throw new Error('Expected generated Android icon directory is missing: ' + dir);
               }
-              const foreground = path.join(dir, 'ic_launcher_foreground.png');
-              if (fs.existsSync(foreground)) fs.rmSync(foreground);
+              for (const name of ['ic_launcher.png', 'ic_launcher_round.png']) {
+                await sharp(svg).resize(sizes.icon, sizes.icon).png()
+                  .toFile(path.join(dir, name));
+              }
+              await sharp(svg).resize(sizes.foreground, sizes.foreground).png()
+                .toFile(path.join(dir, 'ic_launcher_foreground.png'));
             }
-            const adaptiveDir = path.join(root, 'mipmap-anydpi-v26');
             for (const name of ['ic_launcher.xml', 'ic_launcher_round.xml']) {
-              const file = path.join(adaptiveDir, name);
-              if (fs.existsSync(file)) fs.rmSync(file);
+              const xmlPath = path.join(root, 'mipmap-anydpi-v26', name);
+              if (!fs.existsSync(xmlPath)) {
+                throw new Error('Expected adaptive launcher resource is missing: ' + xmlPath);
+              }
+              const xml = fs.readFileSync(xmlPath, 'utf8');
+              if (!xml.includes('@mipmap/ic_launcher_foreground')) {
+                throw new Error(name + ' does not reference the foreground icon being updated.');
+              }
             }
-            console.log('CrownStore APK launcher icons now use the complete PWA master artwork at every density, matching the other KingsHall APKs.');
+            console.log('Replaced CrownStore APK launcher icon PNGs and adaptive foregrounds using the HallsChat resource layout; splash resources were not changed.');
           })().catch(error => { console.error(error); process.exit(1); });
           NODE
-
-      - name: Sync native plugin and deep link
-        run: |
-          npx cap sync android
-          python3 scripts/install-android-device-bridge.py
 
       - name: Configure unified CrownStore native launch splash
         run: |
