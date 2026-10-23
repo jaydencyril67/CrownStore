@@ -56,8 +56,8 @@ function validColor(value: unknown, fallback: string): string {
 
 export function readNotificationPreferences(): NotificationPreferences {
   const saved = safeRead<Partial<NotificationPreferences>>(NOTIFICATION_PREFERENCES_KEY, {});
-  const channels = saved.channels && typeof saved.channels === "object" ? saved.channels : {};
-  const types = saved.types && typeof saved.types === "object" ? saved.types : {};
+  const channels: Partial<NotificationPreferences["channels"]> = saved.channels && typeof saved.channels === "object" ? saved.channels : {};
+  const types: Partial<NotificationPreferences["types"]> = saved.types && typeof saved.types === "object" ? saved.types : {};
   return {
     channels: {
       inApp: channels.inApp !== false,
