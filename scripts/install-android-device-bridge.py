@@ -61,6 +61,15 @@ if plugin_import not in activity:
         raise SystemExit("Could not safely locate the BridgeActivity import.")
     activity = activity.replace(marker, marker + "\n" + plugin_import, 1)
 
+# Android WebView draws native scroll indicators independently of page CSS.
+# Disable both axes at the native layer while preserving normal touch scrolling.
+for import_line in ("import android.view.View;", "import android.webkit.WebView;"):
+    if import_line not in activity:
+        package_end = activity.find("\n", activity.find("package "))
+        if package_end < 0:
+            raise SystemExit("Could not locate the MainActivity package declaration.")
+        activity = activity[:package_end + 1] + "\n" + import_line + activity[package_end + 1:]
+
 registration = "registerPlugin(NativeAppUpdatePlugin.class);"
 if registration not in activity:
     marker = "super.onCreate(savedInstanceState);"
@@ -81,5 +90,21 @@ if registration not in activity:
             raise SystemExit("Could not locate the end of MainActivity.")
         override = "\n    @Override\n    public void onCreate(Bundle savedInstanceState) {\n        " + registration + "\n        super.onCreate(savedInstanceState);\n    }\n"
         activity = activity[:final_brace] + override + activity[final_brace:]
+
+scrollbar_setup = """        // Match CryBots: hide native scrollbars without disabling scrolling.
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            WebView webView = getBridge().getWebView();
+            webView.setVerticalScrollBarEnabled(false);
+            webView.setHorizontalScrollBarEnabled(false);
+            webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+            webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        }
+"""
+if "webView.setVerticalScrollBarEnabled(false);" not in activity:
+    marker = "super.onCreate(savedInstanceState);"
+    if marker not in activity:
+        raise SystemExit("Could not locate onCreate completion point for WebView scrollbar settings.")
+    activity = activity.replace(marker, marker + "\n" + scrollbar_setup.rstrip(), 1)
+
 activity_path.write_text(activity, encoding="utf-8")
-print("Installed CrownStore native package scanner, trusted APK downloader/installer bridge, and crownstore://connect/crownstore://app deep links.")
+print("Installed CrownStore native package scanner, trusted APK downloader/installer bridge, hidden native WebView scrollbars, and crownstore://connect/crownstore://app deep links.")
