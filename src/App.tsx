@@ -1250,6 +1250,8 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + profileToken },
         body: JSON.stringify({ event: "download-complete", appSlug: app.slug, versionName: releaseVersion })
+      }).then((response) => {
+        if (response.ok) window.dispatchEvent(new Event("crownstore:account-notifications-changed"));
       }).catch(() => undefined);
     }
   }
