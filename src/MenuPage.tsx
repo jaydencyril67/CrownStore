@@ -82,6 +82,7 @@ function SettingRow({ title, detail, trailing }: { title: string; detail: string
 }
 
 export default function MenuPage({ onBack }: { onBack: () => void }) {
+  void onBack;
   const [edge, setEdge] = useState<EdgeSettings>(() => readEdge());
   const [buttonColor, setButtonColor] = useState(() => {
     try { const c = window.localStorage.getItem(BUTTON_COLOR_KEY); return c && /^#[0-9a-f]{6}$/i.test(c) ? c : DEFAULT_ACCENT; } catch { return DEFAULT_ACCENT; }
