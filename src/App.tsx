@@ -1272,7 +1272,7 @@ export default function App() {
         })}
         <div className="shelf-footer-note"><ShieldCheck size={15} /> Official apps and verified Android releases, all in one trusted place.</div>
       </section> : <>
-      <section className="hero">
+      <section className={`hero ${view === "UPDATES" ? "updates-hero" : ""}`}>
         <div className="hero-copy">
           <div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div>
           <h1>All your apps.<br /><span>One royal home.</span></h1>
