@@ -110,7 +110,13 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
 
   const openItem = (item: CrownNotification) => {
     void markOneRead(item);
-    if (item.appSlug) onOpenApp(item.appSlug);
+    if (item.appSlug) {
+      onOpenApp(item.appSlug);
+      return;
+    }
+    if (typeof item.url === "string" && item.url.startsWith("/") && !item.url.startsWith("//")) {
+      window.location.assign(item.url);
+    }
   };
 
   async function clearAll() {
