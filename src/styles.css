@@ -820,12 +820,12 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 /* Shared lighting engine: selected styles affect the real header and Nowbar. */
 .kh-nowbar-dock.kh-nowbar-light-stable .kh-nowbar{border-color:var(--kh-light-accent);box-shadow:0 12px 28px rgba(0,0,0,.35),0 0 14px var(--kh-light-glow),inset 0 0 8px color-mix(in srgb,var(--kh-light-glow) 18%,transparent)}
 .kh-nowbar-dock.kh-nowbar-light-stable-light .kh-nowbar{border-color:var(--kh-light-accent);box-shadow:0 12px 28px rgba(0,0,0,.35)}
-.kh-nowbar-dock.kh-nowbar-light-blink .kh-nowbar{animation:kh-light-glow-blink 2.6s ease-in-out infinite;border-color:var(--kh-light-accent)}
-.kh-nowbar-dock.kh-nowbar-light-blink-light .kh-nowbar{animation:kh-light-edge-blink 2.6s ease-in-out infinite;border-color:var(--kh-light-accent)}
-.kh-nowbar-dock.kh-nowbar-light-pulse .kh-nowbar{animation:kh-light-glow-pulse 3.1s ease-in-out infinite;border-color:var(--kh-light-accent)}
-.kh-nowbar-dock.kh-nowbar-light-pulse-light .kh-nowbar{animation:kh-light-edge-pulse 3.1s ease-in-out infinite;border-color:var(--kh-light-accent)}
-.kh-nowbar-dock.kh-nowbar-light-color .kh-nowbar{animation:kh-light-rainbow-glow 6s linear infinite;border-color:#ff6262}
-.kh-nowbar-dock.kh-nowbar-light-color-light .kh-nowbar{animation:kh-light-rainbow-edge 6s linear infinite;border-color:#ff6262}
+.kh-nowbar-dock.kh-nowbar-light-blink .kh-nowbar{animation:kh-light-glow-blink 3.2s ease-in-out infinite;border-color:var(--kh-light-accent)}
+.kh-nowbar-dock.kh-nowbar-light-blink-light .kh-nowbar{animation:kh-light-edge-blink 3.2s ease-in-out infinite;border-color:var(--kh-light-accent)}
+.kh-nowbar-dock.kh-nowbar-light-pulse .kh-nowbar{animation:kh-light-glow-pulse 3.2s ease-in-out infinite;border-color:var(--kh-light-accent)}
+.kh-nowbar-dock.kh-nowbar-light-pulse-light .kh-nowbar{animation:kh-light-edge-pulse 3.2s ease-in-out infinite;border-color:var(--kh-light-accent)}
+.kh-nowbar-dock.kh-nowbar-light-color .kh-nowbar{animation:kh-light-rainbow-glow 6s ease-in-out infinite;border-color:#ff6262}
+.kh-nowbar-dock.kh-nowbar-light-color-light .kh-nowbar{animation:kh-light-rainbow-edge 6s ease-in-out infinite;border-color:#ff6262}
 @keyframes kh-light-edge-blink { 0%, 42%, 100% { border-color: var(--kh-light-accent); box-shadow: 0 18px 50px rgba(0,0,0,.82); } 48%, 94% { border-color: rgba(255,255,255,.88); box-shadow: 0 18px 50px rgba(0,0,0,.82); } }
 @keyframes kh-light-glow-blink { 0%, 42%, 100% { border-color: var(--kh-light-accent); box-shadow: 0 0 0 1px var(--kh-light-accent), 0 0 26px var(--kh-light-accent), 0 18px 50px rgba(0,0,0,.82); } 48%, 94% { border-color: rgba(255,255,255,.88); box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 0 2px transparent, 0 18px 50px rgba(0,0,0,.82); } }
 @keyframes kh-light-edge-pulse { 0%, 100% { border-color: var(--kh-light-accent); filter: saturate(1); box-shadow: 0 0 0 1px var(--kh-light-accent), 0 0 7px var(--kh-light-accent), 0 18px 50px rgba(0,0,0,.82); } 50% { border-color: var(--kh-light-accent); filter: saturate(1.25); box-shadow: 0 0 0 2px var(--kh-light-accent), 0 0 16px var(--kh-light-accent), 0 18px 50px rgba(0,0,0,.82); } }
