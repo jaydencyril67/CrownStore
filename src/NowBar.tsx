@@ -140,7 +140,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
   };
 
   return (
-    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""}`} data-edge-mode={edgeSettings.enabled ? edgeSettings.mode : "off"} data-button-light={buttonColorEnabled ? "true" : "false"} style={{ "--crownstore-edge-color": edgeSettings.color, "--crownstore-button-color": buttonColor } as CSSProperties}>
+    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""} kh-nowbar-light-${edgeSettings.enabled ? edgeSettings.mode : "stable-light"}`} data-button-light={buttonColorEnabled ? "true" : "false"} style={{ "--kh-light-accent": edgeSettings.enabled ? edgeSettings.color : "rgba(220,226,234,.18)", "--kh-light-glow": edgeSettings.enabled ? edgeSettings.color + "66" : "transparent", "--crownstore-button-color": buttonColor } as CSSProperties}>
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
