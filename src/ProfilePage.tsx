@@ -805,16 +805,12 @@ export default function ProfilePage({
   useEffect(() => {
     if (!externalLogin?.requestId) return;
     let stopped = false;
-    let timer: number | undefined;
     let expiryTimer: number | undefined;
     let countdownTimer: number | undefined;
     const requestId = externalLogin.requestId;
     const expiresAt = new Date(externalLogin.expiresAt).getTime();
     const updateCountdown = () => {
-      if (!Number.isFinite(expiresAt)) {
-        setExternalSecondsRemaining(0);
-        return;
-      }
+      if (!Number.isFinite(expiresAt)) { setExternalSecondsRemaining(0); return; }
       const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
       setExternalSecondsRemaining(remaining);
       if (remaining === 0) expire();
@@ -822,7 +818,7 @@ export default function ProfilePage({
     const expire = () => {
       if (stopped) return;
       stopped = true;
-      if (timer !== undefined) window.clearTimeout(timer);
+      source.close();
       if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
       if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
       setExternalSecondsRemaining(0);
@@ -832,60 +828,45 @@ export default function ProfilePage({
       setExternalNotice("");
       setExternalError("This external sign-in request expired. Start again.");
     };
+    const source = new EventSource(API_BASE + "/api/auth/kingshall/external/events/" + encodeURIComponent(requestId));
+    const onStatus = (event: Event) => {
+      if (stopped) return;
+      let data: AuthPayload;
+      try { data = JSON.parse((event as MessageEvent).data) as AuthPayload; } catch { return; }
+      if (data.status === "approved") {
+        setExternalApproved(true);
+        setExternalNotice("Device approved. Enter the KingsHall Access Code for that account to finish signing in.");
+        return;
+      }
+      if (["denied", "expired", "consumed", "authenticated"].includes(String(data.status || ""))) {
+        stopped = true;
+        source.close();
+        if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
+        if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
+        setExternalSecondsRemaining(0);
+        setExternalLogin(null);
+        setExternalApproved(false);
+        setExternalAccessCode("");
+        setExternalError(data.status === "denied" ? "The external sign-in request was denied." : "This external sign-in request expired or was already handled. Start again.");
+      }
+    };
+    source.addEventListener("status", onStatus);
+    source.onerror = () => {
+      if (stopped || source.readyState !== EventSource.CLOSED) return;
+      stopped = true;
+      if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
+      if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
+      setExternalLogin(null);
+      setExternalError("The live external sign-in connection closed. Start again.");
+    };
     updateCountdown();
     if (!stopped) {
       countdownTimer = window.setInterval(updateCountdown, 1000);
       expiryTimer = window.setTimeout(expire, Math.max(0, expiresAt - Date.now()));
     }
-    const poll = async () => {
-      try {
-        const response = await fetch(API_BASE + "/api/auth/kingshall/external/status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify({ requestId })
-        });
-        const data = await response.json().catch(() => ({})) as AuthPayload;
-        if (stopped) return;
-        if (!response.ok) {
-          if ([400, 401, 404, 409, 410, 423].includes(response.status)) {
-            stopped = true;
-            if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
-            if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
-            setExternalLogin(null);
-            setExternalError(responseMessage(data, "This external sign-in request is no longer valid."));
-            return;
-          }
-        } else if (data.status === "approved") {
-          if (timer !== undefined) window.clearTimeout(timer);
-          setExternalApproved(true);
-          setExternalNotice("Device approved. Enter the KingsHall Access Code for that account to finish signing in.");
-          return;
-        } else if (data.status === "authenticated") {
-          stopped = true;
-          if (timer !== undefined) window.clearTimeout(timer);
-          if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
-          if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
-          setExternalLogin(null);
-          setExternalApproved(false);
-          setExternalError("This external sign-in request must be restarted. Enter the Access Code after approving the device in KingsHall.");
-          return;
-        } else if (["denied", "expired", "consumed"].includes(String(data.status || ""))) {
-          stopped = true;
-          if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
-          if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
-          setExternalLogin(null);
-          setExternalError(data.status === "denied" ? "The external sign-in request was denied." : "This external sign-in request expired. Start again.");
-          return;
-        }
-      } catch {
-        // Match CryBots and HallsChat: retry temporary network errors until expiry.
-      }
-      if (!stopped) timer = window.setTimeout(() => { void poll(); }, 1800);
-    };
-    if (!stopped) timer = window.setTimeout(() => { void poll(); }, 1200);
     return () => {
       stopped = true;
-      if (timer !== undefined) window.clearTimeout(timer);
+      source.close();
       if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
       if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
     };
