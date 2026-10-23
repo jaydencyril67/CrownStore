@@ -39,7 +39,7 @@ public class KingsHallAccountPlugin extends Plugin {
             call.resolve(result);
             return;
         }
-        Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[] { ACCOUNT_TYPE }, false, null, null, null);
+        Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[] { ACCOUNT_TYPE }, null, null, null, null);
         startActivityForResult(call, intent, "handleChooseAccountResult");
     }
 
