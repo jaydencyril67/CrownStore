@@ -93,6 +93,57 @@ jobs:
           npx cap sync android
           python3 scripts/install-android-device-bridge.py
 
+      - name: Configure Firebase for CrownStore Android push
+        env:
+          FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
+          FIREBASE_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p android/app
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          raw = os.environ.get("FIREBASE_GOOGLE_SERVICES_JSON", "").strip()
+          encoded = os.environ.get("FIREBASE_GOOGLE_SERVICES_JSON_BASE64", "").strip()
+          if raw:
+              content = raw
+              source = "raw JSON secret"
+          elif encoded:
+              try:
+                  content = base64.b64decode(encoded, validate=True).decode("utf-8")
+              except Exception as exc:
+                  raise SystemExit(f"Firebase base64 secret is invalid: {exc}") from exc
+              source = "base64 JSON secret"
+          else:
+              raise SystemExit(
+                  "Missing Firebase Android configuration. Add FIREBASE_GOOGLE_SERVICES_JSON "
+                  "or FIREBASE_GOOGLE_SERVICES_JSON_BASE64 to CrownStore repository Actions secrets."
+              )
+
+          try:
+              config = json.loads(content)
+          except Exception as exc:
+              raise SystemExit(f"Firebase Android configuration is not valid JSON: {exc}") from exc
+
+          packages = [
+              client.get("client_info", {}).get("android_client_info", {}).get("package_name")
+              for client in config.get("client", [])
+          ]
+          if "online.kingshall.crownstore" not in packages:
+              raise SystemExit(
+                  "Firebase config must contain the CrownStore Android package online.kingshall.crownstore."
+              )
+
+          Path("android/app/google-services.json").write_text(
+              json.dumps(config, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(f"Configured Firebase Cloud Messaging for online.kingshall.crownstore ({source}).")
+          PY
+
       - name: Match CrownStore APK launcher icons to the HallsChat structure
         env:
           APP_ICON_SVG: public/crownstore-app-icon.svg

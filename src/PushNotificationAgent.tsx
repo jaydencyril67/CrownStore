@@ -1,0 +1,97 @@
+import { useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { PushNotifications } from "@capacitor/push-notifications";
+import { addCrownNotification, readNotificationPreferences, type NotificationKind } from "./notifications";
+import { refreshCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
+
+const SESSION_KEY = "crownstore-profile-token";
+const VALID_KINDS: NotificationKind[] = ["appUpdates", "downloads", "security", "storeNotices"];
+
+function currentToken(): string {
+  try { return window.localStorage.getItem(SESSION_KEY) || ""; } catch { return ""; }
+}
+
+function notificationKind(value: unknown): NotificationKind {
+  return typeof value === "string" && VALID_KINDS.includes(value as NotificationKind)
+    ? value as NotificationKind
+    : "storeNotices";
+}
+
+function safeNotificationPath(value: unknown): string {
+  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//")) return "/";
+  try {
+    const url = new URL(value, window.location.origin);
+    return url.origin === window.location.origin ? url.pathname + url.search + url.hash : "/";
+  } catch {
+    return "/";
+  }
+}
+
+export default function PushNotificationAgent() {
+  useEffect(() => {
+    let disposed = false;
+    const listeners: Array<{ remove: () => Promise<void> }> = [];
+
+    async function attachNativeListeners() {
+      if (Capacitor.getPlatform() !== "android") return;
+      const received = await PushNotifications.addListener("pushNotificationReceived", (notification) => {
+        const data = notification.data || {};
+        const title = notification.title || (typeof data.title === "string" ? data.title : "CrownStore alert");
+        const body = notification.body || (typeof data.body === "string" ? data.body : typeof data.message === "string" ? data.message : "");
+        const tag = typeof data.tag === "string" ? data.tag : typeof data.notificationId === "string" ? data.notificationId : "";
+        const appSlug = typeof data.appSlug === "string" && data.appSlug ? data.appSlug : undefined;
+        addCrownNotification({
+          id: "push:" + (tag || title + ":" + body),
+          externalKey: tag || undefined,
+          kind: notificationKind(data.type),
+          title,
+          body,
+          appSlug,
+          versionName: typeof data.versionName === "string" ? data.versionName : undefined
+        });
+      });
+      const tapped = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+        const path = safeNotificationPath(action.notification.data?.url);
+        window.location.assign(path);
+      });
+      if (disposed) {
+        await received.remove();
+        await tapped.remove();
+      } else {
+        listeners.push(received, tapped);
+      }
+    }
+
+    async function syncCurrentAccount() {
+      const token = currentToken();
+      if (!token) return;
+      try {
+        if (readNotificationPreferences().channels.device) await refreshCrownStorePush(token);
+        else await syncCrownStorePushPreferences(token);
+      } catch {
+        // Do not block the store UI when push services or notification permissions are unavailable.
+      }
+    }
+
+    void attachNativeListeners().catch(() => undefined);
+    void syncCurrentAccount();
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key === SESSION_KEY || event.key === "crownstore-notification-preferences-v1") void syncCurrentAccount();
+    };
+    const onSessionChange = () => void syncCurrentAccount();
+    const onPreferencesChange = () => void syncCurrentAccount();
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("crownstore:profile-session-changed", onSessionChange);
+    window.addEventListener("crownstore:notification-preferences-changed", onPreferencesChange);
+
+    return () => {
+      disposed = true;
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("crownstore:profile-session-changed", onSessionChange);
+      window.removeEventListener("crownstore:notification-preferences-changed", onPreferencesChange);
+      listeners.forEach((listener) => void listener.remove());
+    };
+  }, []);
+
+  return null;
+}

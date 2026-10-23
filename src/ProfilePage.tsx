@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import { disableCrownStorePush } from "./pushNotifications";
 import { App as CapacitorApp } from "@capacitor/app";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -371,6 +372,10 @@ export default function ProfilePage({
   const [twoFactorSetupCode, setTwoFactorSetupCode] = useState("");
   const [twoFactorRemovalCode, setTwoFactorRemovalCode] = useState("");
   const [showRemoveTwoFactorConfirm, setShowRemoveTwoFactorConfirm] = useState(false);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("crownstore:profile-session-changed", { detail: { token } }));
+  }, [token]);
 
   useEffect(() => {
     if (!token) {
@@ -1005,6 +1010,7 @@ export default function ProfilePage({
   }
 
   function signOut() {
+    void disableCrownStorePush(token).catch(() => undefined);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     setToken("");

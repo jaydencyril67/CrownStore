@@ -36,3 +36,16 @@ The public CrownStore website for official KingsHall applications. Built with Re
 
 
 The frontend never embeds the admin token or database credentials. The administrator enters the token into the management panel, and it is held in UI state for that session. Configure ApiCrownStore's CORS allowlist to include the deployed storefront origin.
+
+## Push notifications
+
+CrownStore's Menu page can enable account-linked push alerts. Android uses Firebase Cloud Messaging through the Capacitor Push Notifications plugin; supported browsers and installed PWAs use VAPID Web Push. Delivery is tied to the signed-in KingsHall account and follows the selected notification type settings.
+
+Before building a new Android APK:
+
+1. In Firebase Console, register an Android app with package ID `online.kingshall.crownstore` and download its `google-services.json`.
+2. In the GitHub repository **Settings → Secrets and variables → Actions**, add either `FIREBASE_GOOGLE_SERVICES_JSON` (the complete JSON text) or `FIREBASE_GOOGLE_SERVICES_JSON_BASE64` (base64-encoded JSON). The manual Android workflow validates the package ID before building.
+3. Configure `FIREBASE_SERVICE_ACCOUNT_JSON`, `VAPID_PUBLIC_KEY`, and `VAPID_PRIVATE_KEY` on the ApiCrownStore Render service as described in the API repository's Push notifications section. Keep Firebase service-account and VAPID private-key values on the backend only.
+4. Redeploy ApiCrownStore, then run the manual **Build CrownStore Android APK** workflow and install the newly published APK. Sign in to CrownStore and enable **Menu → Notification channels → Device notifications**.
+
+The existing PWA service worker receives and displays Web Push messages and opens the related app detail page when an app-release alert is tapped. The Firebase app config is injected during the APK build; it is not committed to this repository.

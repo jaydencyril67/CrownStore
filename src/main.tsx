@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import PushNotificationAgent from "./PushNotificationAgent";
 import "./styles.css";
 
 function GlobalInteractionRules() {
@@ -69,6 +70,7 @@ createRoot(document.getElementById("root")!).render(
     <GlobalInteractionRules />
     <PwaServiceWorker />
     <RefreshSplashCleanup />
+    <PushNotificationAgent />
     <App />
   </React.StrictMode>
 );

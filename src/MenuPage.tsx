@@ -6,9 +6,10 @@ import {
 import {
   BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT,
   EDGE_LIGHT_KEY, EDGE_LIGHT_ENABLED_KEY, EDGE_LIGHT_COLOR_KEY, EDGE_LIGHT_MODE_KEY, EXPAND_MODE_KEY, readNotificationPreferences,
-  requestDeviceNotificationPermission, saveNotificationPreferences, SWIPE_NAVIGATION_KEY,
+  saveNotificationPreferences, SWIPE_NAVIGATION_KEY,
   type NotificationKind, type NotificationPreferences
 } from "./notifications";
+import { disableCrownStorePush, enableCrownStorePush } from "./pushNotifications";
 
 type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
 type EdgeSettings = { enabled: boolean; color: string; mode: EdgeMode };
@@ -125,16 +126,20 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
   };
 
   const toggleChannel = async (channel: "inApp" | "device", enabled: boolean) => {
-    if (channel === "device" && enabled) {
-      const granted = await requestDeviceNotificationPermission();
-      if (!granted) {
-        setNotice(typeof Notification !== "undefined" && Notification.permission === "denied"
-          ? "Device notifications are blocked by your browser or Android settings."
-          : "Notification permission was not granted. In-app notifications are still available.");
+    if (channel === "device") {
+      const token = (() => { try { return window.localStorage.getItem("crownstore-profile-token") || ""; } catch { return ""; } })();
+      try {
+        if (enabled) await enableCrownStorePush();
+        else await disableCrownStorePush(token);
+      } catch (caught) {
+        setNotice(caught instanceof Error ? caught.message : "CrownStore could not update push notification settings.");
         return;
       }
     }
     savePreferences({ ...preferences, channels: { ...preferences.channels, [channel]: enabled } });
+    if (channel === "device") setNotice(enabled
+      ? "Push notifications are enabled for this signed-in KingsHall account."
+      : "Push notifications are disabled on this device.");
   };
 
   return <section className="menu-page" aria-label="CrownStore menu and preferences">
@@ -173,8 +178,8 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
     <section className="menu-section">
       <div className="menu-section-heading"><span className="menu-section-icon"><Bell size={18} /></span><div><h2>Notification channels</h2><p>Choose where CrownStore alerts may appear.</p></div></div>
       <SettingRow title="In-app notifications" detail="Keep alerts in the CrownStore Notifications page." trailing={<SettingSwitch checked={preferences.channels.inApp} label="Enable in-app notifications" onChange={(enabled) => void toggleChannel("inApp", enabled)} />} />
-      <SettingRow title="Device notifications" detail="Show notifications on this device while CrownStore is active and connected. Browser/Android permission is required." trailing={<SettingSwitch checked={preferences.channels.device} label="Enable device notifications" onChange={(enabled) => void toggleChannel("device", enabled)} />} />
-      <p className="menu-inline-note"><Smartphone size={14} /> Background delivery while CrownStore is closed is not guaranteed by this channel.</p>
+      <SettingRow title="Device notifications" detail="Receive app releases and CrownStore alerts even when the app or browser is in the background. Sign-in and notification permission are required." trailing={<SettingSwitch checked={preferences.channels.device} label="Enable device notifications" onChange={(enabled) => void toggleChannel("device", enabled)} />} />
+      <p className="menu-inline-note"><Smartphone size={14} /> Uses Firebase Cloud Messaging in the Android app and Web Push in supported browsers/PWAs. Push delivery also requires the CrownStore notification services to be configured.</p>
     </section>
 
     <section className="menu-section">

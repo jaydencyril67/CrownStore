@@ -1,4 +1,4 @@
-const CACHE_NAME = "crownstore-shell-v14";
+const CACHE_NAME = "crownstore-shell-v15";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/crownstore-icon.svg?v=3", "/crownstore-maskable.svg?v=3", "/crownstore-pwa-icon.svg?v=3"];
 
 self.addEventListener("install", (event) => {
@@ -15,6 +15,45 @@ self.addEventListener("activate", (event) => {
       .then((keys) => Promise.all(keys.filter((key) => key.startsWith("crownstore-shell-") && key !== CACHE_NAME).map((key) => caches.delete(key))))
       .then(() => self.clients.claim())
   );
+});
+
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch {
+    payload = { body: event.data ? event.data.text() : "" };
+  }
+  const title = typeof payload.title === "string" ? payload.title.slice(0, 140) : "CrownStore alert";
+  const body = typeof payload.body === "string" ? payload.body.slice(0, 500) : typeof payload.message === "string" ? payload.message.slice(0, 500) : "";
+  const candidate = typeof payload.url === "string" && payload.url.startsWith("/") && !payload.url.startsWith("//") ? payload.url : "/";
+  const target = new URL(candidate, self.location.origin);
+  const safeUrl = target.origin === self.location.origin ? target.pathname + target.search + target.hash : "/";
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
+    tag: typeof payload.tag === "string" ? payload.tag.slice(0, 160) : "crownstore-alert",
+    icon: "/crownstore-pwa-icon.svg?v=3",
+    badge: "/crownstore-pwa-icon.svg?v=3",
+    data: { url: safeUrl }
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const candidate = event.notification.data && typeof event.notification.data.url === "string"
+    ? event.notification.data.url
+    : "/";
+  const target = new URL(candidate.startsWith("/") && !candidate.startsWith("//") ? candidate : "/", self.location.origin);
+  const safeUrl = target.origin === self.location.origin ? target.href : self.location.origin + "/";
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (windows) => {
+    const openWindow = windows.find((client) => {
+      try { return new URL(client.url).origin === self.location.origin; } catch { return false; }
+    });
+    if (openWindow) {
+      await openWindow.navigate(safeUrl);
+      return openWindow.focus();
+    }
+    return self.clients.openWindow(safeUrl);
+  }));
 });
 
 self.addEventListener("fetch", (event) => {
