@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Download, RefreshCw, Smartphone, Wifi } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import type { CrownApp } from "./types";
@@ -18,36 +18,25 @@ function version(value: string | number | null | undefined) {
 
 export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onDownloadApp }: Props) {
   const [session, setSession] = useState<BridgeSessionRef | null>(launchSession);
-  const [snapshot, setSnapshot] = useState<BridgeSnapshot | null>(null);
+  const [snapshot, setSnapshot] = useState<BridgeSnapshot | null>(() => {
+    try {
+      const saved = window.localStorage.getItem("crownstore-device-snapshot");
+      return saved ? JSON.parse(saved) as BridgeSnapshot : null;
+    } catch { return null; }
+  });
   const [busy, setBusy] = useState(false);
   const [working, setWorking] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const autoAttempted = useRef(false);
 
   useEffect(() => { setSession(launchSession); }, [launchSession?.sessionId, launchSession?.secret]);
 
   useEffect(() => {
-    if (Capacitor.isNativePlatform() || launchSession || autoAttempted.current) return;
-    autoAttempted.current = true;
-    let cancelled = false;
-    const start = async () => {
-      try {
-        const created = await createBridgeSession();
-        if (cancelled) return;
-        setSession(created);
-        onConnect(created);
-        window.location.assign(created.deepLink);
-      } catch {
-        if (!cancelled) setError("Couldn’t connect automatically.");
-      }
-    };
-    void start();
-    return () => { cancelled = true; };
-  }, [launchSession?.sessionId, onConnect]);
-
-  useEffect(() => {
-    if (!session) { setSnapshot(null); return; }
+    if (!session) return;
+    try {
+      const saved = window.localStorage.getItem("crownstore-device-snapshot");
+      if (saved) setSnapshot(JSON.parse(saved) as BridgeSnapshot);
+    } catch {}
     let stopped = false;
     let inFlight = false;
     const poll = async () => {
@@ -55,7 +44,11 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onD
       inFlight = true;
       try {
         const next = await readBridgeSnapshot(session);
-        if (!stopped) { setSnapshot(next); setError(""); }
+        if (!stopped) {
+          setSnapshot(next);
+          try { window.localStorage.setItem("crownstore-device-snapshot", JSON.stringify(next)); } catch {}
+          setError("");
+        }
       } catch (caught) {
         if (!stopped) setError("Connection interrupted.");
       } finally { inFlight = false; }
