@@ -825,7 +825,7 @@ export default function ProfilePage({
 
       <section className="profile-external-panel">
         <div className="profile-external-heading"><span><Fingerprint size={18} /></span><div><h2>Signing in on another device?</h2><p>Approve CrownStore from your signed-in KingsHall account.</p></div></div>
-        {!externalLogin && <button className="profile-secondary-button" type="button" disabled={busy || externalBusy} onClick={() => void startExternalLogin()}>{externalBusy ? <span className="profile-spinner" /> : <KeyRound size={16} />} Use external-device sign-in</button>}
+        {!externalLogin && <button className="profile-secondary-button" type="button" disabled={busy || externalBusy || Boolean(challengeToken)} onClick={() => void startExternalLogin()}>{externalBusy ? <span className="profile-spinner" /> : <KeyRound size={16} />} Use external-device sign-in</button>}
         {externalNotice && <p className="profile-notice" role="status">{externalNotice}</p>}
         {externalError && <p className="profile-error" role="alert">{externalError}</p>}
         {externalLogin && <>
