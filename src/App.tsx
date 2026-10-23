@@ -395,7 +395,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
 
   return <section className="app-details-page" aria-labelledby="app-details-title">
     <div className="app-detail-topbar">
-      <button className="app-detail-back" type="button" onClick={onClose}><ArrowLeft size={16} /> Back to CrownStore</button>
+      <button className="app-detail-back app-detail-back-icon" type="button" onClick={onClose} aria-label="Back to CrownStore" title="Back to CrownStore"><ArrowLeft size={18} /></button>
       <span className="app-detail-top-label">APP DETAILS</span>
     </div>
 
@@ -1649,7 +1649,7 @@ export default function App() {
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
-    <NowBar activePage={view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} />
+    <NowBar activePage={selectedApp ? "DETAILS" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
       <DownloadFeedback
         progress={downloadProgress}
