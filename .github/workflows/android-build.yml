@@ -38,13 +38,22 @@ jobs:
               v=(1,0,0)
           else:
               major,minor,patch=max(versions)
-              # CrownStore release trains use patches 0-9; after .9, advance the minor.
-              # This deliberately skips the accidental 1.0.10 line and selects 1.1.0.
-              if patch >= 9:
+              # Match the established app release train: patches 0-9, then
+              # minor 0-9; 1.9.9 rolls to 2.0.0 (never 1.0.10).
+              if patch < 9:
+                  v=(major,minor,patch+1)
+              elif minor < 9:
                   v=(major,minor+1,0)
               else:
-                  v=(major,minor,patch+1)
-          with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write("app_version="+".".join(map(str,v))+"\n")
+                  v=(major+1,0,0)
+          major,minor,patch=v
+          version_code=major*1_000_000+minor*1_000+patch
+          if version_code > 2_100_000_000:
+              raise SystemExit("The derived Android versionCode exceeds Android's supported limit.")
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              f.write("app_version="+".".join(map(str,v))+"\n")
+              f.write(f"app_version_code={version_code}\n")
+          print(f"Selected CrownStore {'.'.join(map(str,v))} (versionCode {version_code})")
           PY
 
       - uses: actions/setup-node@v4
@@ -313,7 +322,7 @@ jobs:
       - name: Set Android version
         env:
           APP_VERSION: ${{ steps.version.outputs.app_version }}
-          APP_VERSION_CODE: ${{ github.run_number }}
+          APP_VERSION_CODE: ${{ steps.version.outputs.app_version_code }}
         run: |
           python3 - <<'PY'
           from pathlib import Path
