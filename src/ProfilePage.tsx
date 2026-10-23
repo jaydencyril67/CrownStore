@@ -326,6 +326,7 @@ export default function ProfilePage({
   onOpenCrownStoreDetails: () => void;
   onBack: () => void;
 }) {
+  void onBack;
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) || "");
   const [user, setUser] = useState<ProfileUser | null>(() => readCachedUser());
   const [checkingSession, setCheckingSession] = useState(() => Boolean(localStorage.getItem(TOKEN_KEY)));
