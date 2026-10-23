@@ -1268,12 +1268,7 @@ export default function App() {
         </div>
         <div className="hero-art"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-glow" /><div className="hero-crown"><StoreMark size={61} /><span>CROWNSTORE</span></div><div className="floating-chip chip-one"><Smartphone size={17} /> Android apps</div><div className="floating-chip chip-two"><ShieldCheck size={17} /> Verified builds</div><div className="floating-chip chip-three"><ArrowDownToLine size={17} /> Direct downloads</div></div>
       </section>
-      <section className="feature-strip" id="about">
-        <div><ShieldCheck /><span><strong>Verified releases</strong><small>APK package and version checked</small></span></div>
-        <div><PackageCheck /><span><strong>Release details</strong><small>Version, size, checksum and changelog</small></span></div>
-        <div><Smartphone /><span><strong>Android ready</strong><small>Direct APK downloads</small></span></div>
-      </section>
-      {view === "UPDATES" && !isAndroidApp && <DeviceUpdatesPanel apps={apps} launchSession={bridgeSession} onConnect={setBridgeSession} onDownloadApp={downloadRelease} />}
+            {view === "UPDATES" && !isAndroidApp && <DeviceUpdatesPanel apps={apps} launchSession={bridgeSession} onConnect={setBridgeSession} onDownloadApp={downloadRelease} />}
       <section className={`apps-section ${view === "UPDATES" ? "updates-page" : ""}`} id="apps">
         <div className="section-heading">
           <div><div className="eyebrow">{view === "UPDATES" ? "LATEST PUBLISHED BUILDS" : "THE COLLECTION"}</div><h2>{view === "UPDATES" ? "Latest releases" : "Find your next app."}</h2><p>{view === "UPDATES" ? "The latest stable APKs published to CrownStore." : "Browse the official KingsHall app family."}</p></div>
