@@ -649,3 +649,99 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 /* Match both Updates headings to the Search page's "Find your next app" headline scale. */
 .updates-hero h1,.updates-page .section-heading h2{font-size:clamp(43px,5.1vw,67px);line-height:1.12;letter-spacing:-1.7px;font-weight:500}
 @media(max-width:700px){.updates-hero h1,.updates-page .section-heading h2{font-size:clamp(32px,8.5vw,42px);line-height:1.12;letter-spacing:-.8px}}
+
+
+/* Open, content-first surfaces across CrownStore pages — matching App Details. */
+/* Home and catalogue cards become clean content rows instead of nested glass panels. */
+.site-shell .app-card{
+  padding:18px 2px;
+  border:0;
+  border-bottom:1px solid rgba(226,220,228,.12);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.site-shell .app-card:hover{
+  border-color:rgba(196,181,253,.28);
+  background:transparent;
+  box-shadow:none;
+}
+.site-shell .app-card-top{align-items:center}
+.site-shell .app-card h3{margin:14px 0 6px}
+.site-shell .app-description{min-height:0}
+.site-shell .app-meta{margin:13px 0 12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}
+.site-shell .feature-strip{
+  border:0;
+  border-top:1px solid rgba(226,220,228,.14);
+  border-bottom:1px solid rgba(226,220,228,.14);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.site-shell .bottom-banner{
+  border:0;
+  border-top:1px solid rgba(226,220,228,.14);
+  border-bottom:1px solid rgba(226,220,228,.14);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.site-shell .state-panel{
+  border:0;
+  border-top:1px solid rgba(226,220,228,.14);
+  border-bottom:1px solid rgba(226,220,228,.14);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+/* Updates: keep the scan controls functional, but remove the heavy outer card. */
+.site-shell .device-update-panel{
+  border:0;
+  border-top:1px solid rgba(226,220,228,.15);
+  border-bottom:1px solid rgba(226,220,228,.15);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.site-shell .device-installed-app{
+  padding:12px 0;
+  border:0;
+  border-bottom:1px solid rgba(226,220,228,.11);
+  border-radius:0;
+  background:transparent;
+}
+.site-shell .device-installed-icon{
+  border-radius:10px;
+  background:transparent;
+}
+.site-shell .device-feedback,.site-shell .device-command-status{
+  border-radius:10px;
+  background:rgba(255,255,255,.025);
+}
+.site-shell .native-self-update{
+  border:0;
+  border-block:1px solid rgba(255,205,92,.25);
+  border-radius:0;
+  background:transparent;
+}
+/* Search already uses rows; soften the remaining icon containers to match. */
+.store-search-result-icon{
+  border-color:rgba(255,255,255,.09);
+  border-radius:12px;
+  background:transparent;
+}
+.store-search-result{padding:14px 0;border-bottom-color:rgba(226,220,228,.12)}
+/* Keep home shelves' intentional square Play-Store-style slots unchanged. */
+@media(max-width:620px){
+  .site-shell .app-card{padding:15px 1px}
+  .site-shell .feature-strip{padding:10px 0}
+  .site-shell .bottom-banner{padding:20px 0}
+  .site-shell .device-update-panel{padding:16px 0}
+  .site-shell .app-meta{flex-wrap:wrap}
+}
