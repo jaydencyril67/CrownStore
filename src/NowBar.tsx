@@ -144,7 +144,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
           </button>
         ) : (
-          <div className={`kh-nowbar-actions ${mode === "expanded" ? "is-expanded" : "is-compact"}`} aria-label="Navigation buttons">
             {actions.map((action) => (
               <div className={`kh-nowbar-slot ${mode === "expanded" ? "is-expanded" : ""}`} key={action.label}>
                 <button
@@ -163,7 +162,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
                 </button>
               </div>
             ))}
-          </div>
         )}
       </div>
     </div>
