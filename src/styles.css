@@ -366,6 +366,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar::-webkit-scrollbar{display:none}
 .kh-nowbar-rail{position:absolute;inset:50% 10px auto;height:1px;transform:translateY(-50%);pointer-events:none;background:linear-gradient(90deg,transparent,rgba(139,92,246,.2),transparent)}
 .kh-nowbar.is-title{width:max-content;max-width:100%;min-width:0;overflow:hidden;padding:10px 12px}
+.kh-nowbar-title.is-pressing{background:transparent}
 .kh-nowbar-title{position:relative;z-index:1;width:max-content;max-width:100%;min-width:0;min-height:0;display:flex;flex:0 0 auto;align-items:center;justify-content:center;gap:10px;padding:2px 4px;border:0;border-radius:0;background:transparent;color:#eee7ff;white-space:nowrap;font-size:.95rem;font-weight:700;letter-spacing:.02em;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .kh-nowbar-orb{width:10px;height:10px;flex:0 0 10px;border-radius:999px;background:linear-gradient(135deg,#c4b5fd,#6d28d9);box-shadow:0 0 10px rgba(139,92,246,.42)}
 .kh-nowbar-current{max-width:calc(100vw - 105px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.95rem;font-weight:700;letter-spacing:.02em}
