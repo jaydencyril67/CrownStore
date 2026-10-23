@@ -507,7 +507,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
       <form className="app-review-form" onSubmit={(event) => void submitReview(event)}>
         <div className="app-review-form-heading"><h3>{reviewPayload?.myReview ? "Update your review" : "Rate this app"}</h3><span>One review per browser</span></div>
         <div className="app-review-rating-picker" role="group" aria-label="Your rating">
-          {[1, 2, 3, 4, 5].map((value) => <button className="review-rating-star" key={value} type="button" aria-label={"Rate " + value + " out of 5"} aria-pressed={reviewRating === value} onClick={() => setReviewRating(value)}><Star size={20} fill={value <= reviewRating ? "currentColor" : "none"} /></button>)}
+          {[1, 2, 3, 4, 5].map((value) => <button className="review-rating-star" key={value} type="button" aria-label={"Rate " + value + " out of 5"} aria-pressed={reviewRating === value} onClick={() => setReviewRating(value)} style={{ color: value <= reviewRating ? "#facc15" : "var(--text-muted, #8b8798)" }}><Star size={20} fill={value <= reviewRating ? "#facc15" : "none"} stroke={value <= reviewRating ? "#facc15" : "currentColor"} /></button>)}
         </div>
         <div className="app-review-fields">
           <label className="app-review-field"><span>Your name (optional)</span><input value={reviewName} onChange={(event) => setReviewName(event.target.value)} maxLength={40} autoComplete="nickname" placeholder="CrownStore user" /></label>
