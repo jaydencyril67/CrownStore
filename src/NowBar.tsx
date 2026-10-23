@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type TouchEvent } from "react";
 
-type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "OPTION 3" | "OPTION 4" | "OPTION 5" | "OPTION 6" | "OPTION 7" | "OPTION 8";
+type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "OPTION 3" | "OPTION 4" | "OPTION 5" | "OPTION 6" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
 type Action = { label: ActionLabel; icon: string };
 
 const actions: Action[] = [
@@ -13,6 +13,9 @@ const actions: Action[] = [
   { label: "OPTION 6", icon: "M4 6h16M4 12h16M4 18h16" },
   { label: "OPTION 7", icon: "M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" },
   { label: "OPTION 8", icon: "M4 7h16M4 12h10M4 17h16M17 10l3 2-3 2" },
+  { label: "OPTION 9", icon: "M4 7h16M4 12h10M4 17h16M17 10l3 2-3 2" },
+  { label: "OPTION 10", icon: "M12 3v18M3 12h18" },
+  { label: "OPTION 11", icon: "M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4" },
 ];
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
@@ -104,8 +107,25 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
-        role="group"
-        aria-label="CrownStore quick navigation"
+        role="button"
+        tabIndex={0}
+        aria-label={view === "title" ? `${activePage} page. Tap to show navigation buttons; hold to expand; swipe to navigate.` : "Navigation buttons. Tap to show current page."}
+        onClick={() => {
+          if (swipeHandled.current) {
+            swipeHandled.current = false;
+          } else if (!pressing && !holdTriggered.current) {
+            resetIdle();
+            setBarState({ view: view === "title" ? "actions" : "title", mode: "compact" });
+          }
+          holdTriggered.current = false;
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            resetIdle();
+            setBarState({ view: view === "title" ? "actions" : "title", mode: "compact" });
+          }
+        }}
         onPointerDown={startHold}
         onPointerUp={stopHold}
         onPointerLeave={stopHold}
@@ -124,28 +144,11 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
       >
         <div className="kh-nowbar-rail" />
         {view === "title" ? (
-          <button
-            className={`kh-nowbar-title ${pressing ? "is-pressing" : ""}`}
-            type="button"
-            aria-label={activePage + " page. Tap to show navigation buttons; hold to expand; swipe to navigate."}
-            onClick={() => {
-              if (swipeHandled.current) { swipeHandled.current = false; return; }
-              if (holdTriggered.current) { holdTriggered.current = false; return; }
-              setBarState((current) => ({ view: current.view === "title" ? "actions" : "title", mode: "compact" }));
-              resetIdle();
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                setBarState((current) => ({ view: current.view === "title" ? "actions" : "title", mode: "compact" }));
-                resetIdle();
-              }
-            }}
-          >
+          <div className={`kh-nowbar-title ${pressing ? "is-pressing" : ""}`}>
             <span className="kh-nowbar-orb" />
             <span className="kh-nowbar-current">{activePage}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-          </button>
+          </div>
         ) : (
           actions.map((action) => (
               <div className={`kh-nowbar-slot ${mode === "expanded" ? "is-expanded" : ""}`} key={action.label}>
