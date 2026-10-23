@@ -411,16 +411,12 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
           <div className="app-detail-meta-line">
             <span className="app-detail-category">{readableCategory(app.category || "Utilities")}</span>
             <span className={installStateClass}><span className="details-status-dot" />{installStateLabel}</span>
-            <span className="app-detail-mini-rating">
-              {reviewCount > 0 ? <><RatingStars rating={averageRating} size={12} /> <strong>{averageRating.toFixed(1)}</strong></> : <span>No ratings yet</span>}
-            </span>
-            <span>{reviewCount.toLocaleString()} {reviewCount === 1 ? "review" : "reviews"}</span>
           </div>
         </div>
       </div>
 
       <div className="app-detail-metrics">
-        <div className="app-detail-metric"><span className="app-detail-metric-label">Average rating</span><strong className="app-detail-metric-value">{reviewCount ? averageRating.toFixed(1) : "—"}</strong><span className="app-detail-metric-note">{reviewCount.toLocaleString()} {reviewCount === 1 ? "rating" : "ratings"}</span></div>
+        <div className="app-detail-metric"><span className="app-detail-metric-label">Published date</span><strong className="app-detail-metric-value">{formatDate(firstPublishedAt)}</strong><span className="app-detail-metric-note">First release</span></div>
         <div className="app-detail-metric"><span className="app-detail-metric-label">Total downloads</span><strong className="app-detail-metric-value">{totalDownloads.toLocaleString()}</strong><span className="app-detail-metric-note">Completed APK downloads</span></div>
         <div className="app-detail-metric"><span className="app-detail-metric-label">Latest version</span><strong className="app-detail-metric-value">{app.versionName ? "v" + app.versionName : "—"}</strong><span className="app-detail-metric-note">{ready ? formatSize(app.sizeBytes) : "Coming soon"}</span></div>
       </div>
