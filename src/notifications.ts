@@ -23,6 +23,10 @@ export type NotificationPreferences = {
 export const NOTIFICATION_STORAGE_KEY = "crownstore-notifications-v1";
 export const NOTIFICATION_PREFERENCES_KEY = "crownstore-notification-preferences-v1";
 export const EDGE_LIGHT_KEY = "crownstore-nowbar-edge-light";
+// Keep individual preference keys, matching KingsHall, while retaining the combined key for migration.
+export const EDGE_LIGHT_ENABLED_KEY = "crownstore-nowbar-color-enabled";
+export const EDGE_LIGHT_COLOR_KEY = "crownstore-nowbar-color";
+export const EDGE_LIGHT_MODE_KEY = "crownstore-nowbar-light-style";
 export const BUTTON_COLOR_KEY = "crownstore-nowbar-button-color";
 export const BUTTON_COLOR_ENABLED_KEY = "crownstore-nowbar-button-color-enabled";
 export const SWIPE_NAVIGATION_KEY = "crownstore-nowbar-swipe-enabled";
