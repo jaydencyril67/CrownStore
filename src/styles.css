@@ -745,3 +745,60 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
   .site-shell .device-update-panel{padding:16px 0}
   .site-shell .app-meta{flex-wrap:wrap}
 }
+
+
+/* Compact home shelves: prevent later desktop rules from reintroducing oversized vertical gaps. */
+.home-shelves{
+  padding-top:16px;
+  padding-bottom:8px;
+}
+.shelves-heading{
+  margin-bottom:16px;
+  padding:6px 0 12px;
+}
+.app-shelf{
+  margin:0 0 16px;
+}
+.shelf-heading{
+  margin-bottom:8px;
+}
+.shelf-heading h2{
+  margin-bottom:2px;
+}
+.shelf-heading p{
+  line-height:1.35;
+}
+.shelf-footer-note{
+  padding-top:12px;
+}
+@media(max-width:620px){
+  .home-shelves{
+    padding:8px 9px 4px;
+  }
+  .shelves-heading{
+    gap:6px;
+    margin-bottom:10px;
+    padding:3px 0 8px;
+  }
+  .app-shelf{
+    margin-bottom:12px;
+  }
+  .shelf-heading{
+    gap:4px;
+    margin-bottom:6px;
+  }
+  .shelf-title-wrap{
+    gap:5px;
+  }
+  .shelf-heading h2{
+    line-height:1.2;
+    margin:0 0 2px;
+  }
+  .shelf-heading p{
+    line-height:1.25;
+  }
+  .shelf-footer-note{
+    padding-top:10px;
+    line-height:1.4;
+  }
+}
