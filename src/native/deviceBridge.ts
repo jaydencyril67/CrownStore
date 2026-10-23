@@ -1,6 +1,6 @@
 import type { BridgeSessionRef, BridgeSnapshot } from "./deviceBridgeTypes";
 
-export const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://api.crownstore.kingshall.online").replace(/\/$/, "");
+export const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 
 export async function bridgeFetch<T>(session: BridgeSessionRef, path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
