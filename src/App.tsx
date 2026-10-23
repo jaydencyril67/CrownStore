@@ -807,6 +807,7 @@ export default function App() {
   });
   const [category, setCategory] = useState("All apps");
   const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
+  const detailHistoryPushedRef = useRef(false);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const downloadAbortRef = useRef<AbortController | null>(null);
   const nativeDownloadIdRef = useRef<number | null>(null);
@@ -873,6 +874,29 @@ export default function App() {
     }).catch(() => {});
     return () => { disposed = true; if (subscription) void subscription.remove(); };
   }, []);
+
+  // App detail pages can be opened directly or shared with a lightweight hash URL.
+  useEffect(() => {
+    const syncAppDetailFromUrl = () => {
+      const match = window.location.hash.match(/^#app\/(.+)$/i);
+      if (!match) {
+        setSelectedApp(null);
+        detailHistoryPushedRef.current = false;
+        return;
+      }
+      let slug = "";
+      try { slug = decodeURIComponent(match[1]).toLowerCase(); } catch { slug = match[1].toLowerCase(); }
+      const matchedApp = apps.find((item) => item.slug === slug);
+      if (matchedApp) setSelectedApp(matchedApp);
+    };
+    syncAppDetailFromUrl();
+    window.addEventListener("popstate", syncAppDetailFromUrl);
+    window.addEventListener("hashchange", syncAppDetailFromUrl);
+    return () => {
+      window.removeEventListener("popstate", syncAppDetailFromUrl);
+      window.removeEventListener("hashchange", syncAppDetailFromUrl);
+    };
+  }, [apps]);
 
   // Let the browser restore the user's previous scroll position on refresh.
   useEffect(() => {
@@ -1458,6 +1482,28 @@ export default function App() {
     try { window.localStorage.setItem("crownstore-recent-searches", JSON.stringify(next)); } catch {}
   }
 
+  function openAppDetails(app: CrownApp) {
+    const nextUrl = window.location.pathname + window.location.search + "#app/" + encodeURIComponent(app.slug);
+    if (window.location.hash.startsWith("#app/")) {
+      window.history.replaceState({ crownStoreDetail: true, slug: app.slug }, "", nextUrl);
+    } else {
+      window.history.pushState({ crownStoreDetail: true, slug: app.slug }, "", nextUrl);
+      detailHistoryPushedRef.current = true;
+    }
+    setSelectedApp(app);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  function closeAppDetails() {
+    if (window.location.hash.startsWith("#app/")) {
+      if (detailHistoryPushedRef.current) window.history.back();
+      else window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    detailHistoryPushedRef.current = false;
+    setSelectedApp(null);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
   const updatesAvailable = apps.some((app) => Boolean(app.releaseId));
   return <div className="site-shell">
     <div className="ambient ambient-one" /><div className="ambient ambient-two" />
@@ -1467,7 +1513,21 @@ export default function App() {
       <div className="header-right-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></div>
     </header>
     <main id="home">
-      {view === "SEARCH" ? <section id="search-page" className="store-search-page" aria-label="Search CrownStore apps">
+      {selectedApp ? <AppDetailsPage
+        app={selectedApp}
+        onClose={closeAppDetails}
+        download={downloadProgress}
+        isAnotherDownloadRunning={Boolean(downloadProgress && ["starting", "downloading", "installing", "permission"].includes(downloadProgress.status) && downloadProgress.releaseId !== selectedApp.releaseId)}
+        onDownload={downloadRelease}
+        onCancelDownload={cancelDownload}
+        onDismissDownload={dismissDownload}
+        onInstallDownloaded={onInstallDownloaded}
+        installState={getAppInstallState(selectedApp, installedApps, installedScanStatus)}
+        installedVersion={installedApps[selectedApp.packageId]}
+        onRefreshInstalledApps={() => installedScanRef.current()}
+        allApps={apps}
+        onOpenApp={openAppDetails}
+      /> : view === "SEARCH" ? <section id="search-page" className="store-search-page" aria-label="Search CrownStore apps">
         <div className="store-search-heading"><span className="eyebrow"><Search size={14} /> CROWNSTORE DISCOVERY</span><h1>Find your next app.</h1><p>Search official apps by name, category, description, or package ID.</p></div>
         <form className="store-search-bar glass-panel" role="search" onSubmit={(event) => { event.preventDefault(); submitSearch(); }}>
           <Search size={20} aria-hidden="true" />
@@ -1490,7 +1550,7 @@ export default function App() {
                 : error
                   ? <div className="state-panel state-error"><strong>Search is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : searchResults.length
-                    ? <div className="store-search-results">{searchResults.map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
+                    ? <div className="store-search-results">{searchResults.map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={openAppDetails} />)}</div>
                     : <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No apps found</strong><span>Try another name, category, or package ID.</span></div>}
             </section>
           : <section className="search-discover" aria-label="Discover apps">
@@ -1504,7 +1564,7 @@ export default function App() {
                 : error
                   ? <div className="state-panel state-error"><strong>The catalogue is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : apps.length
-                    ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
+                    ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={openAppDetails} />)}</div>
                     : <div className="search-empty-prompt"><Search size={24} /><strong>No apps are listed yet</strong><span>Official apps will appear here when they are published to CrownStore.</span></div>}
             </section>}
       </section> : view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
@@ -1521,7 +1581,7 @@ export default function App() {
           return <section className="app-shelf" key={shelf.id} aria-labelledby={"shelf-" + shelf.id}>
             <div className="shelf-heading"><div className="shelf-title-wrap"><span className="shelf-icon"><ShelfIcon size={18} /></span><div><h2 id={"shelf-" + shelf.id}>{shelf.title}</h2><p>{shelf.subtitle}</p></div></div><div className="shelf-heading-actions"><span className="shelf-count">{shelfApps.length} {shelfApps.length === 1 ? "app" : "apps"}</span></div></div>
             <div className="shelf-track" aria-label={shelf.title + " app slots"}>
-              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={setSelectedApp} /></div>)}
+              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={openAppDetails} /></div>)}
               {Array.from({ length: Math.max(0, 50 - (loading ? 0 : shelfApps.length)) }, (_, index) => (
                 <div className="shelf-app-card shelf-empty-slot-card" key={"empty-slot-" + index} aria-hidden="true">
                   <div className="shelf-app-tile shelf-empty-slot" />
@@ -1563,7 +1623,7 @@ export default function App() {
               : view === "UPDATES" && isAndroidApp && installedScanStatus === "error"
                 ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Installed apps could not be checked</strong><span>{installedScanError || "CrownStore couldn't read this phone's installed app versions."}</span><button className="button button-outline" onClick={() => installedScanRef.current()}>Try again</button></div>
                 : filtered.length
-              ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
+              ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} onDetails={openAppDetails} />)}</div>
               : view === "UPDATES" && isAndroidApp && installedScanStatus === "ready" && !search.trim() && category === "All apps"
                 ? <div className="state-panel"><div className="state-icon"><CheckCircle2 size={22} /></div><strong>You’re all caught up</strong><span>Every installed CrownStore app is using the latest published version. Apps you haven’t installed remain available in the collection.</span></div>
               : view === "UPDATES" && !search.trim() && category === "All apps" && !updatesAvailable
@@ -1579,7 +1639,7 @@ export default function App() {
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
-    <NowBar activePage={view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { setView("HOME"); document.getElementById("home")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} onSearch={() => navigate("SEARCH")} onUpdates={() => navigate("UPDATES")} />
+    <NowBar activePage={view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
       <DownloadFeedback
         progress={downloadProgress}
@@ -1595,19 +1655,7 @@ export default function App() {
         }}
       />
     </div>}
-    {selectedApp && <AppDetails
-      app={selectedApp}
-      onClose={() => setSelectedApp(null)}
-      download={downloadProgress}
-      isAnotherDownloadRunning={Boolean(downloadProgress && ["starting", "downloading", "installing", "permission"].includes(downloadProgress.status) && downloadProgress.releaseId !== selectedApp.releaseId)}
-      onDownload={downloadRelease}
-      onCancelDownload={cancelDownload}
-      onDismissDownload={dismissDownload}
-      onInstallDownloaded={onInstallDownloaded}
-      installState={getAppInstallState(selectedApp, installedApps, installedScanStatus)}
-      installedVersion={installedApps[selectedApp.packageId]}
-      onRefreshInstalledApps={() => installedScanRef.current()}
-    />}
+
     {showAppManager && <AppManagerPanel onClose={() => setShowAppManager(false)} onSaved={() => void loadApps()} />}
     {showPublisher && <PublisherPanel apps={apps.filter((item) => !("isListed" in item) || item.isListed)} onPublished={() => void loadApps()} onClose={() => setShowPublisher(false)} />}
   </div>;
