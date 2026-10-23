@@ -58,11 +58,25 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
         )).slice(0, 250);
         const inventory = await NativeAppUpdate.getInstalledApps({ packageIds });
         if (stopped) return;
+        const reportInventory = async () => {
+          const latestInventory = await NativeAppUpdate.getInstalledApps({ packageIds });
+          if (stopped) return;
+          await bridgeFetch(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId) + "/report", {
+            method: "POST", body: JSON.stringify({ installedApps: latestInventory.apps || [] }),
+          });
+        };
         await bridgeFetch(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId) + "/report", {
           method: "POST", body: JSON.stringify({ installedApps: inventory.apps || [] }),
         });
+        let lastInventoryReportAt = Date.now();
 
         while (!stopped) {
+          // Refresh the server's installed-version snapshot periodically, so the PWA
+          // reflects installs and updates without asking the user to press Scan again.
+          if (Date.now() - lastInventoryReportAt >= 30000) {
+            await reportInventory();
+            lastInventoryReportAt = Date.now();
+          }
           const snapshot = await bridgeFetch<BridgeSnapshot>(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId));
           const command = snapshot.command;
           if (command && snapshot.commandStatus === "pending" && command.commandId !== activeCommandId) {
