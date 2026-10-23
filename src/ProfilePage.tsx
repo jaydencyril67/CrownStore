@@ -529,6 +529,12 @@ export default function ProfilePage({
     }
     localStorage.setItem(TOKEN_KEY, data.token);
     try { localStorage.setItem(USER_KEY, JSON.stringify(data.user)); } catch {}
+    window.dispatchEvent(new Event("crownstore:profile-session-changed"));
+    void fetch(API_BASE + "/api/notifications/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + data.token },
+      body: JSON.stringify({ event: "login" })
+    }).catch(() => undefined);
     setUser(data.user);
     setToken(data.token);
     setIdentity("");
