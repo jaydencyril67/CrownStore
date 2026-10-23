@@ -41,8 +41,8 @@ export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) 
       }
       await refreshStatus(session);
       setMessage("Status refreshed.");
-    } catch {
-      setError("Couldn’t fetch device status. Reconnect Android and try again.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Couldn’t fetch device status. Keep CrownStore Android open and try again.");
     } finally { setBusy(false); }
   }
 
