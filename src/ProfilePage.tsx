@@ -289,6 +289,7 @@ export default function ProfilePage({
   const [externalBusy, setExternalBusy] = useState(false);
   const [externalError, setExternalError] = useState("");
   const [externalNotice, setExternalNotice] = useState("");
+  const [externalSecondsRemaining, setExternalSecondsRemaining] = useState(300);
   const [downloadHistory, setDownloadHistory] = useState<DownloadHistoryEntry[]>(() => readDownloadHistory());
   const [usage, setUsage] = useState<UsageEntry[]>([]);
   const [usagePermissionRequired, setUsagePermissionRequired] = useState(true);
@@ -628,6 +629,7 @@ export default function ProfilePage({
       if (!response.ok || !data.requestId || !data.loginCode || !data.qrToken || !data.expiresAt) {
         throw new Error(responseMessage(data, "Unable to start external-device sign-in."));
       }
+      setExternalSecondsRemaining(Math.max(0, Math.ceil((new Date(data.expiresAt).getTime() - Date.now()) / 1000)));
       setExternalLogin({
         requestId: data.requestId,
         loginCode: data.loginCode,
@@ -669,17 +671,34 @@ export default function ProfilePage({
     let stopped = false;
     let timer: number | undefined;
     let expiryTimer: number | undefined;
+    let countdownTimer: number | undefined;
     const requestId = externalLogin.requestId;
+    const expiresAt = new Date(externalLogin.expiresAt).getTime();
+    const updateCountdown = () => {
+      if (!Number.isFinite(expiresAt)) {
+        setExternalSecondsRemaining(0);
+        return;
+      }
+      const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      setExternalSecondsRemaining(remaining);
+      if (remaining === 0) expire();
+    };
     const expire = () => {
       if (stopped) return;
       stopped = true;
       if (timer !== undefined) window.clearTimeout(timer);
+      if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
+      if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
+      setExternalSecondsRemaining(0);
       setExternalLogin(null);
       setExternalNotice("");
       setExternalError("This external sign-in request expired. Start again.");
     };
-    const expiresAt = new Date(externalLogin.expiresAt).getTime();
-    if (Number.isFinite(expiresAt)) expiryTimer = window.setTimeout(expire, Math.max(0, expiresAt - Date.now()));
+    updateCountdown();
+    if (!stopped) {
+      countdownTimer = window.setInterval(updateCountdown, 1000);
+      expiryTimer = window.setTimeout(expire, Math.max(0, expiresAt - Date.now()));
+    }
     const poll = async () => {
       try {
         const response = await fetch(API_BASE + "/api/auth/kingshall/external/status", {
@@ -691,30 +710,40 @@ export default function ProfilePage({
         if (stopped) return;
         if (!response.ok) {
           if ([400, 401, 404, 409, 410, 423].includes(response.status)) {
+            stopped = true;
+            if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
+            if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
             setExternalLogin(null);
             setExternalError(responseMessage(data, "This external sign-in request is no longer valid."));
             return;
           }
         } else if (data.status === "authenticated") {
+          stopped = true;
+          if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
+          if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
           setExternalLogin(null);
           try { saveSession(data); }
           catch (caught) { setExternalError(caught instanceof Error ? caught.message : "Could not complete the approved sign-in."); }
           return;
         } else if (["denied", "expired", "consumed"].includes(String(data.status || ""))) {
+          stopped = true;
+          if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
+          if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
           setExternalLogin(null);
           setExternalError(data.status === "denied" ? "The external sign-in request was denied." : "This external sign-in request expired. Start again.");
           return;
         }
       } catch {
-        // Keep checking through temporary network failures until the request expires.
+        // Match CryBots and HallsChat: retry temporary network errors until expiry.
       }
       if (!stopped) timer = window.setTimeout(() => { void poll(); }, 1800);
     };
-    timer = window.setTimeout(() => { void poll(); }, 1200);
+    if (!stopped) timer = window.setTimeout(() => { void poll(); }, 1200);
     return () => {
       stopped = true;
       if (timer !== undefined) window.clearTimeout(timer);
       if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
+      if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
     };
   }, [externalLogin?.requestId]);
 
@@ -837,6 +866,11 @@ export default function ProfilePage({
           <div className="profile-qr"><QRCodeSVG value={JSON.stringify({ type: "kingshall-external-login-v1", requestId: externalLogin.requestId, qrToken: externalLogin.qrToken, appName: "CrownStore" })} size={174} level="M" includeMargin /></div>
           <span className="profile-one-time-label">ONE-TIME LOGIN CODE</span>
           <strong className="profile-one-time-code">{externalLogin.loginCode}</strong>
+          <p className="profile-external-expiry" role="timer" aria-live="off">
+            {externalSecondsRemaining > 0
+              ? `Expires in ${Math.floor(externalSecondsRemaining / 60)}:${String(externalSecondsRemaining % 60).padStart(2, "0")} · ${new Date(externalLogin.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              : "Request expired"}
+          </p>
           <p className="profile-external-help">Waiting for approval from KingsHall…</p>
           <button className="profile-text-button" type="button" disabled={externalBusy} onClick={() => void cancelExternalLogin()}>Cancel external sign-in</button>
         </>}
