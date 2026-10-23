@@ -450,6 +450,7 @@ export default function ProfilePage({
       if (!active) return;
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      window.dispatchEvent(new Event("crownstore:profile-session-changed"));
       setToken("");
       setUser(null);
       if (caught instanceof Error && !/sign in to crownstore/i.test(caught.message)) setError(caught.message);
@@ -1021,6 +1022,7 @@ export default function ProfilePage({
     void disableCrownStorePush(token, false).catch(() => undefined);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    window.dispatchEvent(new Event("crownstore:profile-session-changed"));
     setToken("");
     setUser(null);
     setIdentity("");
