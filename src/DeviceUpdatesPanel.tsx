@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, CheckCircle2, Download, RefreshCw, Smartphone, Wifi } from "lucide-react";
-import { Capacitor } from "@capacitor/core";
 import type { CrownApp } from "./types";
 import type { BridgeSessionRef, BridgeSnapshot, InstalledCatalogueApp } from "./native/deviceBridgeTypes";
 import { bridgeFetch, createBridgeSession, readBridgeSnapshot } from "./native/deviceBridge";
@@ -16,7 +15,7 @@ function version(value: string | number | null | undefined) {
   return value == null || value === "" ? "Unknown" : String(value);
 }
 
-export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onDownloadApp }: Props) {
+export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) {
   const [session, setSession] = useState<BridgeSessionRef | null>(launchSession);
   const [snapshot, setSnapshot] = useState<BridgeSnapshot | null>(() => {
     try {
