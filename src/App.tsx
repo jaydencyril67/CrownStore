@@ -409,6 +409,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
           <p className="app-detail-short-description">{app.shortDescription || app.description || "Official app in the KingsHall ecosystem."}</p>
           <div className="app-detail-meta-line">
             <span className="app-detail-category">{readableCategory(app.category || "Utilities")}</span>
+            <span className={installStateClass}><span className="details-status-dot" />{installStateLabel}</span>
             <span className="app-detail-mini-rating">
               {reviewCount > 0 ? <><RatingStars rating={averageRating} size={12} /> <strong>{averageRating.toFixed(1)}</strong></> : <span>No ratings yet</span>}
             </span>
