@@ -468,10 +468,10 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
 
     <section className="app-detail-section" aria-labelledby="app-about-title">
       <div className="app-detail-section-heading"><div><h2 id="app-about-title">About this app</h2><p>Everything you need to know.</p></div></div>
-      <p className="app-detail-description">{app.description || app.shortDescription || "Official app in the KingsHall ecosystem."}</p>
+      <p className={"app-detail-description" + (app.description && app.description.length > 420 && !expanded ? " is-collapsed" : "")}>{app.description || app.shortDescription || "Official app in the KingsHall ecosystem."}</p>
       {app.changelog && <div className="app-detail-changelog"><h3>What’s new</h3><p>{app.changelog}</p></div>}
       {app.description && app.description.length > 420 && <button className="app-detail-back app-detail-read-more" type="button" onClick={() => setExpanded((value) => !value)}>{expanded ? "Show less" : "More about this app"} <ChevronRight size={14} /></button>}
-      {expanded && app.description && <p className="app-detail-description app-detail-description-extra">{app.description}</p>}
+
     </section>
 
     <section className="app-detail-section" aria-labelledby="app-info-title">
@@ -507,7 +507,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
 
       <hr className="app-review-divider" />
       <form className="app-review-form" onSubmit={(event) => void submitReview(event)}>
-        <div className="app-review-form-heading"><h3>{reviewPayload?.myReview ? "Update your review" : "Rate this app"}</h3><span>One review per device</span></div>
+        <div className="app-review-form-heading"><h3>{reviewPayload?.myReview ? "Update your review" : "Rate this app"}</h3><span>One review per browser</span></div>
         <div className="app-review-rating-picker" role="group" aria-label="Your rating">
           {[1, 2, 3, 4, 5].map((value) => <button className="review-rating-star" key={value} type="button" aria-label={"Rate " + value + " out of 5"} aria-pressed={reviewRating === value} onClick={() => setReviewRating(value)}><Star size={20} fill={value <= reviewRating ? "currentColor" : "none"} /></button>)}
         </div>
