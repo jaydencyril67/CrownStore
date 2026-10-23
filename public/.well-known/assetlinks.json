@@ -1,0 +1,24 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.kingshall.crownstore",
+      "sha256_cert_fingerprints": [
+        "A1:83:36:49:FA:E0:18:ED:A4:06:65:7F:1B:56:ED:E9:45:50:53:CC:7B:83:60:2F:5B:88:41:C3:26:6D:10:48"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "web",
+      "site": "https://crownstore.kingshall.online"
+    }
+  }
+]
