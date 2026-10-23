@@ -1,6 +1,6 @@
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
-import { readNotificationPreferences } from "./notifications";
+import { readNotificationPreferences, saveNotificationPreferences } from "./notifications";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 const SESSION_KEY = "crownstore-profile-token";
@@ -152,17 +152,53 @@ async function registerWeb(token: string, askPermission: boolean): Promise<boole
   return true;
 }
 
-export async function syncCrownStorePushPreferences(token = sessionToken(), deviceEnabled?: boolean): Promise<void> {
+export async function syncCrownStorePushPreferences(
+  token = sessionToken(),
+  deviceEnabled?: boolean,
+  channelChoices?: { inApp: boolean; email: boolean }
+): Promise<void> {
   if (!token) return;
   const preferences = readNotificationPreferences();
-  const body: { channels: { inApp: boolean; email: boolean; device?: boolean }; types: typeof preferences.types } = {
-    channels: { inApp: preferences.channels.inApp, email: preferences.channels.email },
+  const body: { channels?: { inApp?: boolean; device?: boolean; email?: boolean }; types: typeof preferences.types } = {
     types: preferences.types
   };
-  // Routine syncs update account-level in-app/email choices but preserve the account's
-  // existing push choice. Only an explicit push toggle is allowed to change device.
-  if (deviceEnabled !== undefined) body.channels.device = deviceEnabled;
+  // Routine syncs update notification types only. Channel changes are sent explicitly so
+  // a fresh device cannot accidentally disable email or in-app alerts already configured.
+  if (deviceEnabled !== undefined || channelChoices) {
+    body.channels = {};
+    if (deviceEnabled !== undefined) body.channels.device = deviceEnabled;
+    if (channelChoices) {
+      body.channels.inApp = channelChoices.inApp;
+      body.channels.email = channelChoices.email;
+    }
+  }
   await requestApi("/api/notifications/preferences", token, "PUT", body);
+}
+
+export async function loadCrownStoreAccountNotificationPreferences(token = sessionToken()): Promise<boolean> {
+  if (!token) return false;
+  const remote = await requestApi<{
+    hasSavedPreferences?: boolean;
+    channels?: { inApp?: boolean; device?: boolean; email?: boolean };
+    types?: Partial<ReturnType<typeof readNotificationPreferences>["types"]>;
+  }>("/api/notifications/preferences", token);
+  if (remote.hasSavedPreferences !== true) return false;
+  const local = readNotificationPreferences();
+  saveNotificationPreferences({
+    ...local,
+    channels: {
+      inApp: remote.channels?.inApp !== false,
+      device: remote.channels?.device === true,
+      email: remote.channels?.email === true
+    },
+    types: {
+      appUpdates: remote.types?.appUpdates !== false,
+      downloads: remote.types?.downloads !== false,
+      security: remote.types?.security !== false,
+      storeNotices: remote.types?.storeNotices !== false
+    }
+  });
+  return true;
 }
 
 export async function enableCrownStorePush(): Promise<void> {
