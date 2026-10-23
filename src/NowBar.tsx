@@ -89,11 +89,20 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
       setExpandModeEnabled(readEnabled(EXPAND_MODE_KEY, true));
       setSwipeNavigationEnabled(readEnabled(SWIPE_NAVIGATION_KEY, true));
     };
+    // Navigation can remount this component or restore a page from the back-forward cache.
+    // Re-read persisted preferences rather than letting an old in-memory snapshot win.
+    const refreshWhenRestored = () => refreshSettings();
     window.addEventListener("storage", refreshSettings);
     window.addEventListener("crownstore:nowbar-settings-changed", refreshSettings);
+    window.addEventListener("pageshow", refreshWhenRestored);
+    window.addEventListener("focus", refreshWhenRestored);
+    document.addEventListener("visibilitychange", refreshWhenRestored);
     return () => {
       window.removeEventListener("storage", refreshSettings);
       window.removeEventListener("crownstore:nowbar-settings-changed", refreshSettings);
+      window.removeEventListener("pageshow", refreshWhenRestored);
+      window.removeEventListener("focus", refreshWhenRestored);
+      document.removeEventListener("visibilitychange", refreshWhenRestored);
     };
   }, []);
 
