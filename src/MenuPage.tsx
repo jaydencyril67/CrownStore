@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Bell, Check, Palette, Radio, Settings2, ShieldCheck,
-  Smartphone, Sparkles, Zap
+  Smartphone, Sparkles, Zap, Mail
 } from "lucide-react";
 import {
   BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT,
@@ -34,6 +34,10 @@ const NOTIFICATION_GROUPS: { title: string; items: { key: NotificationKind; labe
     { key: "storeNotices", label: "CrownStore announcements", detail: "Service changes and important store notices." }
   ] }
 ];
+
+function hasCrownStoreSession(): boolean {
+  try { return Boolean(window.localStorage.getItem("crownstore-profile-token")); } catch { return false; }
+}
 
 function getBoolean(key: string, fallback = true): boolean {
   try {
@@ -95,12 +99,14 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
   const [swipeEnabled, setSwipeEnabled] = useState(() => getBoolean(SWIPE_NAVIGATION_KEY, true));
   const [expandEnabled, setExpandEnabled] = useState(() => getBoolean(EXPAND_MODE_KEY, true));
   const [preferences, setPreferences] = useState<NotificationPreferences>(() => readNotificationPreferences());
+  const [loggedIn, setLoggedIn] = useState(() => hasCrownStoreSession());
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
     const refresh = () => {
       setEdge(readEdge());
       setPreferences(readNotificationPreferences());
+      setLoggedIn(hasCrownStoreSession());
       try {
         const savedColor = window.localStorage.getItem(BUTTON_COLOR_KEY);
         if (savedColor && /^#[0-9a-f]{6}$/i.test(savedColor)) setButtonColor(savedColor);
@@ -112,10 +118,12 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
     window.addEventListener("storage", refresh);
     window.addEventListener("crownstore:nowbar-settings-changed", refresh);
     window.addEventListener("crownstore:notification-preferences-changed", refresh);
+    window.addEventListener("crownstore:profile-session-changed", refresh);
     return () => {
       window.removeEventListener("storage", refresh);
       window.removeEventListener("crownstore:nowbar-settings-changed", refresh);
       window.removeEventListener("crownstore:notification-preferences-changed", refresh);
+      window.removeEventListener("crownstore:profile-session-changed", refresh);
     };
   }, []);
 
@@ -125,9 +133,14 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
     setNotice("Your preferences have been saved on this device.");
   };
 
-  const toggleChannel = async (channel: "inApp" | "device", enabled: boolean) => {
+  const toggleChannel = async (channel: "inApp" | "device" | "email", enabled: boolean) => {
+    const token = (() => { try { return window.localStorage.getItem("crownstore-profile-token") || ""; } catch { return ""; } })();
+    if (channel === "email" && !token) {
+      setNotice("Sign in to CrownStore before enabling email notifications.");
+      setLoggedIn(false);
+      return;
+    }
     if (channel === "device") {
-      const token = (() => { try { return window.localStorage.getItem("crownstore-profile-token") || ""; } catch { return ""; } })();
       try {
         if (enabled) await enableCrownStorePush();
         else await disableCrownStorePush(token);
@@ -140,6 +153,9 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
     if (channel === "device") setNotice(enabled
       ? "Push notifications are enabled for this signed-in KingsHall account."
       : "Push notifications are disabled on this device.");
+    else if (channel === "email") setNotice(enabled
+      ? "Email notifications are enabled for your signed-in KingsHall account."
+      : "Email notifications are disabled for your account.");
   };
 
   return <section className="menu-page" aria-label="CrownStore menu and preferences">
@@ -179,6 +195,7 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
       <div className="menu-section-heading"><span className="menu-section-icon"><Bell size={18} /></span><div><h2>Notification channels</h2><p>Choose where CrownStore alerts may appear.</p></div></div>
       <SettingRow title="In-app notifications" detail="Keep alerts in the CrownStore Notifications page." trailing={<SettingSwitch checked={preferences.channels.inApp} label="Enable in-app notifications" onChange={(enabled) => void toggleChannel("inApp", enabled)} />} />
       <SettingRow title="Device notifications" detail="Receive app releases and CrownStore alerts even when the app or browser is in the background. Sign-in and notification permission are required." trailing={<SettingSwitch checked={preferences.channels.device} label="Enable device notifications" onChange={(enabled) => void toggleChannel("device", enabled)} />} />
+      {loggedIn && <SettingRow title="Email notifications" detail="Send enabled CrownStore alert types to the email address on your signed-in KingsHall account." trailing={<SettingSwitch checked={preferences.channels.email} label="Enable email notifications" onChange={(enabled) => void toggleChannel("email", enabled)} />} />}
       <p className="menu-inline-note"><Smartphone size={14} /> Uses Firebase Cloud Messaging in the Android app and Web Push in supported browsers/PWAs. Push delivery also requires the CrownStore notification services to be configured.</p>
     </section>
 
