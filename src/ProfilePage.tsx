@@ -65,6 +65,7 @@ type NativeKingsHallAccountPlugin = {
 };
 const DeviceAccount = registerPlugin<NativeKingsHallAccountPlugin>("KingsHallAccount");
 type NativeWebAuthnPlugin = {
+  create(options: { options: string }): Promise<{ responseJson: string }>;
   get(options: { options: string }): Promise<{ responseJson: string }>;
 };
 const NativeWebAuthn = registerPlugin<NativeWebAuthnPlugin>("NativeWebAuthn");
@@ -120,6 +121,48 @@ async function authenticateCrownStorePasskey(options: Record<string, any>): Prom
     clientExtensionResults: credential.getClientExtensionResults()
   };
 }
+
+
+async function createCrownStorePasskey(options: Record<string, any>): Promise<Record<string, any>> {
+  if (Capacitor.getPlatform() === "android") {
+    if (!Capacitor.isPluginAvailable("NativeWebAuthn")) {
+      throw new Error("This CrownStore APK needs its native passkey registration bridge updated.");
+    }
+    const result = await NativeWebAuthn.create({ options: JSON.stringify(options) });
+    try { return JSON.parse(result.responseJson) as Record<string, any>; }
+    catch { throw new Error("Android returned an invalid passkey registration response."); }
+  }
+  if (!window.PublicKeyCredential || !navigator.credentials) {
+    throw new Error("Passkey registration is not supported in this browser. Use a supported browser or the CrownStore APK.");
+  }
+  const publicKey: PublicKeyCredentialCreationOptions = {
+    ...options,
+    challenge: base64UrlToBytes(String(options.challenge)).buffer as ArrayBuffer,
+    user: { ...options.user, id: base64UrlToBytes(String(options.user?.id)).buffer as ArrayBuffer },
+    excludeCredentials: (Array.isArray(options.excludeCredentials) ? options.excludeCredentials : []).map((credential: Record<string, any>) => ({
+      ...credential, type: "public-key" as const, id: base64UrlToBytes(String(credential.id)).buffer as ArrayBuffer
+    }))
+  };
+  const credential = await navigator.credentials.create({ publicKey }) as PublicKeyCredential | null;
+  if (!credential) throw new Error("Passkey registration was cancelled.");
+  const response = credential.response as AuthenticatorAttestationResponse;
+  return {
+    id: credential.id,
+    rawId: bytesToBase64Url(credential.rawId),
+    type: credential.type,
+    response: {
+      clientDataJSON: bytesToBase64Url(response.clientDataJSON),
+      attestationObject: bytesToBase64Url(response.attestationObject),
+      transports: response.getTransports?.() || []
+    },
+    clientExtensionResults: credential.getClientExtensionResults()
+  };
+}
+
+type ProfileSecurityStatus = {
+  twoFactor: { configured: boolean; enabled: boolean; pending?: boolean };
+  biometric: { configured: boolean; enabled: boolean; credentialCount: number };
+};
 
 type DownloadHistoryEntry = {
   packageId: string;
@@ -296,6 +339,40 @@ export default function ProfilePage({
   const [usagePermissionRequired, setUsagePermissionRequired] = useState(true);
   const [usageLoading, setUsageLoading] = useState(false);
   const [usageError, setUsageError] = useState("");
+  const [securityStatus, setSecurityStatus] = useState<ProfileSecurityStatus | null>(null);
+  const [securityLoading, setSecurityLoading] = useState(false);
+  const [securityBusy, setSecurityBusy] = useState(false);
+  const [securityError, setSecurityError] = useState("");
+  const [securityNotice, setSecurityNotice] = useState("");
+  const [twoFactorSetupSecret, setTwoFactorSetupSecret] = useState("");
+  const [twoFactorSetupUri, setTwoFactorSetupUri] = useState("");
+  const [twoFactorSetupCode, setTwoFactorSetupCode] = useState("");
+  const [twoFactorRemovalCode, setTwoFactorRemovalCode] = useState("");
+
+  useEffect(() => {
+    if (!token) {
+      setSecurityStatus(null);
+      setSecurityLoading(false);
+      return;
+    }
+    let active = true;
+    setSecurityLoading(true);
+    setSecurityError("");
+    fetch(API_BASE + "/api/auth/kingshall/security", {
+      method: "GET",
+      cache: "no-store",
+      headers: { Accept: "application/json", Authorization: "Bearer " + token }
+    }).then(async (response) => {
+      const data = await response.json().catch(() => ({})) as ProfileSecurityStatus & { message?: string; error?: string };
+      if (!response.ok) throw new Error(data.message || data.error || "Unable to load account security settings.");
+      if (active) setSecurityStatus(data);
+    }).catch((caught: unknown) => {
+      if (active) setSecurityError(caught instanceof Error ? caught.message : "Unable to load account security settings.");
+    }).finally(() => {
+      if (active) setSecurityLoading(false);
+    });
+    return () => { active = false; };
+  }, [token]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -748,6 +825,131 @@ export default function ProfilePage({
     };
   }, [externalLogin?.requestId]);
 
+
+  async function requestProfileSecurity(path: string, body?: Record<string, unknown>): Promise<Record<string, any>> {
+    if (!token) throw new Error("Sign in to CrownStore before changing security settings.");
+    const method = path === "/api/auth/kingshall/security" ? "GET" : "POST";
+    const response = await fetch(API_BASE + path, {
+      method,
+      cache: "no-store",
+      headers: { Accept: "application/json", Authorization: "Bearer " + token, ...(method === "POST" ? { "Content-Type": "application/json" } : {}) },
+      ...(method === "POST" ? { body: JSON.stringify(body || {}) } : {})
+    });
+    const data = await response.json().catch(() => ({})) as Record<string, any>;
+    if (!response.ok) throw new Error(String(data.message || data.error || "CrownStore could not update this security setting."));
+    return data;
+  }
+
+  async function refreshProfileSecurity() {
+    const data = await requestProfileSecurity("/api/auth/kingshall/security");
+    setSecurityStatus(data as ProfileSecurityStatus);
+  }
+
+  async function beginTwoFactorSetup() {
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/setup");
+      setTwoFactorSetupSecret(String(data.secret || ""));
+      setTwoFactorSetupUri(String(data.otpauthUrl || ""));
+      setTwoFactorSetupCode("");
+      setSecurityNotice(String(data.message || "Scan the QR code, then verify the generated code."));
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to start authenticator setup.");
+    } finally { setSecurityBusy(false); }
+  }
+
+  async function verifyTwoFactorSetup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!/^\d{6}$/.test(twoFactorSetupCode)) {
+      setSecurityError("Enter the current six-digit authenticator code.");
+      return;
+    }
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/verify", { code: twoFactorSetupCode });
+      setTwoFactorSetupSecret(""); setTwoFactorSetupUri(""); setTwoFactorSetupCode("");
+      setSecurityNotice(String(data.message || "Authenticator configured."));
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Authenticator verification failed.");
+    } finally { setSecurityBusy(false); }
+  }
+
+  async function cancelTwoFactorSetup() {
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      await requestProfileSecurity("/api/auth/kingshall/security/2fa/cancel");
+      setTwoFactorSetupSecret(""); setTwoFactorSetupUri(""); setTwoFactorSetupCode("");
+      setSecurityNotice("Pending authenticator setup cancelled.");
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to cancel authenticator setup.");
+    } finally { setSecurityBusy(false); }
+  }
+
+  async function changeTwoFactorEnforcement(enabled: boolean) {
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/login-setting", { enabled });
+      setSecurityNotice(String(data.message || "Authenticator sign-in setting updated."));
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to update authenticator sign-in protection.");
+    } finally { setSecurityBusy(false); }
+  }
+
+  async function removeTwoFactor() {
+    if (!/^\d{6}$/.test(twoFactorRemovalCode)) {
+      setSecurityError("Enter the current six-digit authenticator code before removing it.");
+      return;
+    }
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/disable", { code: twoFactorRemovalCode });
+      setTwoFactorRemovalCode("");
+      setSecurityNotice(String(data.message || "Authenticator removed."));
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to remove the authenticator.");
+    } finally { setSecurityBusy(false); }
+  }
+
+  async function registerBiometricPasskey() {
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      const options = await requestProfileSecurity("/api/auth/kingshall/security/biometric/registration/options");
+      const credential = await createCrownStorePasskey(options);
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/registration/verify", credential);
+      setSecurityNotice(String(data.message || "Passkey configured."));
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to register a passkey.");
+    } finally { setSecurityBusy(false); }
+  }
+
+  async function changeBiometricEnforcement(enabled: boolean) {
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/login-setting", { enabled });
+      setSecurityNotice(String(data.message || "Biometric sign-in setting updated."));
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to update biometric sign-in protection.");
+    } finally { setSecurityBusy(false); }
+  }
+
+  async function removeBiometricPasskey() {
+    setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
+    try {
+      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/unbind");
+      setSecurityNotice(String(data.message || "Passkey removed."));
+      await refreshProfileSecurity();
+    } catch (caught) {
+      setSecurityError(caught instanceof Error ? caught.message : "Unable to remove the passkey.");
+    } finally { setSecurityBusy(false); }
+  }
+
   function signOut() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -898,6 +1100,56 @@ export default function ProfilePage({
           <div><span>Username</span><strong>{user.username ? "@" + user.username : "Not set"}</strong></div>
           <div><span>Verification</span><strong>{user.verificationStatus === "verified" ? "Verified" : user.verificationStatus === "pending" ? "Pending review" : "Not verified"}</strong></div>
         </div>
+      </section>
+
+      <section className="profile-section profile-security-section" aria-labelledby="profile-security-title">
+        <div className="profile-section-heading">
+          <h2 id="profile-security-title">Account security</h2>
+          <span>{securityLoading ? "Checking…" : "Synced with KingsHall"}</span>
+        </div>
+        <p className="profile-security-intro">Configure two-factor authentication and passkey/biometric sign-in for this KingsHall account. These settings apply across CrownStore web, PWA and APK, and are enforced by KingsHall during sign-in.</p>
+        {securityError && <p className="profile-error" role="alert">{securityError}</p>}
+        {securityNotice && <p className="profile-notice" role="status">{securityNotice}</p>}
+        {securityLoading && !securityStatus ? <p className="profile-empty">Loading security settings…</p> : <>
+          <div className="profile-security-item">
+            <div className="profile-security-item-heading"><span className="profile-security-icon"><ShieldCheck size={19} /></span><div><h3>Authenticator app (2FA)</h3><p>Use a time-based six-digit code from Google Authenticator, Authy or another compatible app.</p></div></div>
+            <div className="profile-security-status-row">
+              <span className={securityStatus?.twoFactor.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.twoFactor.configured ? "Configured" : securityStatus?.twoFactor.pending ? "Setup pending" : "Not configured"}</span>
+              <span className={securityStatus?.twoFactor.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.twoFactor.enabled ? "Required at sign-in" : "Sign-in requirement off"}</span>
+            </div>
+            {!securityStatus?.twoFactor.configured && <button className="profile-secondary-button" type="button" disabled={securityBusy} onClick={() => void beginTwoFactorSetup()}>{securityBusy ? <span className="profile-spinner" /> : <KeyRound size={15} />} {securityStatus?.twoFactor.pending ? "Restart authenticator setup" : "Configure authenticator"}</button>}
+            {twoFactorSetupUri && <form className="profile-security-setup" onSubmit={verifyTwoFactorSetup}>
+              <p>1. Scan this QR code in your authenticator app.</p>
+              <div className="profile-security-qr"><QRCodeSVG value={twoFactorSetupUri} size={176} includeMargin /></div>
+              <label htmlFor="crown-profile-totp-key">Manual setup key</label>
+              <div className="profile-security-manual-key"><code id="crown-profile-totp-key">{twoFactorSetupSecret}</code><button className="profile-text-button" type="button" onClick={() => { void navigator.clipboard?.writeText(twoFactorSetupSecret).then(() => setSecurityNotice("Authenticator setup key copied."), () => setSecurityError("Could not copy the setup key on this device.")); }}>Copy key</button></div>
+              <label htmlFor="crown-profile-totp-code">2. Enter the current six-digit code to verify setup</label>
+              <input id="crown-profile-totp-code" value={twoFactorSetupCode} onChange={(event) => setTwoFactorSetupCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" required />
+              <button className="profile-primary-button" type="submit" disabled={securityBusy || twoFactorSetupCode.length !== 6}>{securityBusy ? <span className="profile-spinner" /> : "Verify and finish setup"}</button>
+              <button className="profile-text-button" type="button" disabled={securityBusy} onClick={() => void cancelTwoFactorSetup()}>Cancel setup</button>
+            </form>}
+            {securityStatus?.twoFactor.configured && <div className="profile-security-actions">
+              <button className={securityStatus.twoFactor.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={securityBusy} onClick={() => void changeTwoFactorEnforcement(!securityStatus.twoFactor.enabled)}>{securityBusy ? <span className="profile-spinner" /> : <ShieldCheck size={15} />} {securityStatus.twoFactor.enabled ? "Disable 2FA at sign-in" : "Enable 2FA at sign-in"}</button>
+              <label htmlFor="crown-profile-totp-remove">Authenticator code required to remove 2FA</label>
+              <input id="crown-profile-totp-remove" value={twoFactorRemovalCode} onChange={(event) => setTwoFactorRemovalCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" />
+              <button className="profile-text-button" type="button" disabled={securityBusy || twoFactorRemovalCode.length !== 6} onClick={() => void removeTwoFactor()}>Remove authenticator</button>
+            </div>}
+          </div>
+
+          <div className="profile-security-item">
+            <div className="profile-security-item-heading"><span className="profile-security-icon"><Fingerprint size={19} /></span><div><h3>Passkey / biometric security</h3><p>Register a device passkey. Your fingerprint, face or device-unlock check is handled by the device; CrownStore does not receive biometric templates.</p></div></div>
+            <div className="profile-security-status-row">
+              <span className={securityStatus?.biometric.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.biometric.configured ? "Passkey configured" : "No passkey configured"}</span>
+              <span className={securityStatus?.biometric.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.biometric.enabled ? "Required at sign-in" : "Sign-in requirement off"}</span>
+            </div>
+            {!securityStatus?.biometric.configured && <button className="profile-secondary-button" type="button" disabled={securityBusy} onClick={() => void registerBiometricPasskey()}>{securityBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} Configure passkey on this device</button>}
+            {securityStatus?.biometric.configured && <div className="profile-security-actions">
+              <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your KingsHall account.</p>
+              <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={securityBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{securityBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable biometric at sign-in" : "Enable biometric at sign-in"}</button>
+              <button className="profile-text-button" type="button" disabled={securityBusy} onClick={() => void removeBiometricPasskey()}>Remove passkey and disable biometric security</button>
+            </div>}
+          </div>
+        </>}
       </section>
 
       {!isAndroidApp ? <section className="profile-manage-apps">
