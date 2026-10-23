@@ -1578,10 +1578,11 @@ export default function App() {
             openAppDetails(crownStoreApp);
             return;
           }
-          void requestStoreJson<{ app: CrownApp }>(API_BASE + "/api/apps/crownstore").then((payload) => {
-            if (payload.app) {
-              setApps((current) => current.some((item) => item.slug === payload.app.slug) ? current : [...current, payload.app]);
-              openAppDetails(payload.app);
+          void requestStoreJson<AppsResponse>(API_BASE + "/api/apps").then((payload) => {
+            const matchingApp = payload.apps?.find((item) => item.packageId === "online.kingshall.crownstore" || item.slug.toLowerCase() === "crownstore");
+            if (matchingApp) {
+              setApps((current) => current.some((item) => item.slug === matchingApp.slug) ? current : [...current, matchingApp]);
+              openAppDetails(matchingApp);
             } else {
               setView("APPS");
             }
