@@ -199,3 +199,60 @@
   .app-detail-metric-note{font-size:8px}
   .app-detail-info-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}
 }
+
+
+/* Home page: use the details page's open, content-first layout instead of nested cards. */
+.home-shelves{
+  width:min(100%,1100px);margin:0 auto;padding:16px clamp(14px,3vw,28px) 150px;
+  display:grid;gap:30px;box-sizing:border-box;
+}
+.home-shelves .app-shelf{
+  min-width:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;
+}
+.home-shelves .shelf-heading{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  padding:0 0 12px;margin:0 0 14px;border-bottom:1px solid rgba(255,255,255,.09);
+}
+.home-shelves .shelf-title-wrap{display:flex;align-items:center;gap:10px;min-width:0}
+.home-shelves .shelf-icon{
+  width:auto;height:auto;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  border:0;border-radius:0;background:none;box-shadow:none;color:#c4b5fd;
+}
+.home-shelves .shelf-title-wrap h2{margin:0;font-size:clamp(17px,2.5vw,21px);font-weight:500;line-height:1.25}
+.home-shelves .shelf-title-wrap p{margin:5px 0 0;color:#a99fba;font-size:10px;line-height:1.5}
+.home-shelves .shelf-count{color:#bca9dc;font-size:10px;white-space:nowrap}
+.home-shelves .shelf-track{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:14px 12px;
+  overflow:visible;padding:0;scrollbar-width:none;
+}
+.home-shelves .shelf-app-card{
+  min-width:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;
+}
+.home-shelves .shelf-app-tile{
+  width:100%;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:9px;
+  padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:inherit;text-align:left;
+}
+.home-shelves .shelf-app-icon{
+  width:100%;aspect-ratio:1;display:grid;place-items:center;overflow:hidden;
+  border:1px solid rgba(226,220,228,.13);border-radius:18px;background:rgba(255,255,255,.025);
+  box-shadow:none;
+}
+.home-shelves .shelf-app-icon .app-icon-image,.home-shelves .shelf-app-icon .app-icon-fallback{
+  width:100%;height:100%;object-fit:contain;border-radius:inherit;
+}
+.home-shelves .shelf-app-name{
+  display:-webkit-box;width:100%;min-height:2.6em;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  color:#eee7fb;font-size:11px;font-weight:550;line-height:1.35;overflow-wrap:anywhere;
+}
+.home-shelves .shelf-empty-slot-card{display:none}
+.home-shelves .shelf-footer-note{
+  display:flex;align-items:center;gap:8px;padding:13px 0 0;border-top:1px solid rgba(255,255,255,.08);
+  border-radius:0;background:none;box-shadow:none;color:#a99fba;font-size:10px;line-height:1.5;
+}
+.home-shelves .shelf-footer-note svg{color:#b49ae9;flex:0 0 auto}
+.home-shelves .shelf-app-tile:focus-visible{outline:2px solid rgba(196,181,253,.8);outline-offset:4px}
+@media(max-width:420px){
+  .home-shelves{gap:25px}
+  .home-shelves .shelf-track{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px 10px}
+  .home-shelves .shelf-app-icon{border-radius:15px}
+}
