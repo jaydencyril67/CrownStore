@@ -614,3 +614,23 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .details-download:disabled{opacity:.9;cursor:default}
 @media(max-width:480px){.shelf-app-card .shelf-app-tile{gap:5px;padding:6px 3px}.shelf-app-icon{width:42px;height:42px;flex-basis:42px}.shelf-app-status{font-size:8px;padding:3px 5px}}
 
+/* Nowbar sizing must switch instantly, matching CryBots: no resize motion. */
+.kh-nowbar-dock,
+.kh-nowbar,
+.kh-nowbar-rail,
+.kh-nowbar-title,
+.kh-nowbar-slot,
+.kh-nowbar-action,
+.kh-nowbar-action *,
+.kh-nowbar-label-compact,
+.kh-nowbar-label-expanded,
+.kh-nowbar-marquee {
+  transition: none !important;
+  animation: none !important;
+}
+.kh-nowbar-dock,
+.kh-nowbar,
+.kh-nowbar-slot,
+.kh-nowbar-action {
+  scroll-behavior: auto !important;
+}
