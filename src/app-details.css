@@ -75,7 +75,7 @@
 .app-review-form-heading span{color:#a99fba;font-size:10px}
 .app-review-rating-picker{display:flex;align-items:center;gap:5px}
 .review-rating-star{display:grid;place-items:center;width:34px;height:34px;padding:0;border:0;border-radius:0;background:transparent;color:#766b83;cursor:pointer;appearance:none;-webkit-appearance:none}
-.review-rating-star[aria-pressed="true"]{color:#d9b66a}.review-rating-star svg{display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}.review-rating-star[aria-pressed="true"] svg{stroke:#a77b32;fill:#e3c16f}.review-rating-star:not([aria-pressed="true"]) svg{stroke:#766b83;fill:none}.review-rating-star:focus-visible{outline:2px solid rgba(217,182,106,.75);outline-offset:2px}
+.review-rating-star.is-filled{color:#d9b66a}.review-rating-star svg{display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}.review-rating-star.is-filled svg{stroke:#a77b32;fill:#e3c16f}.review-rating-star:not(.is-filled) svg{stroke:#766b83;fill:none}.review-rating-star:focus-visible{outline:2px solid rgba(217,182,106,.75);outline-offset:2px}
 .app-review-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .app-review-field{display:grid;gap:6px;min-width:0}
 .app-review-field>span{color:#b7a9cd;font-size:10px}
