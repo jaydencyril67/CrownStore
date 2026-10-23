@@ -1,14 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState, type TouchEvent, type ReactNode } from "react";
-import { Home, Search, Download, Sparkles, CircleHelp, Menu, Crosshair, ListFilter, Plus } from "lucide-react";
+import { Home, Search, Download, Sparkles, CircleHelp, Menu, Crosshair, ListFilter, Plus, UserRound } from "lucide-react";
 
-type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "OPTION 3" | "OPTION 4" | "OPTION 5" | "OPTION 6" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
+type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "OPTION 4" | "OPTION 5" | "OPTION 6" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
 type Action = { label: ActionLabel; icon: ReactNode };
 
 const actions: Action[] = [
   { label: "HOME", icon: <Home size={18} /> },
   { label: "SEARCH", icon: <Search size={18} /> },
   { label: "UPDATES", icon: <Download size={18} /> },
-  { label: "OPTION 3", icon: <Download size={18} /> },
+  { label: "PROFILE", icon: <UserRound size={18} /> },
   { label: "OPTION 4", icon: <Sparkles size={18} /> },
   { label: "OPTION 5", icon: <CircleHelp size={18} /> },
   { label: "OPTION 6", icon: <Menu size={18} /> },
@@ -21,7 +21,7 @@ const actions: Action[] = [
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
 
-export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "DETAILS" }) {
+export default function NowBar({ onHome, onSearch, onUpdates, onProfile, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "DETAILS" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
   const [pressing, setPressing] = useState(false);
   const { view, mode } = barState;
@@ -78,11 +78,11 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
   }, []);
 
   const activate = (label: ActionLabel) => {
-    if (label !== "HOME" && label !== "SEARCH" && label !== "UPDATES") return;
+    if (label !== "HOME" && label !== "SEARCH" && label !== "UPDATES" && label !== "PROFILE") return;
     try { window.localStorage.setItem("crownstore-nowbar-action", label); } catch {}
     resetIdle();
     setBarState({ view: "title", mode: "compact" });
-    if (label === "HOME") onHome(); else if (label === "SEARCH") onSearch(); else onUpdates();
+    if (label === "HOME") onHome(); else if (label === "SEARCH") onSearch(); else if (label === "UPDATES") onUpdates(); else onProfile();
   };
 
   const finishSwipe = (event: TouchEvent<HTMLDivElement>) => {
@@ -161,7 +161,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
                   aria-label={action.label}
                   onClick={() => {
                     if (holdTriggered.current) { holdTriggered.current = false; return; }
-                    if (action.label === "HOME" || action.label === "SEARCH" || action.label === "UPDATES") activate(action.label);
+                    if (action.label === "HOME" || action.label === "SEARCH" || action.label === "UPDATES" || action.label === "PROFILE") activate(action.label);
                   }}
                 >
                   <span className="kh-nowbar-icon">{action.icon}</span>
