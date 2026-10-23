@@ -378,7 +378,7 @@ export default function ProfilePage({
     let active = true;
     setSecurityLoading(true);
     setSecurityError("");
-    fetch(API_BASE + "/api/auth/kingshall/security", {
+    fetch(API_BASE + "/api/security", {
       method: "GET",
       cache: "no-store",
       headers: { Accept: "application/json", Authorization: "Bearer " + token }
@@ -848,7 +848,7 @@ export default function ProfilePage({
 
   async function requestProfileSecurity(path: string, body?: Record<string, unknown>): Promise<Record<string, any>> {
     if (!token) throw new Error("Sign in to CrownStore before changing security settings.");
-    const method = path === "/api/auth/kingshall/security" ? "GET" : "POST";
+    const method = path === "/api/security" ? "GET" : "POST";
     const response = await fetch(API_BASE + path, {
       method,
       cache: "no-store",
@@ -861,14 +861,14 @@ export default function ProfilePage({
   }
 
   async function refreshProfileSecurity() {
-    const data = await requestProfileSecurity("/api/auth/kingshall/security");
+    const data = await requestProfileSecurity("/api/security");
     setSecurityStatus(data as ProfileSecurityStatus);
   }
 
   async function beginTwoFactorSetup() {
     setTwoFactorSetupBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/setup");
+      const data = await requestProfileSecurity("/api/security/2fa/setup");
       setTwoFactorSetupSecret(String(data.secret || ""));
       setTwoFactorSetupUri(String(data.otpauthUrl || ""));
       setTwoFactorSetupCode("");
@@ -887,7 +887,7 @@ export default function ProfilePage({
     }
     setTwoFactorVerifyBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/verify", { code: twoFactorSetupCode });
+      const data = await requestProfileSecurity("/api/security/2fa/verify", { code: twoFactorSetupCode });
       setTwoFactorSetupSecret(""); setTwoFactorSetupUri(""); setTwoFactorSetupCode("");
       setSecurityNotice(String(data.message || "Authenticator configured."));
       await refreshProfileSecurity();
@@ -899,7 +899,7 @@ export default function ProfilePage({
   async function cancelTwoFactorSetup() {
     setTwoFactorCancelBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      await requestProfileSecurity("/api/auth/kingshall/security/2fa/cancel");
+      await requestProfileSecurity("/api/security/2fa/cancel");
       setTwoFactorSetupSecret(""); setTwoFactorSetupUri(""); setTwoFactorSetupCode("");
       setSecurityNotice("Pending authenticator setup cancelled.");
       await refreshProfileSecurity();
@@ -911,7 +911,7 @@ export default function ProfilePage({
   async function changeTwoFactorEnforcement(enabled: boolean) {
     setTwoFactorEnforcementBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/login-setting", { enabled });
+      const data = await requestProfileSecurity("/api/security/2fa/login-setting", { enabled });
       setSecurityNotice(String(data.message || "Authenticator sign-in setting updated."));
       await refreshProfileSecurity();
     } catch (caught) {
@@ -931,7 +931,7 @@ export default function ProfilePage({
   async function confirmRemoveTwoFactor() {
     setTwoFactorRemoveBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/disable", { code: twoFactorRemovalCode });
+      const data = await requestProfileSecurity("/api/security/2fa/disable", { code: twoFactorRemovalCode });
       setTwoFactorRemovalCode("");
       setShowRemoveTwoFactorConfirm(false);
       setSecurityNotice(String(data.message || "Authenticator removed."));
@@ -944,9 +944,9 @@ export default function ProfilePage({
   async function registerBiometricPasskey() {
     setBiometricRegisterBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const options = await requestProfileSecurity("/api/auth/kingshall/security/biometric/registration/options");
+      const options = await requestProfileSecurity("/api/security/biometric/register/options");
       const credential = await createCrownStorePasskey(options);
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/registration/verify", credential);
+      const data = await requestProfileSecurity("/api/security/biometric/register/verify", credential);
       setSecurityNotice(String(data.message || "Passkey configured."));
       await refreshProfileSecurity();
     } catch (caught) {
@@ -957,7 +957,7 @@ export default function ProfilePage({
   async function changeBiometricEnforcement(enabled: boolean) {
     setBiometricEnforcementBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/login-setting", { enabled });
+      const data = await requestProfileSecurity("/api/security/biometric/login-setting", { enabled });
       setSecurityNotice(String(data.message || "Biometric sign-in setting updated."));
       await refreshProfileSecurity();
     } catch (caught) {
@@ -968,7 +968,7 @@ export default function ProfilePage({
   async function removeBiometricPasskey(credentialId: string) {
     setBiometricRemoveBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
-      const data = await requestProfileSecurity("/api/auth/kingshall/security/biometric/remove", { credentialId });
+      const data = await requestProfileSecurity("/api/security/biometric/remove", { credentialId });
       setSecurityNotice(String(data.message || "Passkey removed."));
       await refreshProfileSecurity();
     } catch (caught) {
@@ -1180,7 +1180,7 @@ export default function ProfilePage({
               {!securityStatus?.biometric.configured && <button className="profile-secondary-button" type="button" disabled={biometricRegisterBusy || !securityStatus} onClick={() => void registerBiometricPasskey()}>{biometricRegisterBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} Configure passkey on this device</button>}
               {securityStatus?.biometric.enabled && <p className="profile-security-meta">A passkey is already configured. Remove the existing passkey before configuring another.</p>}
               {securityStatus?.biometric.configured && <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={biometricEnforcementBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{biometricEnforcementBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable biometric at sign-in" : "Enable biometric at sign-in"}</button>}
-              {securityStatus?.biometric.configured && <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your KingsHall account. Remove all existing passkeys before configuring another.</p>}
+              {securityStatus?.biometric.configured && <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your CrownStore profile. Remove all existing passkeys before configuring another.</p>}
               {(securityStatus?.biometric.credentials || []).map((credential, index) => <div className="profile-security-passkey" key={credential.id}>
                 <div><strong>Bound passkey {index + 1}</strong><span>{credential.createdAt ? "Added " + new Date(credential.createdAt).toLocaleDateString() : "Added date unavailable"}</span></div>
                 <button className="profile-text-button" type="button" disabled={biometricRemoveBusy} onClick={() => void removeBiometricPasskey(credential.id)}>Unbind passkey</button>
