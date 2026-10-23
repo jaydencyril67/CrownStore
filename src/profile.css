@@ -36,6 +36,7 @@
 .profile-qr{justify-self:center;background:#fff;padding:10px;border-radius:13px;line-height:0}
 .profile-one-time-label{text-align:center;color:#a99bbd;font-size:10px;font-weight:800;letter-spacing:.15em}
 .profile-one-time-code{text-align:center;font-size:28px;letter-spacing:.2em;overflow-wrap:anywhere}
+.profile-external-expiry{margin:0;text-align:center;color:#ddd2f0;font-size:12px;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 .profile-notice,.profile-error{margin:12px 0 0;padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
 .profile-notice{border:1px solid rgba(226,220,228,.16);color:#c7bdd8;background:rgba(255,255,255,.025)}
 .profile-error{border:1px solid rgba(248,113,113,.24);color:#ffc9cf;background:rgba(220,60,60,.09)}
