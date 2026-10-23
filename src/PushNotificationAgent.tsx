@@ -62,11 +62,11 @@ export default function PushNotificationAgent() {
       }
     }
 
-    async function syncCurrentAccount() {
+    async function syncCurrentAccount(registerIfEnabled: boolean) {
       const token = currentToken();
       if (!token) return;
       try {
-        if (readNotificationPreferences().channels.device) await refreshCrownStorePush(token);
+        if (registerIfEnabled && readNotificationPreferences().channels.device) await refreshCrownStorePush(token);
         else await syncCrownStorePushPreferences(token);
       } catch {
         // Do not block the store UI when push services or notification permissions are unavailable.
@@ -74,12 +74,13 @@ export default function PushNotificationAgent() {
     }
 
     void attachNativeListeners().catch(() => undefined);
-    void syncCurrentAccount();
+    void syncCurrentAccount(true);
     const onStorage = (event: StorageEvent) => {
-      if (!event.key || event.key === SESSION_KEY || event.key === "crownstore-notification-preferences-v1") void syncCurrentAccount();
+      if (!event.key || event.key === SESSION_KEY) void syncCurrentAccount(true);
+      else if (event.key === "crownstore-notification-preferences-v1") void syncCurrentAccount(false);
     };
-    const onSessionChange = () => void syncCurrentAccount();
-    const onPreferencesChange = () => void syncCurrentAccount();
+    const onSessionChange = () => void syncCurrentAccount(true);
+    const onPreferencesChange = () => void syncCurrentAccount(false);
     window.addEventListener("storage", onStorage);
     window.addEventListener("crownstore:profile-session-changed", onSessionChange);
     window.addEventListener("crownstore:notification-preferences-changed", onPreferencesChange);

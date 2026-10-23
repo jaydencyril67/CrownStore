@@ -77,8 +77,8 @@ async function waitForNativeToken(): Promise<string> {
   });
   let timeoutId = 0;
   try {
-    await PushNotifications.register();
     timeoutId = window.setTimeout(() => rejectToken(new Error("Firebase registration timed out. Check your internet connection and try again.")), 20000);
+    await PushNotifications.register();
     const token = await tokenPromise;
     if (!token || token.length < 20) throw new Error("Firebase returned an invalid device token.");
     return token;
