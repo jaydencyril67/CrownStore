@@ -371,7 +371,7 @@ jobs:
             -keystore "$KEYSTORE_PATH" \
             -storepass "$ANDROID_KEYSTORE_PASSWORD" \
             -alias "$ANDROID_KEY_ALIAS" \
-            | openssl dgst -sha256 -binary | od -An -v -tx1 | tr -d ' \\n' | tr '[:lower:]' '[:upper:]' | sed 's/../&:/g; s/:$//')"
+            | openssl dgst -sha256 -binary | od -An -v -tx1 | tr -d ' \n' | tr '[:lower:]' '[:upper:]' | sed 's/../&:/g; s/:$//')"
           ANDROID_KEY_HASH="$(keytool -exportcert \
             -keystore "$KEYSTORE_PATH" \
             -storepass "$ANDROID_KEYSTORE_PASSWORD" \
