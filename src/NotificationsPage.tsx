@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Bell, CheckCheck, Download, Info, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Download, Info, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
 import {
   clearNotifications, markAllNotificationsRead, markNotificationRead, readNotifications,
   type CrownNotification, type NotificationKind
@@ -24,6 +24,7 @@ function formatTime(value: string) {
 }
 
 export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () => void; onOpenApp: (slug: string) => void }) {
+  void onBack;
   const [items, setItems] = useState<CrownNotification[]>(() => readNotifications());
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [confirmClear, setConfirmClear] = useState(false);
@@ -50,7 +51,6 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
   return <section className="notifications-page" aria-label="CrownStore notifications">
     <div className="notifications-heading">
       <div className="app-detail-topbar">
-        <button className="app-detail-back app-detail-back-icon" type="button" onClick={onBack} aria-label="Back to Menu" title="Back to Menu"><ArrowLeft size={18} /></button>
         <span className="app-detail-top-label">NOTIFICATIONS</span>
       </div>
       <span className="eyebrow"><Bell size={14} /> CROWNSTORE ALERTS</span>
