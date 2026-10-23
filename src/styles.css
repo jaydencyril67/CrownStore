@@ -385,7 +385,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-action{flex:0 0 auto;width:100%;min-width:0;max-width:none;min-height:40px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:7px 6px 6px;border:1px solid rgba(139,92,246,.36);border-radius:12px;background:linear-gradient(180deg,rgba(139,92,246,.1),rgba(9,11,14,.96));color:#a78bfa;white-space:nowrap;cursor:pointer;transition:none;animation:none;transform:none;scale:1; -webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .kh-nowbar-action:active,.kh-nowbar-title:active{transform:none!important;scale:1!important;animation:none!important;filter:none!important}
 .kh-nowbar-action svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.kh-nowbar-action span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kh-nowbar-action span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;font-weight:700;letter-spacing:.06em}
 .kh-nowbar-icon{width:20px;height:20px;display:grid;place-items:center;flex:0 0 20px}
 .kh-nowbar-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .kh-nowbar-label-compact{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1}
@@ -398,7 +398,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-label-expanded{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1;text-align:center}
 .kh-nowbar-marquee{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:600px){.kh-nowbar-dock{bottom:calc(10px + env(safe-area-inset-bottom,0px))}.kh-nowbar.is-actions{padding:7px}}
-@media(max-width:412px){.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr));padding:9px;gap:7px}.kh-nowbar-dock.is-expanded .kh-nowbar-action{min-width:0}}@media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{width:calc(100vw - 24px);max-width:calc(100vw - 24px)}}
+@media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{width:calc(100vw - 24px);max-width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr));padding:9px;gap:7px}.kh-nowbar-dock.is-expanded .kh-nowbar-action{min-width:0}}
 
 
 /* Global interaction rules aligned with CryBots: no browser tap flash, selection,
