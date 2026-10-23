@@ -1,16 +1,15 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, Clock3, Download,
-  Fingerprint, KeyRound, LogOut, PackageCheck, RefreshCw, ShieldCheck,
+  Fingerprint, KeyRound, LogOut, RefreshCw, ShieldCheck,
   Smartphone, UserRound, X
 } from "lucide-react";
 import type { CrownApp } from "./types";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { NativeProfileUsage } from "./native/nativeProfileUsage";
-import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import "./profile.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
@@ -168,7 +167,7 @@ function displayName(user: ProfileUser): string {
 function ProfileAppRow({ app, detail, trailing, onClick }: {
   app: CrownApp;
   detail: string;
-  trailing?: string;
+  trailing?: ReactNode;
   onClick: () => void;
 }) {
   return <button className="profile-app-row" type="button" onClick={onClick}>
@@ -336,7 +335,6 @@ export default function ProfilePage({
     }).sort((a, b) => Number(b.versionCode || 0) - Number(a.versionCode || 0)),
     [apps, installedApps]
   );
-  const usageByPackage = useMemo(() => new Map(usage.map((item) => [item.packageId, item])), [usage]);
   const mostUsed = useMemo(
     () => usage.filter((item) => item.totalTimeInForeground > 0)
       .sort((a, b) => b.totalTimeInForeground - a.totalTimeInForeground)
@@ -353,7 +351,6 @@ export default function ProfilePage({
       .slice(0, 6),
     [usage, apps]
   );
-  const catalogueCrownStore = apps.find((app) => app.packageId === "online.kingshall.crownstore" || app.slug.toLowerCase() === "crownstore");
 
   function saveSession(data: AuthPayload) {
     if (!data.token || !data.user?.email || !data.user.kingsHallId) {
@@ -731,7 +728,7 @@ export default function ProfilePage({
 
         <section className="profile-section">
           <div className="profile-section-heading"><h2>Most used apps</h2><span>Last 30 days</span></div>
-          {usagePermissionRequired ? <div className="profile-permission-prompt"><div><strong>Enable app usage access</strong><p>Android keeps this private until you allow usage access in system settings.</p></div><button className="profile-secondary-button" type="button" onClick={() => void openUsageSettings()}><Smartphone size={16} /> Enable access</button></div>
+          {usageError ? <div className="profile-inline-error"><span>{usageError}</span><button type="button" onClick={() => void refreshUsage()}>Retry</button></div> : usagePermissionRequired ? <div className="profile-permission-prompt"><div><strong>Enable app usage access</strong><p>Android keeps this private until you allow usage access in system settings.</p></div><button className="profile-secondary-button" type="button" onClick={() => void openUsageSettings()}><Smartphone size={16} /> Enable access</button></div>
             : usageLoading ? <p className="profile-empty">Loading app activity…</p>
             : usageError ? <div className="profile-inline-error"><span>{usageError}</span><button type="button" onClick={() => void refreshUsage()}>Retry</button></div>
             : mostUsed.length ? <div className="profile-app-list">{mostUsed.map(({ item, app }) => <ProfileAppRow key={item.packageId} app={app} detail={humanDuration(item.totalTimeInForeground) + " in foreground"} onClick={() => onOpenApp(app)} />)}</div>
@@ -741,7 +738,7 @@ export default function ProfilePage({
 
         <section className="profile-section">
           <div className="profile-section-heading"><h2>Recently used</h2><span>Last 30 days</span></div>
-          {usagePermissionRequired ? <p className="profile-empty">Enable app usage access to see your recent app activity.</p>
+          {usageError ? <p className="profile-empty">{usageError}</p> : usagePermissionRequired ? <p className="profile-empty">Enable app usage access to see your recent app activity.</p>
             : recentlyUsed.length ? <div className="profile-app-list">{recentlyUsed.map(({ item, app }) => <ProfileAppRow key={item.packageId} app={app} detail={"Last used " + dateLabel(item.lastTimeUsed)} trailing={<Clock3 size={15} />} onClick={() => onOpenApp(app)} />)}</div>
             : <p className="profile-empty">Recent app activity will appear here when Android has usage history.</p>}
         </section>
