@@ -348,6 +348,7 @@ export default function ProfilePage({
   const [twoFactorSetupUri, setTwoFactorSetupUri] = useState("");
   const [twoFactorSetupCode, setTwoFactorSetupCode] = useState("");
   const [twoFactorRemovalCode, setTwoFactorRemovalCode] = useState("");
+  const [showRemoveTwoFactorConfirm, setShowRemoveTwoFactorConfirm] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -904,10 +905,16 @@ export default function ProfilePage({
       setSecurityError("Enter the current six-digit authenticator code before removing it.");
       return;
     }
+    setSecurityError("");
+    setShowRemoveTwoFactorConfirm(true);
+  }
+
+  async function confirmRemoveTwoFactor() {
     setSecurityBusy(true); setSecurityError(""); setSecurityNotice("");
     try {
       const data = await requestProfileSecurity("/api/auth/kingshall/security/2fa/disable", { code: twoFactorRemovalCode });
       setTwoFactorRemovalCode("");
+      setShowRemoveTwoFactorConfirm(false);
       setSecurityNotice(String(data.message || "Authenticator removed."));
       await refreshProfileSecurity();
     } catch (caught) {
@@ -972,6 +979,7 @@ export default function ProfilePage({
     setTwoFactorRemovalCode("");
     setSecurityError("");
     setSecurityNotice("");
+    setShowRemoveTwoFactorConfirm(false);
   }
 
   async function openUsageSettings() {
@@ -1226,6 +1234,15 @@ export default function ProfilePage({
         <p>Sign in to KingsHall first, then return to CrownStore.</p>
         <button className="profile-primary-button" type="button" onClick={redirectToKingsHall}>Sign in to KingsHall</button>
         <button className="profile-text-button" type="button" onClick={() => setShowNoAccountModal(false)}><X size={15} /> Cancel</button>
+      </section>
+    </div>}
+    {showRemoveTwoFactorConfirm && <div className="profile-modal-backdrop" role="presentation" onClick={() => { if (!securityBusy) setShowRemoveTwoFactorConfirm(false); }}>
+      <section className="profile-no-account-modal profile-security-confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="profile-remove-2fa-title" onClick={(event) => event.stopPropagation()}>
+        <span className="profile-auth-emblem"><ShieldCheck size={23} /></span>
+        <h2 id="profile-remove-2fa-title">Remove authenticator?</h2>
+        <p>This permanently removes the configured authenticator and disables 2FA sign-in enforcement for this KingsHall account. Your current authenticator code will be verified before removal.</p>
+        <button className="profile-primary-button" type="button" disabled={securityBusy} onClick={() => void confirmRemoveTwoFactor()}>{securityBusy ? <span className="profile-spinner" /> : "Confirm and remove 2FA"}</button>
+        <button className="profile-text-button" type="button" disabled={securityBusy} onClick={() => setShowRemoveTwoFactorConfirm(false)}>Keep authenticator</button>
       </section>
     </div>}
     {checkingSession && user && <span className="profile-session-refreshing" role="status">Refreshing profile…</span>}
