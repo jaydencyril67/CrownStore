@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { CSSProperties, FormEvent } from "react";
 import NowBar from "./NowBar";
 import DeviceUpdatesPanel from "./DeviceUpdatesPanel";
 import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
 import NativeSelfUpdate from "./NativeSelfUpdate";
 import ProfilePage from "./ProfilePage";
+import MenuPage from "./MenuPage";
+import NotificationsPage from "./NotificationsPage";
+import { addCrownNotification, readNotificationPreferences, unreadNotificationCount } from "./notifications";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
@@ -21,7 +24,7 @@ import "./app-details.css";
 import "./profile.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
-type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE";
+type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS";
 
 function formatSize(value: number | string | null) {
   const bytes = Number(value);
@@ -807,10 +810,30 @@ export default function App() {
   const [view, setView] = useState<View>(() => {
     try {
       if (new URLSearchParams(window.location.search).get("profile") === "1") return "PROFILE";
+      const requestedView = new URLSearchParams(window.location.search).get("view");
+      if (requestedView === "MENU" || requestedView === "NOTIFICATIONS") return requestedView;
       const saved = window.localStorage.getItem("crownstore-current-view");
-      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" || saved === "PROFILE" ? saved : "HOME";
+      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" || saved === "PROFILE" || saved === "MENU" || saved === "NOTIFICATIONS" ? saved : "HOME";
     } catch { return "HOME"; }
   });
+
+  const [notificationPreferences, setNotificationPreferences] = useState(() => readNotificationPreferences());
+  const [unreadAlerts, setUnreadAlerts] = useState(() => unreadNotificationCount());
+
+  useEffect(() => {
+    const refreshNotifications = () => setUnreadAlerts(unreadNotificationCount());
+    const refreshPreferences = () => setNotificationPreferences(readNotificationPreferences());
+    window.addEventListener("crownstore:notifications-changed", refreshNotifications);
+    window.addEventListener("storage", refreshNotifications);
+    window.addEventListener("crownstore:notification-preferences-changed", refreshPreferences);
+    window.addEventListener("focus", refreshNotifications);
+    return () => {
+      window.removeEventListener("crownstore:notifications-changed", refreshNotifications);
+      window.removeEventListener("storage", refreshNotifications);
+      window.removeEventListener("crownstore:notification-preferences-changed", refreshPreferences);
+      window.removeEventListener("focus", refreshNotifications);
+    };
+  }, []);
 
   useEffect(() => {
     const updateOnlineStatus = () => setIsOnline(navigator.onLine);
@@ -1050,7 +1073,28 @@ export default function App() {
         if (hasOpened) void loadApps(undefined, true);
         hasOpened = true;
       });
-      stream.addEventListener("release-published", () => {
+      stream.addEventListener("release-published", (event) => {
+        try {
+          const payload = JSON.parse((event as MessageEvent<string>).data) as {
+            slug?: string; name?: string; versionName?: string; versionCode?: number; tag?: string; publishedAt?: string | null;
+          };
+          if (payload.slug && payload.name && payload.versionName) {
+            const versionKey = String(payload.versionCode || payload.versionName);
+            addCrownNotification({
+              id: "release:" + payload.slug + ":" + versionKey,
+              externalKey: "release:" + payload.slug + ":" + versionKey,
+              kind: "appUpdates",
+              title: payload.name + " update available",
+              body: "Version " + payload.versionName + " has been published to CrownStore.",
+              createdAt: payload.publishedAt || undefined,
+              appSlug: payload.slug,
+              versionName: payload.versionName,
+              details: { tag: payload.tag || "" }
+            });
+          }
+        } catch {
+          // The app catalogue still refreshes even if a release notice is malformed.
+        }
         void loadApps(undefined, true);
       });
     };
@@ -1188,6 +1232,16 @@ export default function App() {
       window.localStorage.setItem("crownstore-downloaded-apps", JSON.stringify(next));
       window.dispatchEvent(new Event("crownstore-download-history-changed"));
     } catch { /* Downloads continue if browser storage is unavailable. */ }
+    const releaseVersion = String(app.versionName || "latest");
+    addCrownNotification({
+      id: "download:" + app.packageId + ":" + releaseVersion,
+      externalKey: "download:" + app.packageId + ":" + releaseVersion,
+      kind: "downloads",
+      title: app.name + " is ready",
+      body: "The " + releaseVersion + " APK has been downloaded and is ready for installation.",
+      appSlug: app.slug,
+      versionName: releaseVersion
+    });
   }
 
   async function downloadRelease(app: CrownApp): Promise<void> {
@@ -1481,7 +1535,7 @@ export default function App() {
     setView(next);
     // Updates and Search always open at the page top, regardless of the previous scroll position.
     window.requestAnimationFrame(() => {
-      if (next === "UPDATES" || next === "SEARCH") {
+      if (next === "UPDATES" || next === "SEARCH" || next === "MENU" || next === "NOTIFICATIONS") {
         window.scrollTo({ top: 0, behavior: "auto" });
       } else {
         const targetId = next === "HOME" ? "home" : next === "ABOUT" ? "about" : "apps";
@@ -1544,10 +1598,13 @@ export default function App() {
   const updatesAvailable = apps.some((app) => Boolean(app.releaseId));
   return <div className="site-shell">
     <div className="ambient ambient-one" /><div className="ambient ambient-two" />
-    <header className="app-header glass-panel" aria-label="CrownStore">
-      <span className="header-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></span>
+    <header className={"app-header glass-panel" + (notificationPreferences.headerLightingEnabled ? " header-lighting-enabled" : "")} style={{ "--crownstore-header-light": notificationPreferences.headerLightingColor } as CSSProperties} aria-label="CrownStore">
+      <button type="button" className="header-artwork notification-header-trigger" aria-label="Open CrownStore notifications" onClick={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }}><span className="header-logo brand-mark"><StoreMark size={19} /></span></button>
       <div className={"header-brand" + (!isOnline ? " header-brand-offline" : "")} aria-live="polite"><div className="header-brand-copy"><p className="header-brand-title">{isOnline ? "CrownStore" : "NO INTERNET"}</p>{!isOnline && <p className="header-brand-subtitle">Check your connection</p>}</div></div>
-      <div className="header-right-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></div>
+      <button type="button" className="header-right-artwork notification-header-trigger" aria-label={"Open CrownStore notifications. " + unreadAlerts + " unread."} onClick={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }}>
+        <span className="header-logo brand-mark"><StoreMark size={19} /></span>
+        {unreadAlerts > 0 && <span className="notification-header-badge" style={notificationPreferences.badgeColorEnabled ? { backgroundColor: notificationPreferences.badgeColor } : undefined}>{unreadAlerts > 99 ? "99+" : unreadAlerts}</span>}
+      </button>
     </header>
     <main id="home">
       {selectedApp ? <AppDetailsPage
@@ -1564,7 +1621,10 @@ export default function App() {
         onRefreshInstalledApps={() => installedScanRef.current()}
         allApps={apps}
         onOpenApp={openAppDetails}
-      /> : view === "PROFILE" ? <ProfilePage
+      /> : view === "MENU" ? <MenuPage onBack={() => navigate("HOME")} onOpenNotifications={() => navigate("NOTIFICATIONS")} /> : view === "NOTIFICATIONS" ? <NotificationsPage onBack={() => navigate("MENU")} onOpenApp={(slug) => {
+        const app = apps.find((item) => item.slug === slug);
+        if (app) openAppDetails(app);
+      }} /> : view === "PROFILE" ? <ProfilePage
         apps={apps}
         isAndroidApp={isAndroidApp}
         installedApps={installedApps}
@@ -1697,7 +1757,7 @@ export default function App() {
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
-    <NowBar activePage={selectedApp ? "DETAILS" : view === "PROFILE" ? "PROFILE" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} />
+    <NowBar activePage={selectedApp ? "DETAILS" : view === "PROFILE" ? "PROFILE" : view === "MENU" ? "MENU" : view === "NOTIFICATIONS" ? "NOTIFICATIONS" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} onMenu={() => { closeAppDetails(); navigate("MENU"); }} onNotifications={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
       <DownloadFeedback
         progress={downloadProgress}
