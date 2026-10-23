@@ -93,7 +93,8 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
     if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
-    const index = ORDER.indexOf(activePage);
+    const currentPage: "HOME" | "SEARCH" | "UPDATES" = activePage === "DETAILS" ? "HOME" : activePage;
+    const index = ORDER.indexOf(currentPage);
     const next = ORDER[index + (dx < 0 ? 1 : -1)];
     if (!next) return;
     swipeHandled.current = true;
