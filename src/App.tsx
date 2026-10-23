@@ -291,6 +291,18 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
   const ready = Boolean(app.releaseId);
   const currentDownload = download?.releaseId === app.releaseId ? download : null;
   const isCurrentDownloadBusy = Boolean(currentDownload && ["starting", "downloading", "installing"].includes(currentDownload.status));
+  const installStateClass = installState === "update" ? "details-status is-ready" : installState === "installed" ? "details-status is-installed" : installState === "check-error" ? "details-status is-error" : "details-status";
+  const installStateLabel = installState === "checking"
+    ? "Checking installation"
+    : installState === "check-error"
+      ? "Install status unavailable"
+      : installState === "update"
+        ? "Update available"
+        : installState === "installed"
+          ? "Installed"
+          : installState === "unreleased"
+            ? "Coming soon"
+            : "Available to download";
   const screenshots = Array.isArray(app.screenshots) ? app.screenshots.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
   const reviewSummary = reviewPayload?.summary;
   const averageRating = reviewSummary ? Number(reviewSummary.averageRating) || 0 : Number(app.averageRating) || 0;
