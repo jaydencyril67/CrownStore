@@ -10,12 +10,13 @@ import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
 import type { BridgeSessionRef } from "./native/deviceBridgeTypes";
 import {
-  ArrowDownToLine, ArrowRight, Bot, CheckCircle2, ChevronRight,
-  Download, Info, Layers3, MessageCircle, PackageCheck, Search,
+  ArrowDownToLine, ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronRight,
+  Download, Image as ImageIcon, Info, Layers3, MessageCircle, PackageCheck, Search, Send, Star,
   ShieldCheck, Smartphone, Sparkles, X
 } from "lucide-react";
 import type { AppsResponse, CrownApp } from "./types";
 import "./search.css";
+import "./app-details.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH";
@@ -198,13 +199,106 @@ function SearchAppResultRow({ app, onDetails }: { app: CrownApp; onDetails: (app
   </div>;
 }
 
-function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload, onInstallDownloaded, installState, installedVersion, onRefreshInstalledApps }: {
+type AppReview = {
+  id: string;
+  displayName: string;
+  rating: number;
+  title: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+type AppRatingDistribution = { rating: number; count: number };
+type AppReviewsPayload = {
+  summary: { averageRating: number; reviewCount: number; ratingDistribution: AppRatingDistribution[] };
+  reviews: AppReview[];
+  myReview: AppReview | null;
+};
+
+function getReviewerToken(): string {
+  const makeToken = () => {
+    if (typeof window.crypto?.randomUUID === "function") return window.crypto.randomUUID();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (letter) => {
+      const random = Math.floor(Math.random() * 16);
+      return (letter === "x" ? random : (random & 0x3) | 0x8).toString(16);
+    });
+  };
+  try {
+    const saved = window.localStorage.getItem("crownstore-reviewer-token-v1");
+    if (saved && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(saved)) return saved;
+    const next = makeToken();
+    window.localStorage.setItem("crownstore-reviewer-token-v1", next);
+    return next;
+  } catch {
+    return makeToken();
+  }
+}
+
+function apiErrorMessage(payload: unknown, fallback: string): string {
+  if (payload && typeof payload === "object" && "error" in payload) {
+    const value = (payload as { error?: unknown }).error;
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return fallback;
+}
+
+async function requestStoreJson<T>(url: string, method: "GET" | "POST" = "GET", body?: unknown): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (body !== undefined) headers["Content-Type"] = "application/json";
+
+  if (Capacitor.isNativePlatform()) {
+    const options = { url, headers, connectTimeout: 12000, readTimeout: 20000 };
+    const response = method === "POST"
+      ? await CapacitorHttp.post({ ...options, data: body })
+      : await CapacitorHttp.get(options);
+    let payload: unknown = response.data;
+    if (typeof payload === "string") {
+      try { payload = JSON.parse(payload); } catch { payload = {}; }
+    }
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(apiErrorMessage(payload, "CrownStore could not complete this request."));
+    }
+    return payload as T;
+  }
+
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  let payload: unknown;
+  try { payload = await response.json(); } catch { payload = {}; }
+  if (!response.ok) throw new Error(apiErrorMessage(payload, "CrownStore could not complete this request."));
+  return payload as T;
+}
+
+function RatingStars({ rating, size = 13 }: { rating: number; size?: number }) {
+  return <span className="app-rating-stars" aria-label={rating.toFixed(1) + " out of 5 stars"}>
+    {Array.from({ length: 5 }, (_, index) => <Star key={index} size={size} fill={index < Math.round(rating) ? "currentColor" : "none"} strokeWidth={1.8} />)}
+  </span>;
+}
+
+function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDownload, onCancelDownload, onDismissDownload, onInstallDownloaded, installState, installedVersion, onRefreshInstalledApps, allApps, onOpenApp }: {
   app: CrownApp; onClose: () => void; download: DownloadProgress | null; isAnotherDownloadRunning: boolean;
   onDownload: (app: CrownApp) => Promise<void>; onCancelDownload: () => void; onDismissDownload: () => void;
   onInstallDownloaded: (app: CrownApp) => void; installState: AppInstallState;
   installedVersion?: NativeInstalledApp; onRefreshInstalledApps: () => void;
+  allApps: CrownApp[]; onOpenApp: (app: CrownApp) => void;
 }) {
-  const [expandedSection, setExpandedSection] = useState<string | null>("about");
+  const [expanded, setExpanded] = useState(false);
+  const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
+  const [reviewerToken] = useState(() => getReviewerToken());
+  const [reviewPayload, setReviewPayload] = useState<AppReviewsPayload | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(true);
+  const [reviewLoadError, setReviewLoadError] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewBody, setReviewBody] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewNotice, setReviewNotice] = useState("");
+  const [reviewNoticeError, setReviewNoticeError] = useState(false);
+
   const ready = Boolean(app.releaseId);
   const currentDownload = download?.releaseId === app.releaseId ? download : null;
   const isCurrentDownloadBusy = Boolean(currentDownload && ["starting", "downloading", "installing"].includes(currentDownload.status));
@@ -212,87 +306,253 @@ function AppDetails({ app, onClose, download, isAnotherDownloadRunning, onDownlo
   const installStateLabel = installState === "update" && installedVersion
     ? "Update available · installed v" + (installedVersion.versionName || installedVersion.versionCode)
     : appInstallDetailsLabel(installState, app);
-  return <div className="modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <section className="details-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="details-title">
-      <button className="modal-close" onClick={onClose} aria-label="Close details"><X size={19} /></button>
-      <div className="details-heading">
-        <AppIcon app={app} />
-        <div className="details-heading-copy"><span className="eyebrow">KINGSHALL ECOSYSTEM</span><h2 id="details-title">{app.name}</h2><span className="details-package">{app.packageId}</span></div>
-      </div>
-      <div className="details-quick-row">
-        <span className={installStateClass}><span className="details-status-dot" />{installStateLabel}</span>
-        <span className="details-category-chip">{readableCategory(app.category || "Utilities")}</span>
-      </div>
-      <p className="details-description">{app.shortDescription || app.description || "Official app in the KingsHall ecosystem."}</p>
-      <div className="details-primary-facts">
-        <div><span>Latest version</span><strong>{app.versionName ? "v" + app.versionName : "Pending"}</strong></div>
-        <div><span>APK size</span><strong>{formatSize(app.sizeBytes)}</strong></div>
-      </div>
-      {installState === "checking"
-        ? <button className="button button-outline details-download" type="button" disabled><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span> Checking installed apps…</button>
-        : installState === "check-error"
-          ? <button className="button button-outline details-download" type="button" onClick={onRefreshInstalledApps}><Smartphone size={17} /> Retry installed-app check</button>
-          : installState === "installed"
-            ? <button className="button button-outline details-download" type="button" disabled><CheckCircle2 size={17} /> {app.releaseId ? "Installed · up to date" : "Installed"}{installedVersion?.versionName ? " · v" + installedVersion.versionName : ""}</button>
-            : ready
-              ? <>
-                <button className="button button-primary details-download" type="button" onClick={() => {
-                  if (currentDownload?.status === "complete" || currentDownload?.status === "permission") onInstallDownloaded(app);
-                  else void onDownload(app);
-                }} disabled={isAnotherDownloadRunning || isCurrentDownloadBusy}>
-                  {isCurrentDownloadBusy
-                    ? <><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span>{currentDownload?.status === "starting" ? "Starting download…" : currentDownload?.status === "installing" ? "Opening installer…" : "Downloading " + (currentDownload && currentDownload.total > 0 ? Math.min(100, Math.floor(currentDownload.loaded / currentDownload.total * 100)) : 0) + "%"} </>
-                    : isAnotherDownloadRunning ? "Another download is in progress"
-                    : currentDownload?.status === "complete" ? <><PackageCheck size={17} /> {currentDownload.platform === "android" ? "Open installer again" : "Install saved APK"}</>
-                    : currentDownload?.status === "permission" ? <><Smartphone size={17} /> Continue installation</>
-                    : currentDownload?.status === "error" || currentDownload?.status === "cancelled" ? <><Download size={17} /> Retry download</>
-                    : installState === "update" ? <><Download size={17} /> Update to v{app.versionName || "latest"}</>
-                    : <><Download size={17} /> Download APK</>}
-                </button>
-                {currentDownload && <DownloadFeedback
-                  progress={currentDownload}
-                  onCancel={onCancelDownload}
-                  onRetry={() => void onDownload(app)}
-                  onDismiss={onDismissDownload}
-                  onInstall={() => onInstallDownloaded(app)}
-                />}
-              </>
-              : <div className="release-note"><ShieldCheck size={17} /> The download appears here after an official stable APK is verified and published.</div>}
-      <div className="details-sections">
-        <details className="details-section" open={expandedSection === "about"}>
-          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "about" ? null : "about"); }}><span><Info size={16} /><span><strong>About this app</strong><small>What it does and how it fits in</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
-          <div className="details-section-body">
-            <p className="details-full-description">{app.description || app.shortDescription || "No extended description has been provided yet."}</p>
-            <div className="details-facts">
-              <div><span>Category</span><strong>{readableCategory(app.category || "Utilities")}</strong></div>
-              <div><span>Release status</span><strong>{ready ? "Published stable" : "Coming soon"}</strong></div>
-            </div>
+  const screenshots = Array.isArray(app.screenshots) ? app.screenshots.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
+  const reviewSummary = reviewPayload?.summary;
+  const averageRating = reviewSummary ? Number(reviewSummary.averageRating) || 0 : Number(app.averageRating) || 0;
+  const reviewCount = reviewSummary ? Number(reviewSummary.reviewCount) || 0 : Number(app.reviewCount) || 0;
+  const totalDownloads = Math.max(0, Number(app.totalDownloads) || 0);
+  const firstPublishedAt = app.firstPublishedAt || app.publishedAt;
+  const lastUpdatedAt = app.lastUpdatedAt || app.publishedAt;
+  const distribution = reviewSummary?.ratingDistribution || [5, 4, 3, 2, 1].map((rating) => ({ rating, count: 0 }));
+  const relatedApps = allApps.filter((item) => item.slug !== app.slug).slice(0, 6);
+
+  useEffect(() => {
+    let active = true;
+    setReviewLoading(true);
+    setReviewLoadError("");
+    setReviewPayload(null);
+    setReviewNotice("");
+    const url = API_BASE + "/api/apps/" + encodeURIComponent(app.slug) + "/reviews?reviewerToken=" + encodeURIComponent(reviewerToken);
+    void requestStoreJson<AppReviewsPayload>(url).then((payload) => {
+      if (!active) return;
+      setReviewPayload(payload);
+      const own = payload.myReview;
+      if (own) {
+        setReviewRating(own.rating);
+        setReviewName(own.displayName === "CrownStore user" ? "" : own.displayName);
+        setReviewTitle(own.title || "");
+        setReviewBody(own.body || "");
+      } else {
+        setReviewRating(5);
+        setReviewName("");
+        setReviewTitle("");
+        setReviewBody("");
+      }
+    }).catch(() => {
+      if (active) setReviewLoadError("Reviews are temporarily unavailable.");
+    }).finally(() => {
+      if (active) setReviewLoading(false);
+    });
+    return () => { active = false; };
+  }, [app.slug, reviewerToken]);
+
+  useEffect(() => {
+    if (!previewScreenshot) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewScreenshot(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [previewScreenshot]);
+
+  async function submitReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (reviewSubmitting) return;
+    const cleanBody = reviewBody.trim();
+    if (cleanBody.length < 8) {
+      setReviewNotice("Add a little more detail to your review.");
+      setReviewNoticeError(true);
+      return;
+    }
+    setReviewSubmitting(true);
+    setReviewNotice("");
+    setReviewNoticeError(false);
+    try {
+      await requestStoreJson<{ review: AppReview }>(
+        API_BASE + "/api/apps/" + encodeURIComponent(app.slug) + "/reviews",
+        "POST",
+        {
+          reviewerToken,
+          displayName: reviewName.trim(),
+          rating: reviewRating,
+          title: reviewTitle.trim(),
+          body: cleanBody
+        }
+      );
+      setReviewNotice("Your review is saved.");
+      const refreshed = await requestStoreJson<AppReviewsPayload>(
+        API_BASE + "/api/apps/" + encodeURIComponent(app.slug) + "/reviews?reviewerToken=" + encodeURIComponent(reviewerToken)
+      );
+      setReviewPayload(refreshed);
+      if (refreshed.myReview) {
+        setReviewRating(refreshed.myReview.rating);
+        setReviewName(refreshed.myReview.displayName === "CrownStore user" ? "" : refreshed.myReview.displayName);
+        setReviewTitle(refreshed.myReview.title || "");
+        setReviewBody(refreshed.myReview.body || "");
+      }
+    } catch (error) {
+      setReviewNotice(error instanceof Error ? error.message : "Your review could not be saved. Try again.");
+      setReviewNoticeError(true);
+    } finally {
+      setReviewSubmitting(false);
+    }
+  }
+
+  return <section className="app-details-page" aria-labelledby="app-details-title">
+    <div className="app-detail-topbar">
+      <button className="app-detail-back" type="button" onClick={onClose}><ArrowLeft size={16} /> Back to CrownStore</button>
+      <span className="app-detail-top-label">APP DETAILS</span>
+    </div>
+
+    <section className="app-detail-hero glass-panel">
+      <div className="app-detail-identity">
+        <div className="app-detail-icon"><AppIcon app={app} /></div>
+        <div className="app-detail-identity-copy">
+          <span className="app-detail-eyebrow"><ShieldCheck size={12} /> KINGSHALL ECOSYSTEM</span>
+          <h1 id="app-details-title">{app.name}</h1>
+          <p className="app-detail-short-description">{app.shortDescription || app.description || "Official app in the KingsHall ecosystem."}</p>
+          <div className="app-detail-meta-line">
+            <span className="app-detail-category">{readableCategory(app.category || "Utilities")}</span>
+            <span className="app-detail-mini-rating">
+              {reviewCount > 0 ? <><RatingStars rating={averageRating} size={12} /> <strong>{averageRating.toFixed(1)}</strong></> : <span>No ratings yet</span>}
+            </span>
+            <span>{reviewCount.toLocaleString()} {reviewCount === 1 ? "review" : "reviews"}</span>
           </div>
-        </details>
-        <details className="details-section" open={expandedSection === "technical"}>
-          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "technical" ? null : "technical"); }}><span><Smartphone size={16} /><span><strong>Version &amp; technical details</strong><small>Build information and verification</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
-          <div className="details-section-body">
-            <div className="details-facts">
-              <div><span>Version code</span><strong>{app.versionCode ?? "Not available"}</strong></div>
-              <div><span>Published</span><strong>{formatDate(app.publishedAt)}</strong></div>
-              {app.sha256 && <div className="details-checksum"><span>Verified APK SHA-256</span><strong>{app.sha256}</strong></div>}
-            </div>
-          </div>
-        </details>
-        {app.changelog && <details className="details-section" open={expandedSection === "changelog"}>
-          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "changelog" ? null : "changelog"); }}><span><PackageCheck size={16} /><span><strong>What’s new</strong><small>Latest published release notes</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
-          <div className="details-section-body"><p className="details-changelog">{app.changelog}</p></div>
-        </details>}
-        {app.screenshots.length > 0 && <details className="details-section" open={expandedSection === "screenshots"}>
-          <summary onClick={(event) => { event.preventDefault(); setExpandedSection((current) => current === "screenshots" ? null : "screenshots"); }}><span><Layers3 size={16} /><span><strong>Screenshots</strong><small>{app.screenshots.length} {app.screenshots.length === 1 ? "image" : "images"}</small></span></span><ChevronRight className="details-section-chevron" size={17} /></summary>
-          <div className="details-section-body"><div className="details-screenshots" aria-label={app.name + " screenshots"}>
-            {app.screenshots.map((screenshot, index) => <img key={screenshot + index} src={screenshot} alt={app.name + " screenshot " + (index + 1)} loading="lazy" />)}
-          </div></div>
-        </details>}
+        </div>
+      </div>
+
+      <div className="app-detail-metrics">
+        <div className="app-detail-metric"><span className="app-detail-metric-label">Average rating</span><strong className="app-detail-metric-value">{reviewCount ? averageRating.toFixed(1) : "—"}</strong><span className="app-detail-metric-note">{reviewCount.toLocaleString()} {reviewCount === 1 ? "rating" : "ratings"}</span></div>
+        <div className="app-detail-metric"><span className="app-detail-metric-label">Total downloads</span><strong className="app-detail-metric-value">{totalDownloads.toLocaleString()}</strong><span className="app-detail-metric-note">Completed APK downloads</span></div>
+        <div className="app-detail-metric"><span className="app-detail-metric-label">Latest version</span><strong className="app-detail-metric-value">{app.versionName ? "v" + app.versionName : "—"}</strong><span className="app-detail-metric-note">{ready ? formatSize(app.sizeBytes) : "Coming soon"}</span></div>
+      </div>
+
+      <div className="app-detail-install-wrap">
+        {installState === "checking"
+          ? <button className="button button-outline app-detail-primary-action" type="button" disabled><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span> Checking installed apps…</button>
+          : installState === "check-error"
+            ? <button className="button button-outline app-detail-primary-action" type="button" onClick={onRefreshInstalledApps}><Smartphone size={17} /> Retry installed-app check</button>
+            : installState === "installed"
+              ? <button className="button button-outline app-detail-primary-action" type="button" disabled><CheckCircle2 size={17} /> {ready ? "Installed · up to date" : "Installed"}{installedVersion?.versionName ? " · v" + installedVersion.versionName : ""}</button>
+              : ready
+                ? <>
+                  <button className="button button-primary app-detail-primary-action" type="button" onClick={() => {
+                    if (currentDownload?.status === "complete" || currentDownload?.status === "permission") onInstallDownloaded(app);
+                    else void onDownload(app);
+                  }} disabled={isAnotherDownloadRunning || isCurrentDownloadBusy}>
+                    {isCurrentDownloadBusy
+                      ? <><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span>{currentDownload?.status === "starting" ? "Starting download…" : currentDownload?.status === "installing" ? "Opening installer…" : "Downloading " + (currentDownload && currentDownload.total > 0 ? Math.min(100, Math.floor(currentDownload.loaded / currentDownload.total * 100)) : 0) + "%"}</>
+                      : isAnotherDownloadRunning ? "Another download is in progress"
+                      : currentDownload?.status === "complete" ? <><PackageCheck size={17} /> {currentDownload.platform === "android" ? "Open installer again" : "Install saved APK"}</>
+                      : currentDownload?.status === "permission" ? <><Smartphone size={17} /> Continue installation</>
+                      : currentDownload?.status === "error" || currentDownload?.status === "cancelled" ? <><Download size={17} /> Retry download</>
+                      : installState === "update" ? <><Download size={17} /> Update to v{app.versionName || "latest"}</>
+                      : <><Download size={17} /> Download APK</>}
+                  </button>
+                  {currentDownload && <DownloadFeedback progress={currentDownload} onCancel={onCancelDownload} onRetry={() => void onDownload(app)} onDismiss={onDismissDownload} onInstall={() => onInstallDownloaded(app)} />}
+                </>
+                : <div className="app-detail-release-note"><ShieldCheck size={16} /> No stable release yet.</div>}
       </div>
     </section>
-  </div>;
+
+    <section className="app-detail-section" aria-labelledby="app-screenshots-title">
+      <div className="app-detail-section-heading"><div><h2 id="app-screenshots-title">Screenshots</h2><p>Take a closer look inside the app.</p></div><span className="app-detail-section-count">{screenshots.length} {screenshots.length === 1 ? "image" : "images"}</span></div>
+      {screenshots.length > 0
+        ? <div className="app-detail-screenshot-track" aria-label={app.name + " screenshots"}>
+            {screenshots.map((screenshot, index) => <button className="app-detail-screenshot" key={screenshot + index} type="button" onClick={() => setPreviewScreenshot(screenshot)} aria-label={"View screenshot " + (index + 1)}>
+              <img src={screenshot} alt={app.name + " screenshot " + (index + 1)} loading="lazy" />
+            </button>)}
+          </div>
+        : <div className="app-detail-screenshot-empty"><ImageIcon size={22} /><span>Screenshots coming soon</span></div>}
+    </section>
+
+    <section className="app-detail-section" aria-labelledby="app-about-title">
+      <div className="app-detail-section-heading"><div><h2 id="app-about-title">About this app</h2><p>Everything you need to know.</p></div></div>
+      <p className="app-detail-description">{app.description || app.shortDescription || "Official app in the KingsHall ecosystem."}</p>
+      {app.changelog && <div className="app-detail-changelog"><h3>What’s new</h3><p>{app.changelog}</p></div>}
+      {app.description && app.description.length > 420 && <button className="app-detail-back app-detail-read-more" type="button" onClick={() => setExpanded((value) => !value)}>{expanded ? "Show less" : "More about this app"} <ChevronRight size={14} /></button>}
+      {expanded && app.description && <p className="app-detail-description app-detail-description-extra">{app.description}</p>}
+    </section>
+
+    <section className="app-detail-section" aria-labelledby="app-info-title">
+      <div className="app-detail-section-heading"><div><h2 id="app-info-title">App information</h2><p>Release details and version history.</p></div></div>
+      <div className="app-detail-info-grid">
+        <div className="app-detail-info-item"><span>Category</span><strong>{readableCategory(app.category || "Utilities")}</strong></div>
+        <div className="app-detail-info-item"><span>Published date</span><strong>{formatDate(firstPublishedAt)}</strong></div>
+        <div className="app-detail-info-item"><span>Last updated</span><strong>{formatDate(lastUpdatedAt)}</strong></div>
+        <div className="app-detail-info-item"><span>Version name</span><strong>{app.versionName ? "v" + app.versionName : "Not available"}</strong></div>
+        <div className="app-detail-info-item"><span>Version code</span><strong>{app.versionCode ?? "Not available"}</strong></div>
+        <div className="app-detail-info-item"><span>APK size</span><strong>{formatSize(app.sizeBytes)}</strong></div>
+        <div className="app-detail-info-item"><span>Total downloads</span><strong>{totalDownloads.toLocaleString()}</strong></div>
+        <div className="app-detail-info-item"><span>Package ID</span><strong>{app.packageId}</strong></div>
+        <div className="app-detail-info-item"><span>Release status</span><strong>{ready ? "Verified stable release" : "Coming soon"}</strong></div>
+      </div>
+      {app.sha256 && <div className="app-detail-checksum"><span>Verified APK SHA-256</span><code>{app.sha256}</code></div>}
+    </section>
+
+    <section className="app-detail-section" aria-labelledby="app-ratings-title">
+      <div className="app-detail-section-heading"><div><h2 id="app-ratings-title">Ratings &amp; reviews</h2><p>Feedback from the CrownStore community.</p></div><span className="app-detail-section-count">{reviewCount.toLocaleString()} total</span></div>
+      <div className="app-rating-summary">
+        <div className="app-rating-score">
+          <strong>{reviewCount ? averageRating.toFixed(1) : "—"}</strong>
+          <RatingStars rating={averageRating} size={15} />
+          <span>{reviewCount ? reviewCount.toLocaleString() + (reviewCount === 1 ? " review" : " reviews") : "No ratings yet"}</span>
+        </div>
+        <div className="app-rating-bars" aria-label="Rating breakdown">
+          {distribution.map((item) => <div className="app-rating-bar-row" key={item.rating}>
+            <span>{item.rating}</span><div className="app-rating-bar-track"><span className="app-rating-bar-fill" style={{ width: (reviewCount ? Math.min(100, (item.count / reviewCount) * 100) : 0) + "%" }} /></div><span>{item.count.toLocaleString()}</span>
+          </div>)}
+        </div>
+      </div>
+
+      <hr className="app-review-divider" />
+      <form className="app-review-form" onSubmit={(event) => void submitReview(event)}>
+        <div className="app-review-form-heading"><h3>{reviewPayload?.myReview ? "Update your review" : "Rate this app"}</h3><span>One review per device</span></div>
+        <div className="app-review-rating-picker" role="group" aria-label="Your rating">
+          {[1, 2, 3, 4, 5].map((value) => <button className="review-rating-star" key={value} type="button" aria-label={"Rate " + value + " out of 5"} aria-pressed={reviewRating === value} onClick={() => setReviewRating(value)}><Star size={20} fill={value <= reviewRating ? "currentColor" : "none"} /></button>)}
+        </div>
+        <div className="app-review-fields">
+          <label className="app-review-field"><span>Your name (optional)</span><input value={reviewName} onChange={(event) => setReviewName(event.target.value)} maxLength={40} autoComplete="nickname" placeholder="CrownStore user" /></label>
+          <label className="app-review-field"><span>Review headline (optional)</span><input value={reviewTitle} onChange={(event) => setReviewTitle(event.target.value)} maxLength={100} placeholder="Sum it up in a few words" /></label>
+        </div>
+        <label className="app-review-field"><span>Your review</span><textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} minLength={8} maxLength={1600} required placeholder="What did you like, or what could be better?" /></label>
+        <div className="app-review-form-actions"><span>{reviewBody.trim().length}/1,600 characters</span><button className="button button-primary" type="submit" disabled={reviewSubmitting || reviewBody.trim().length < 8}>{reviewSubmitting ? "Saving…" : <><Send size={15} /> {reviewPayload?.myReview ? "Update review" : "Post review"}</>}</button></div>
+        {reviewNotice && <p className={"app-review-notice " + (reviewNoticeError ? "is-error" : "")} role={reviewNoticeError ? "alert" : "status"}>{reviewNotice}</p>}
+        {reviewLoadError && <p className="app-review-notice is-error" role="alert">{reviewLoadError}</p>}
+      </form>
+
+      <hr className="app-review-divider" />
+      <div className="app-detail-section-heading"><div><h2>Recent reviews</h2><p>{reviewLoading ? "Loading reviews…" : reviewCount.toLocaleString() + (reviewCount === 1 ? " review" : " reviews")}</p></div></div>
+      {reviewLoading
+        ? <div className="app-review-empty"><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span><span>Loading reviews…</span></div>
+        : reviewLoadError
+          ? <div className="app-review-empty"><MessageCircle size={22} /><strong>Reviews unavailable</strong><span>Try reopening this page in a moment.</span></div>
+          : (reviewPayload?.reviews || []).length > 0
+            ? <div className="app-review-list">{(reviewPayload?.reviews || []).slice(0, 12).map((review) => <article className="app-review-card" key={review.id}>
+                <div className="app-review-card-heading">
+                  <div className="app-review-author"><span className="app-review-avatar">{(review.displayName || "C").trim().charAt(0).toUpperCase()}</span><div className="app-review-author-copy"><strong>{review.displayName || "CrownStore user"}</strong><span>{formatDate(review.createdAt)}{review.updatedAt && review.createdAt !== review.updatedAt ? " · Edited" : ""}</span></div></div>
+                  <RatingStars rating={Number(review.rating) || 0} size={12} />
+                </div>
+                {review.title && <h3 className="app-review-title">{review.title}</h3>}
+                <p className="app-review-body">{review.body}</p>
+              </article>)}</div>
+            : <div className="app-review-empty"><MessageCircle size={23} /><strong>Be the first to review {app.name}</strong><span>Your feedback helps people choose their next app.</span></div>}
+    </section>
+
+    {relatedApps.length > 0 && <section className="app-detail-section" aria-labelledby="app-related-title">
+      <div className="app-detail-section-heading"><div><h2 id="app-related-title">More from KingsHall</h2><p>Discover another app from the ecosystem.</p></div></div>
+      <div className="app-detail-related-track">{relatedApps.map((item) => <button className="app-detail-related-card" type="button" key={item.id} onClick={() => onOpenApp(item)}>
+        <span className="app-detail-related-icon"><AppIcon app={item} /></span><span className="app-detail-related-copy"><strong>{item.name}</strong><span>{item.shortDescription || readableCategory(item.category || "Utilities")}</span></span><ChevronRight size={15} />
+      </button>)}</div>
+    </section>}
+
+    {previewScreenshot && <div className="app-screenshot-lightbox" role="dialog" aria-modal="true" aria-label={app.name + " screenshot preview"} onClick={() => setPreviewScreenshot(null)}>
+      <button type="button" aria-label="Close screenshot" onClick={(event) => { event.stopPropagation(); setPreviewScreenshot(null); }}><X size={20} /></button>
+      <img src={previewScreenshot} alt={app.name + " full screenshot"} onClick={(event) => event.stopPropagation()} />
+    </div>}
+  </section>;
 }
+
 function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; apps: CrownApp[]; onPublished: () => void }) {
   const [token, setToken] = useState("");
   const [appSlug, setAppSlug] = useState(apps[0]?.slug || "kingshall");
