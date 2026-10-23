@@ -186,15 +186,14 @@ function DownloadFeedback({
   </section>;
 }
 
-function AppCard({ app, onDetails, installState }: { app: CrownApp; onDetails: (app: CrownApp) => void; installState: AppInstallState }) {
+function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
   return <button className="shelf-app-tile" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details"}>
     <span className="shelf-app-icon"><AppIcon app={app} /></span>
     <span className="shelf-app-name">{app.name}</span>
-    <span className="shelf-app-status" data-state={installState}>{appInstallBadgeLabel(installState)}</span>
   </button>;
 }
 
-function SearchAppResultRow({ app, onDetails, installState }: { app: CrownApp; onDetails: (app: CrownApp) => void; installState: AppInstallState }) {
+function SearchAppResultRow({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
   return <div className="store-search-result">
     <button className="store-search-result-main" type="button" aria-label={"Open " + app.name + " details"} onClick={() => onDetails(app)}>
       <span className="store-search-result-icon"><AppIcon app={app} /></span>
@@ -204,8 +203,8 @@ function SearchAppResultRow({ app, onDetails, installState }: { app: CrownApp; o
         <span>{app.shortDescription || app.description || "Official KingsHall ecosystem app."}</span>
       </span>
     </button>
-    <button className="store-search-result-action" data-state={installState} type="button" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details — " + appInstallBadgeLabel(installState)}>
-      {appInstallBadgeLabel(installState)}<ChevronRight size={16} />
+    <button className="store-search-result-action" type="button" onClick={() => onDetails(app)} aria-label={"Open " + app.name + " details"}>
+      <ChevronRight size={16} />
     </button>
   </div>;
 }
@@ -1224,7 +1223,7 @@ export default function App() {
                 : error
                   ? <div className="state-panel state-error"><strong>Search is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : searchResults.length
-                    ? <div className="store-search-results">{searchResults.map((app) => <SearchAppResultRow key={app.id} app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} />)}</div>
+                    ? <div className="store-search-results">{searchResults.map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
                     : <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No apps found</strong><span>Try another name, category, or package ID.</span></div>}
             </section>
           : <section className="search-discover" aria-label="Discover apps">
@@ -1238,7 +1237,7 @@ export default function App() {
                 : error
                   ? <div className="state-panel state-error"><strong>The catalogue is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : apps.length
-                    ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} />)}</div>
+                    ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
                     : <div className="search-empty-prompt"><Search size={24} /><strong>No apps are listed yet</strong><span>Official apps will appear here when they are published to CrownStore.</span></div>}
             </section>}
       </section> : view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
@@ -1255,7 +1254,7 @@ export default function App() {
           return <section className="app-shelf" key={shelf.id} aria-labelledby={"shelf-" + shelf.id}>
             <div className="shelf-heading"><div className="shelf-title-wrap"><span className="shelf-icon"><ShelfIcon size={18} /></span><div><h2 id={"shelf-" + shelf.id}>{shelf.title}</h2><p>{shelf.subtitle}</p></div></div><div className="shelf-heading-actions"><span className="shelf-count">{shelfApps.length} {shelfApps.length === 1 ? "app" : "apps"}</span></div></div>
             <div className="shelf-track" aria-label={shelf.title + " app slots"}>
-              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} /></div>)}
+              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={setSelectedApp} /></div>)}
               {Array.from({ length: Math.max(0, 50 - (loading ? 0 : shelfApps.length)) }, (_, index) => (
                 <div className="shelf-app-card shelf-empty-slot-card" key={"empty-slot-" + index} aria-hidden="true">
                   <div className="shelf-app-tile shelf-empty-slot" />
@@ -1302,7 +1301,7 @@ export default function App() {
               : view === "UPDATES" && isAndroidApp && installedScanStatus === "error"
                 ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Installed apps could not be checked</strong><span>{installedScanError || "CrownStore couldn't read this phone's installed app versions."}</span><button className="button button-outline" onClick={() => installedScanRef.current()}>Try again</button></div>
                 : filtered.length
-              ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} installState={getAppInstallState(app, installedApps, installedScanStatus)} onDetails={setSelectedApp} />)}</div>
+              ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} onDetails={setSelectedApp} />)}</div>
               : view === "UPDATES" && isAndroidApp && installedScanStatus === "ready" && !search.trim() && category === "All apps"
                 ? <div className="state-panel"><div className="state-icon"><CheckCircle2 size={22} /></div><strong>You’re all caught up</strong><span>Every installed CrownStore app is using the latest published version. Apps you haven’t installed remain available in the collection.</span></div>
               : view === "UPDATES" && !search.trim() && category === "All apps" && !updatesAvailable
