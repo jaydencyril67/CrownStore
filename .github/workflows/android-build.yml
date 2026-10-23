@@ -360,6 +360,37 @@ jobs:
           end=s.find("\n",idx)+1; s=s[:end]+"            signingConfig signingConfigs.release\n"+s[end:]; p.write_text(s)
           PY
 
+      - name: Publish CrownStore WebAuthn signing configuration
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/crownstore-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          CERT_SHA256="$(keytool -exportcert \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" \
+            | openssl dgst -sha256 -binary | od -An -v -tx1 | tr -d ' \\n' | tr '[:lower:]' '[:upper:]' | sed 's/../&:/g; s/:$//')"
+          ANDROID_KEY_HASH="$(keytool -exportcert \
+            -keystore "$KEYSTORE_PATH" \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" \
+            | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
+          test -n "$CERT_SHA256"
+          test -n "$ANDROID_KEY_HASH"
+          {
+            echo "### CrownStore WebAuthn configuration"
+            echo ""
+            echo "- Set `WEBAUTHN_ANDROID_ORIGIN` on the ApiKingsHall Render service to:"
+            echo ""
+            echo "  `android:apk-key-hash:$ANDROID_KEY_HASH`"
+            echo ""
+            echo "- Set the KingsHall repository Actions variable `CROWNSTORE_CERT_SHA256` to:"
+            echo ""
+            echo "  `$CERT_SHA256`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Build production APK
         working-directory: android
         env:
