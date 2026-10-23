@@ -256,3 +256,10 @@
   .home-shelves .shelf-track{grid-template-columns:repeat(3,minmax(0,1fr));gap:13px 10px}
   .home-shelves .shelf-app-icon{border-radius:15px}
 }
+
+
+/* Match CryBots header network messaging without changing the compact header layout. */
+.header-brand-copy{min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.header-brand-subtitle{margin:0;color:rgba(255,255,255,.66);font-size:9px;font-weight:500;letter-spacing:.025em;line-height:1.2;white-space:nowrap}
+.header-brand-offline .header-brand-title{color:#fca5a5}
+.header-brand-offline .header-brand-subtitle{color:#fecaca}
