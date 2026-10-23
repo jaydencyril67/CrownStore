@@ -166,9 +166,15 @@ function DownloadFeedback({
 }
 
 function AppCard({ app, onDetails }: { app: CrownApp; onDetails: (app: CrownApp) => void }) {
+  const summary = (app.shortDescription || app.description || "Official KingsHall ecosystem app.").trim();
   return <button className="shelf-app-tile" onClick={() => onDetails(app)} aria-label={"View " + app.name + " details"}>
     <span className="shelf-app-icon"><AppIcon app={app} /></span>
-    <span className="shelf-app-name">{app.name}</span>
+    <span className="shelf-app-copy">
+      <span className="shelf-app-name">{app.name}</span>
+      <span className="shelf-app-meta">{readableCategory(app.category || "Utilities")}{app.versionName ? " · Version " + app.versionName : ""}</span>
+      <span className="shelf-app-description">{summary}</span>
+    </span>
+    <span className="shelf-app-chevron" aria-hidden="true"><ChevronRight size={17} /></span>
   </button>;
 }
 
