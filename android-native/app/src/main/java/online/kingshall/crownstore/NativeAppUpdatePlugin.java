@@ -251,7 +251,7 @@ public class NativeAppUpdatePlugin extends Plugin {
         Uri uri = url == null ? null : Uri.parse(url);
         boolean trusted = uri != null
             && "https".equalsIgnoreCase(uri.getScheme())
-            && "api.crownstore.kingshall.online".equalsIgnoreCase(uri.getHost())
+            && "apicrownstore.kingshall.online".equalsIgnoreCase(uri.getHost())
             && (uri.getPort() == -1 || uri.getPort() == 443)
             && uri.getPath() != null
             && uri.getPath().matches("^/api/downloads/[0-9a-fA-F-]{36}$")
