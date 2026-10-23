@@ -12,7 +12,7 @@ function version(value: string | number | null | undefined) {
   return value == null || value === "" ? "Unknown" : String(value);
 }
 
-export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) {
+export default function DeviceUpdatesPanel({ launchSession }: Props) {
   const [session, setSession] = useState<BridgeSessionRef | null>(launchSession);
   const [snapshot, setSnapshot] = useState<BridgeSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
@@ -30,7 +30,6 @@ export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) 
     setSnapshot(next);
     setError("");
   }
-
 
   async function connect() {
     setBusy(true); setError(""); setMessage("");
@@ -55,7 +54,7 @@ export default function DeviceUpdatesPanel({ launchSession, onConnect }: Props) 
       });
       setMessage("Update requested.");
       setSnapshot(await readBridgeSnapshot(session));
-    } catch (caught) {
+    } catch {
       setError("Couldn’t start the update. Please try again.");
     } finally { setWorking(""); }
   }
