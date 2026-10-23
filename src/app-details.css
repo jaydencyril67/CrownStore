@@ -263,3 +263,50 @@
 .header-brand-subtitle{margin:0;color:rgba(255,255,255,.66);font-size:9px;font-weight:500;letter-spacing:.025em;line-height:1.2;white-space:nowrap}
 .header-brand-offline .header-brand-title{color:#fca5a5}
 .header-brand-offline .header-brand-subtitle{color:#fecaca}
+
+
+/* Home page correction: remove the remaining app-tile/card surfaces entirely. */
+.home-shelves .app-shelf,
+.home-shelves .shelf-app-card,
+.home-shelves .shelf-app-tile,
+.home-shelves .shelf-app-icon,
+.home-shelves .shelf-empty-slot,
+.home-shelves .shelf-footer-note {
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  outline-offset:4px;
+}
+.home-shelves .shelf-app-tile {
+  display:flex!important;
+  align-items:flex-start!important;
+  padding:0!important;
+  margin:0!important;
+  text-align:left!important;
+}
+.home-shelves .shelf-app-icon {
+  width:100%!important;
+  aspect-ratio:1!important;
+  overflow:visible!important;
+  display:block!important;
+}
+.home-shelves .shelf-app-icon .app-icon-image,
+.home-shelves .shelf-app-icon .app-icon-fallback {
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.home-shelves .shelf-app-name {
+  margin-top:8px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.home-shelves .shelf-track { background:transparent!important; border:0!important; box-shadow:none!important; }
