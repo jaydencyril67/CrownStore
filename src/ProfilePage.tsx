@@ -698,7 +698,7 @@ export default function ProfilePage({
         <section className="profile-stat-grid" aria-label="CrownStore summary">
           <div><span>Installed</span><strong>{installedScanStatus === "ready" ? installedCatalogueApps.length : "—"}</strong></div>
           <div><span>Updates</span><strong>{installedScanStatus === "ready" ? updatesNeeded.length : "—"}</strong></div>
-          <div><span>Downloads</span><strong>{downloadHistory.length}</strong></div>
+          <div><span>Downloaded apps</span><strong>{downloadHistory.length}</strong></div>
           <div><span>Listed apps</span><strong>{apps.length}</strong></div>
         </section>
 
