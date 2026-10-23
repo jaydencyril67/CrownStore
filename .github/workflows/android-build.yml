@@ -159,7 +159,7 @@ jobs:
             // Crop to the actual cart/crown artwork so its visible scale matches the other APKs,
             // instead of scaling the full PWA icon (which also contains its square canvas and circle).
             const artworkSvg = Buffer.from(
-              '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="130 130 500 500">' +
+              '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="137 114.5 500 500">' +
               defs + artworkGroup + '</svg>'
             );
 
