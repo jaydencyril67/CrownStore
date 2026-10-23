@@ -396,6 +396,8 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-dock.is-expanded .kh-nowbar-slot{width:100%;min-width:0;max-width:100%;min-height:0}
 .kh-nowbar-dock.is-expanded .kh-nowbar-action{width:100%;min-width:112px;max-width:100%;min-height:40px;padding:9px 10px 8px;border-radius:12px;gap:4px}
 .kh-nowbar-label-expanded{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1;text-align:center}
+/* Match KingsHall's effective specificity: expanded labels retain the larger label rule. */
+.kh-nowbar-dock.is-expanded .kh-nowbar-label-expanded{font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1;text-align:center}
 .kh-nowbar-marquee{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:600px){.kh-nowbar-dock{bottom:calc(10px + env(safe-area-inset-bottom,0px))}.kh-nowbar.is-actions{padding:7px}}
 @media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{width:calc(100vw - 24px);max-width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr));padding:9px;gap:7px}.kh-nowbar-dock.is-expanded .kh-nowbar-action{min-width:0}}
