@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { addCrownNotification, readNotificationPreferences, type NotificationKind } from "./notifications";
-import { refreshCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
+import { loadCrownStoreAccountNotificationPreferences, refreshCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
 
 const SESSION_KEY = "crownstore-profile-token";
 const VALID_KINDS: NotificationKind[] = ["appUpdates", "downloads", "security", "storeNotices"];
@@ -66,8 +66,20 @@ export default function PushNotificationAgent() {
       const token = currentToken();
       if (!token) return;
       try {
-        if (registerIfEnabled && readNotificationPreferences().channels.device) await refreshCrownStorePush(token);
-        else await syncCrownStorePushPreferences(token);
+        if (registerIfEnabled) {
+          const saved = await loadCrownStoreAccountNotificationPreferences(token);
+          if (!saved) {
+            const local = readNotificationPreferences();
+            await syncCrownStorePushPreferences(token, local.channels.device, {
+              inApp: local.channels.inApp,
+              email: local.channels.email
+            });
+          }
+          if (readNotificationPreferences().channels.device) await refreshCrownStorePush(token);
+          else await syncCrownStorePushPreferences(token);
+          return;
+        }
+        await syncCrownStorePushPreferences(token);
       } catch {
         // Do not block the store UI when push services or notification permissions are unavailable.
       }
