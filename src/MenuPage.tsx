@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, Bell, Check, Palette, Radio, Settings2, ShieldCheck,
+  Bell, Check, Palette, Radio, Settings2, ShieldCheck,
   Smartphone, Sparkles, Zap
 } from "lucide-react";
 import {
@@ -136,7 +136,6 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
   return <section className="menu-page" aria-label="CrownStore menu and preferences">
     <div className="menu-page-heading">
       <div className="app-detail-topbar">
-        <button className="app-detail-back app-detail-back-icon" type="button" onClick={onBack} aria-label="Back to CrownStore" title="Back to CrownStore"><ArrowLeft size={18} /></button>
         <span className="app-detail-top-label">MENU</span>
       </div>
       <span className="eyebrow"><Settings2 size={14} /> CROWNSTORE CONTROL CENTER</span>
