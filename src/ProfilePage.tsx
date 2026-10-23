@@ -342,6 +342,8 @@ export default function ProfilePage({
   const [showNoAccountModal, setShowNoAccountModal] = useState(false);
   const [browserAccounts, setBrowserAccounts] = useState<string[]>([]);
   const [externalLogin, setExternalLogin] = useState<ExternalLoginStart | null>(null);
+  const [externalApproved, setExternalApproved] = useState(false);
+  const [externalAccessCode, setExternalAccessCode] = useState("");
   const [externalBusy, setExternalBusy] = useState(false);
   const [externalError, setExternalError] = useState("");
   const [externalNotice, setExternalNotice] = useState("");
@@ -531,6 +533,8 @@ export default function ProfilePage({
     setExtraCode("");
     setBrowserAccounts([]);
     setExternalLogin(null);
+    setExternalApproved(false);
+    setExternalAccessCode("");
     setError("");
     setNotice("");
   }
@@ -709,6 +713,8 @@ export default function ProfilePage({
 
   async function startExternalLogin() {
     if (externalBusy || busy) return;
+    setExternalApproved(false);
+    setExternalAccessCode("");
     setExternalBusy(true);
     setExternalError("");
     setExternalNotice("");
@@ -746,6 +752,8 @@ export default function ProfilePage({
     if (!externalLogin) return;
     const request = externalLogin;
     setExternalLogin(null);
+    setExternalApproved(false);
+    setExternalAccessCode("");
     setExternalBusy(true);
     setExternalError("");
     try {
@@ -761,6 +769,35 @@ export default function ProfilePage({
       setExternalError(caught instanceof Error ? caught.message : "Unable to cancel external sign-in.");
     } finally {
       setExternalBusy(false);
+    }
+  }
+
+  async function verifyExternalAccessCode(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const request = externalLogin;
+    if (!request || !externalApproved || externalAccessCode.length !== 6 || externalBusy) return;
+    setExternalBusy(true);
+    setExternalError("");
+    setExternalNotice("");
+    try {
+      const response = await fetch(API_BASE + "/api/auth/kingshall/external/verify-access-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ requestId: request.requestId, accessCode: externalAccessCode })
+      });
+      const data = await response.json().catch(() => ({})) as AuthPayload;
+      if (!response.ok) throw new Error(responseMessage(data, "KingsHall could not verify the Access Code."));
+      saveSession(data);
+    } catch (caught) {
+      setExternalError(caught instanceof Error ? caught.message : "KingsHall could not verify the Access Code.");
+      const status = (caught as { response?: { status?: number } }).response?.status;
+      if ([409, 410, 423].includes(Number(status))) {
+        setExternalLogin(null);
+        setExternalApproved(false);
+      }
+    } finally {
+      setExternalBusy(false);
+      setExternalAccessCode("");
     }
   }
 
@@ -789,6 +826,8 @@ export default function ProfilePage({
       if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
       setExternalSecondsRemaining(0);
       setExternalLogin(null);
+      setExternalApproved(false);
+      setExternalAccessCode("");
       setExternalNotice("");
       setExternalError("This external sign-in request expired. Start again.");
     };
@@ -815,13 +854,20 @@ export default function ProfilePage({
             setExternalError(responseMessage(data, "This external sign-in request is no longer valid."));
             return;
           }
+        } else if (data.status === "approved") {
+          stopped = true;
+          if (timer !== undefined) window.clearTimeout(timer);
+          setExternalApproved(true);
+          setExternalNotice("Device approved. Enter the KingsHall Access Code for that account to finish signing in.");
+          return;
         } else if (data.status === "authenticated") {
           stopped = true;
+          if (timer !== undefined) window.clearTimeout(timer);
           if (expiryTimer !== undefined) window.clearTimeout(expiryTimer);
           if (countdownTimer !== undefined) window.clearInterval(countdownTimer);
           setExternalLogin(null);
-          try { saveSession(data); }
-          catch (caught) { setExternalError(caught instanceof Error ? caught.message : "Could not complete the approved sign-in."); }
+          setExternalApproved(false);
+          setExternalError("This external sign-in request must be restarted. Enter the Access Code after approving the device in KingsHall.");
           return;
         } else if (["denied", "expired", "consumed"].includes(String(data.status || ""))) {
           stopped = true;
@@ -1108,7 +1154,11 @@ export default function ProfilePage({
               ? `Expires in ${Math.floor(externalSecondsRemaining / 60)}:${String(externalSecondsRemaining % 60).padStart(2, "0")} · ${new Date(externalLogin.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
               : "Request expired"}
           </p>
-          <p className="profile-external-help">Waiting for approval from KingsHall…</p>
+          {!externalApproved ? <p className="profile-external-help" role="status">Waiting for approval from KingsHall…</p> : <form onSubmit={verifyExternalAccessCode} style={{ display: "grid", gap: 10, textAlign: "left", width: "100%" }}>
+            <label htmlFor="crownstore-external-access-code" style={{ fontSize: 12, fontWeight: 800 }}>KingsHall Access Code</label>
+            <input id="crownstore-external-access-code" type="password" inputMode="numeric" autoComplete="off" pattern="[0-9]{6}" maxLength={6} required value={externalAccessCode} onChange={event => setExternalAccessCode(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter six-digit Access Code" style={{ width: "100%", minHeight: 48, boxSizing: "border-box", borderRadius: 13, border: "1px solid var(--profile-line, rgba(255,255,255,.2))", background: "var(--profile-surface, rgba(255,255,255,.06))", color: "inherit", padding: "12px 14px", fontSize: 15, outline: "none" }} />
+            <button className="profile-secondary-button" type="submit" disabled={externalBusy || externalAccessCode.length !== 6}>{externalBusy ? <span className="profile-spinner" /> : "Verify Access Code & Sign in"}</button>
+          </form>}
           <button className="profile-text-button" type="button" disabled={externalBusy} onClick={() => void cancelExternalLogin()}>Cancel external sign-in</button>
         </>}
       </section>
