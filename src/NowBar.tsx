@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type TouchEvent, type ReactNode } from "react";
 import { Home, Search, Download, Sparkles, Menu, Crosshair, ListFilter, Plus, UserRound } from "lucide-react";
-import { BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, EDGE_LIGHT_KEY, EXPAND_MODE_KEY, SWIPE_NAVIGATION_KEY } from "./notifications";
+import { BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, EDGE_LIGHT_KEY, EDGE_LIGHT_ENABLED_KEY, EDGE_LIGHT_COLOR_KEY, EDGE_LIGHT_MODE_KEY, EXPAND_MODE_KEY, SWIPE_NAVIGATION_KEY } from "./notifications";
 
 type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "OPTION 4" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
 type Action = { label: ActionLabel; icon: ReactNode };
@@ -49,9 +49,17 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
     try {
       const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as { enabled?: boolean; color?: string; mode?: string };
       const modes: EdgeMode[] = ["stable-light", "stable", "blink-light", "blink", "pulse-light", "pulse", "color-light", "color"];
-      const mode: EdgeMode = modes.includes(saved.mode as EdgeMode) ? saved.mode as EdgeMode : "stable";
-      return { enabled: saved.enabled === true, color: typeof saved.color === "string" && /^#[0-9a-f]{6}$/i.test(saved.color) ? saved.color : "#c4b5fd", mode };
-    } catch { return { enabled: false, color: "#c4b5fd", mode: "stable" }; }
+      // Prefer the dedicated keys (same pattern as KingsHall); fall back to the combined key for older installs.
+      const storedMode = window.localStorage.getItem(EDGE_LIGHT_MODE_KEY) ?? saved.mode;
+      const storedColor = window.localStorage.getItem(EDGE_LIGHT_COLOR_KEY) ?? saved.color;
+      const storedEnabled = window.localStorage.getItem(EDGE_LIGHT_ENABLED_KEY);
+      const mode: EdgeMode = modes.includes(storedMode as EdgeMode) ? storedMode as EdgeMode : "stable-light";
+      return {
+        enabled: storedEnabled === null ? saved.enabled === true : storedEnabled === "true",
+        color: typeof storedColor === "string" && /^#[0-9a-f]{6}$/i.test(storedColor) ? storedColor : "#c4b5fd",
+        mode
+      };
+    } catch { return { enabled: false, color: "#c4b5fd", mode: "stable-light" }; }
   };
   const readColor = (key: string, fallback: string) => {
     try { const saved = window.localStorage.getItem(key); return saved && /^#[0-9a-f]{6}$/i.test(saved) ? saved : fallback; } catch { return fallback; }
