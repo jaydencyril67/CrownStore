@@ -99,6 +99,7 @@ async function authenticateCrownStorePasskey(options: Record<string, any>): Prom
     challenge: base64UrlToBytes(String(options.challenge)).buffer as ArrayBuffer,
     allowCredentials: (Array.isArray(options.allowCredentials) ? options.allowCredentials : []).map((credential: Record<string, any>) => ({
       ...credential,
+      type: "public-key" as const,
       id: base64UrlToBytes(String(credential.id)).buffer as ArrayBuffer
     }))
   };
