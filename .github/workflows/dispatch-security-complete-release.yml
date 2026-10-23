@@ -1,0 +1,21 @@
+name: Dispatch security-complete CrownStore APK build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/dispatch-security-complete-release.yml"
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch the normal manual-release workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run android-build.yml --ref main
