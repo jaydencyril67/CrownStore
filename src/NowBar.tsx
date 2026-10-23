@@ -41,7 +41,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
   const resetIdle = () => {
     if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     idleTimer.current = window.setTimeout(() => {
-      setBarState({ view: "title", mode: "compact" });
+      setBarState((current) => ({ ...current, view: "title" }));
     }, 10000);
   };
 
