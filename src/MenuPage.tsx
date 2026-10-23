@@ -241,7 +241,7 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
       <div className="menu-section-heading"><span className="menu-section-icon"><ShieldCheck size={18} /></span><div><h2>Notification types</h2><p>Turn specific CrownStore alerts on or off.</p></div></div>
       {NOTIFICATION_GROUPS.map((group) => <div key={group.title} className="menu-notification-group"><h3>{group.title}</h3>{group.items.map((item) => <SettingRow key={item.key} title={item.label} detail={item.detail} trailing={<SettingSwitch checked={preferences.types[item.key]} label={"Enable " + item.label} onChange={(enabled) => savePreferences({ ...preferences, types: { ...preferences.types, [item.key]: enabled } })} />} />)}</div>)}
     </section>
-    <div className="menu-page-footer"><Sparkles size={14} /> Preferences are stored on this device and apply immediately.</div>
+    <div className="menu-page-footer"><Sparkles size={14} /> Preferences are saved locally and synced to your signed-in CrownStore account when available.</div>
     {notice && <p className="menu-status" role="status">{notice}<button type="button" onClick={() => setNotice("")} aria-label="Dismiss message">Dismiss</button></p>}
   </section>;
 }
