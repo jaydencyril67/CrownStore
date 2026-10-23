@@ -533,6 +533,73 @@ export default function ProfilePage({
     }
   }
 
+  async function verifyExtra2fa(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy || !challengeToken || extraCode.length !== 6) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch(API_BASE + "/api/auth/kingshall/extra-security/verify-2fa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ challengeToken, code: extraCode })
+      });
+      const data = await response.json().catch(() => ({})) as AuthPayload;
+      if (!response.ok || !data.token || !data.user) {
+        throw new Error(responseMessage(data, "The authenticator code could not be verified."));
+      }
+      saveSession(data);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The authenticator code could not be verified.");
+    } finally {
+      setBusy(false);
+      setExtraCode("");
+    }
+  }
+
+  async function verifyExtraBiometric() {
+    if (busy || !challengeToken || !extraMethods.includes("biometric")) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const optionsResponse = await fetch(API_BASE + "/api/auth/kingshall/extra-security/biometric/options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ challengeToken })
+      });
+      const options = await optionsResponse.json().catch(() => ({})) as Record<string, any>;
+      if (!optionsResponse.ok) throw new Error(responseMessage(options as AuthPayload, "Unable to start passkey verification."));
+      const credential = await authenticateCrownStorePasskey(options);
+      const verifyResponse = await fetch(API_BASE + "/api/auth/kingshall/extra-security/biometric/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ challengeToken, ...credential })
+      });
+      const data = await verifyResponse.json().catch(() => ({})) as AuthPayload;
+      if (!verifyResponse.ok || !data.token || !data.user) {
+        throw new Error(responseMessage(data, "Passkey verification failed."));
+      }
+      saveSession(data);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Passkey verification failed. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function cancelSecurityChallenge() {
+    setChallengeToken("");
+    setExtraMethods([]);
+    setExtraMethod("");
+    setExtraCode("");
+    setAccessCode("");
+    setIdentity("");
+    setError("");
+    setNotice("");
+  }
+
   async function startExternalLogin() {
     if (externalBusy || busy) return;
     setExternalBusy(true);
