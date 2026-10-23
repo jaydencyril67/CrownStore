@@ -100,7 +100,7 @@ export default function DeviceUpdatesPanel({ apps, launchSession, onConnect, onD
     <div className="device-bridge-actions">
       <button className="button button-primary" type="button" onClick={() => void connect()} disabled={busy}>
         {busy ? <><RefreshCw size={16} className="device-spin" /> Connecting…</> :
-          <><Wifi size={16} /> {snapshot?.session.status === "connected" ? "Scan again" : "Reconnect"}</>}
+          <><Wifi size={16} /> {session ? "Reconnect Android" : "Connect Android"}</>}
       </button>
       {snapshot?.session.status === "connected" && <span className="device-connected"><CheckCircle2 size={15} /> Connected</span>}
     </div>
