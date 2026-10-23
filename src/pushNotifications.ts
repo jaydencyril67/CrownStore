@@ -155,10 +155,13 @@ async function registerWeb(token: string, askPermission: boolean): Promise<boole
 export async function syncCrownStorePushPreferences(token = sessionToken(), deviceEnabled?: boolean): Promise<void> {
   if (!token) return;
   const preferences = readNotificationPreferences();
-  await requestApi("/api/notifications/preferences", token, "PUT", {
-    channels: { device: deviceEnabled === undefined ? preferences.channels.device : deviceEnabled },
+  const body: { channels?: { device: boolean }; types: typeof preferences.types } = {
     types: preferences.types
-  });
+  };
+  // Omit channel state for routine syncs so a fresh browser/device cannot silently
+  // turn off push delivery configured on another device for the same account.
+  if (deviceEnabled !== undefined) body.channels = { device: deviceEnabled };
+  await requestApi("/api/notifications/preferences", token, "PUT", body);
 }
 
 export async function enableCrownStorePush(): Promise<void> {
@@ -182,9 +185,12 @@ export async function refreshCrownStorePush(token = sessionToken()): Promise<voi
   await syncCrownStorePushPreferences(token, preferences.channels.device);
 }
 
-export async function disableCrownStorePush(token = sessionToken()): Promise<void> {
-  // Local opt-out must still take effect when the API is temporarily unreachable.
-  if (token) await syncCrownStorePushPreferences(token, false).catch(() => undefined);
+export async function disableCrownStorePush(token = sessionToken(), disableAccountPreference = true): Promise<void> {
+  // Explicit opt-out updates the account-wide preference. Sign-out only removes
+  // this device so other devices belonging to the same account stay subscribed.
+  if (token && disableAccountPreference) {
+    await syncCrownStorePushPreferences(token, false).catch(() => undefined);
+  }
 
   if (Capacitor.getPlatform() === "android") {
     if (token) {
