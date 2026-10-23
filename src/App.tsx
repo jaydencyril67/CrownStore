@@ -1242,6 +1242,16 @@ export default function App() {
       appSlug: app.slug,
       versionName: releaseVersion
     });
+    const profileToken = (() => {
+      try { return window.localStorage.getItem("crownstore-profile-token") || ""; } catch { return ""; }
+    })();
+    if (profileToken) {
+      void fetch(API_BASE + "/api/notifications/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + profileToken },
+        body: JSON.stringify({ event: "download-complete", appSlug: app.slug, versionName: releaseVersion })
+      }).catch(() => undefined);
+    }
   }
 
   async function downloadRelease(app: CrownApp): Promise<void> {
