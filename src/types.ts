@@ -15,6 +15,11 @@ export type CrownApp = {
   sizeBytes: number | string | null;
   sha256: string | null;
   publishedAt: string | null;
+  firstPublishedAt?: string | null;
+  lastUpdatedAt?: string | null;
+  totalDownloads?: number;
+  averageRating?: number | string | null;
+  reviewCount?: number;
 };
 
 export type AppsResponse = { apps: CrownApp[] };
