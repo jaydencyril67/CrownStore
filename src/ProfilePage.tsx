@@ -798,6 +798,24 @@ export default function ProfilePage({
           <button className="profile-text-button" type="button" onClick={cancelSecurityChallenge}>Cancel request</button>
         </form>}
 
+        {challengeToken && <section className="profile-external-panel profile-extra-security" aria-label="Extra security verification">
+          <div className="profile-external-heading"><span><ShieldCheck size={18} /></span><div><h2>Extra security required</h2><p>Choose one enabled security method to complete this sign-in. The challenge expires in five minutes.</p></div></div>
+          {extraMethods.length > 1 && <div className="profile-extra-methods">
+            {extraMethods.includes("2fa") && <button className="profile-secondary-button" type="button" disabled={busy} onClick={() => { setExtraMethod("2fa"); setError(""); }}>Authenticator app (2FA)</button>}
+            {extraMethods.includes("biometric") && <button className="profile-secondary-button" type="button" disabled={busy} onClick={() => { setExtraMethod("biometric"); setError(""); }}><Fingerprint size={16} /> Passkey / biometric</button>}
+          </div>}
+          {extraMethod === "2fa" && <form className="profile-access-form" onSubmit={verifyExtra2fa}>
+            <label htmlFor="crownstore-extra-2fa">Six-digit authenticator code</label>
+            <input id="crownstore-extra-2fa" value={extraCode} onChange={(event) => setExtraCode(event.target.value.replace(/\\D/g, "").slice(0, 6))} type="password" inputMode="numeric" autoComplete="one-time-code" placeholder="••••••" minLength={6} maxLength={6} pattern="[0-9]{6}" required />
+            <button className="profile-primary-button" type="submit" disabled={busy || extraCode.length !== 6}>{busy ? <span className="profile-spinner" /> : "Verify authenticator code"}</button>
+          </form>}
+          {extraMethod === "biometric" && <div className="profile-passkey-action">
+            <p className="profile-external-help">Confirm using the passkey or biometric credential linked to this KingsHall account.</p>
+            <button className="profile-primary-button" type="button" onClick={() => void verifyExtraBiometric()} disabled={busy}>{busy ? <span className="profile-spinner" /> : <><Fingerprint size={16} /> Verify passkey</>}</button>
+          </div>}
+          {!extraMethod && <p className="profile-external-help">Select an available security method above.</p>}
+          <button className="profile-text-button" type="button" disabled={busy} onClick={cancelSecurityChallenge}>Cancel sign-in</button>
+        </section>}
         {checkingSession && <p className="profile-notice" role="status">Restoring your CrownStore session…</p>}
         {notice && <p className="profile-notice" role="status">{notice}</p>}
         {error && <p className="profile-error" role="alert">{error}</p>}
