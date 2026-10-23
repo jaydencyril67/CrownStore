@@ -390,7 +390,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-dock.is-expanded .kh-nowbar-label-expanded{font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1;text-align:center}
 .kh-nowbar-marquee{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:600px){.kh-nowbar-dock{bottom:calc(10px + env(safe-area-inset-bottom,0px))}}
-@media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{max-width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(0,1fr));padding:9px;gap:7px}.kh-nowbar-dock.is-expanded .kh-nowbar-action{min-width:0}}
+@media(max-width:380px){.kh-nowbar-dock{width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded{max-width:calc(100vw - 24px)}.kh-nowbar-dock.is-expanded .kh-nowbar{grid-template-columns:repeat(3,minmax(112px,max-content));padding:12px;gap:8px}}
 
 
 /* Global interaction rules aligned with CryBots: no browser tap flash, selection,
