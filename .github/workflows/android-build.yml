@@ -386,16 +386,17 @@ jobs:
             | openssl dgst -sha256 -binary | openssl base64 -A | tr '+/' '-_' | tr -d '=')"
           test -n "$CERT_SHA256"
           test -n "$ANDROID_KEY_HASH"
+          echo "CROWNSTORE_CERT_SHA256=$CERT_SHA256" >> "$GITHUB_ENV"
+          echo "CROWNSTORE_ANDROID_KEY_HASH=$ANDROID_KEY_HASH" >> "$GITHUB_ENV"
           {
-            echo "### CrownStore WebAuthn configuration"
+            echo "### CrownStore-owned WebAuthn configuration"
             echo ""
-            echo "- Set `WEBAUTHN_ANDROID_ORIGIN` on the ApiKingsHall Render service to:"
+            echo "- Set `WEBAUTHN_ANDROID_ORIGIN` on the ApiCrownStore Render service to:"
             echo ""
             echo "  `android:apk-key-hash:$ANDROID_KEY_HASH`"
             echo ""
-            echo "- Set the KingsHall repository Actions variable `CROWNSTORE_CERT_SHA256` to:"
-            echo ""
-            echo "  `$CERT_SHA256`"
+            echo "- The next step publishes the matching signing-certificate fingerprint at CrownStore's own `/.well-known/assetlinks.json`."
+            echo "- CrownStore's passkey RP ID is `crownstore.kingshall.online`; this does not change KingsHall, CryBots or HallsChat configuration."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build production APK
@@ -418,6 +419,62 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose CrownStore.apk
           sha256sum CrownStore.apk > CrownStore.apk.sha256
           gh release create "v$APP_VERSION" CrownStore.apk CrownStore.apk.sha256 --target "$GITHUB_SHA" --title "CrownStore $APP_VERSION" --notes "CrownStore Android production APK $APP_VERSION. Android will ask the user to approve installation."
+
+      - name: Publish CrownStore Digital Asset Links association
+        if: ${{ steps.publish_release.outcome == 'success' }}
+        env:
+          CERT_SHA256: ${{ env.CROWNSTORE_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          fingerprint = os.environ["CERT_SHA256"].strip().upper()
+          if not re.fullmatch(r"(?:[0-9A-F]{2}:){31}[0-9A-F]{2}", fingerprint):
+              raise SystemExit("The CrownStore signing-certificate fingerprint is invalid.")
+          path = Path("public/.well-known/assetlinks.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          statements = [
+              {
+                  "relation": [
+                      "delegate_permission/common.handle_all_urls",
+                      "delegate_permission/common.get_login_creds"
+                  ],
+                  "target": {
+                      "namespace": "android_app",
+                      "package_name": "online.kingshall.crownstore",
+                      "sha256_cert_fingerprints": [fingerprint]
+                  }
+              },
+              {
+                  "relation": ["delegate_permission/common.get_login_creds"],
+                  "target": {
+                      "namespace": "web",
+                      "site": "https://crownstore.kingshall.online"
+                  }
+              }
+          ]
+          path.write_text(json.dumps(statements, indent=2) + "\\n", encoding="utf-8")
+          print("Generated CrownStore-only Digital Asset Links for online.kingshall.crownstore.")
+          PY
+
+          if [ "${{ github.ref_type }}" != "branch" ]; then
+            echo "::error::Run this manual release workflow from a branch so its CrownStore asset-link update can be committed."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/.well-known/assetlinks.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update CrownStore Digital Asset Links signing fingerprint"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          else
+            echo "CrownStore Digital Asset Links already matches this signing certificate."
+          fi
+
       - name: Notify ApiCrownStore about the published APK release
         if: ${{ always() && steps.publish_release.outcome == 'success' }}
         env:
