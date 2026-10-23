@@ -1254,6 +1254,33 @@ export default function App() {
     }
   }
 
+  function recordDownloadFailure(app: CrownApp) {
+    const releaseVersion = String(app.versionName || "latest");
+    const eventId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+    const externalKey = "download-failed:" + app.slug + ":" + releaseVersion + ":" + eventId;
+    addCrownNotification({
+      id: externalKey,
+      externalKey,
+      kind: "downloads",
+      title: app.name + " download failed",
+      body: "The " + releaseVersion + " APK download did not complete. Open CrownStore and retry.",
+      appSlug: app.slug,
+      versionName: releaseVersion
+    });
+    const profileToken = (() => {
+      try { return window.localStorage.getItem("crownstore-profile-token") || ""; } catch { return ""; }
+    })();
+    if (profileToken) {
+      void fetch(API_BASE + "/api/notifications/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + profileToken },
+        body: JSON.stringify({ event: "download-failed", appSlug: app.slug, versionName: releaseVersion, eventId })
+      }).then((response) => {
+        if (response.ok) window.dispatchEvent(new Event("crownstore:account-notifications-changed"));
+      }).catch(() => undefined);
+    }
+  }
+
   async function downloadRelease(app: CrownApp): Promise<void> {
     if (!app.releaseId) return;
     if (Capacitor.getPlatform() === "android" && downloadProgress?.releaseId === app.releaseId && downloadProgress.status === "permission" && downloadProgress.downloadId) {
@@ -1294,6 +1321,7 @@ export default function App() {
           };
         });
         if (status === "complete" || status === "permission") recordDownloadedApp(app);
+        else if (status === "error") recordDownloadFailure(app);
       };
 
       try {
@@ -1453,6 +1481,7 @@ export default function App() {
         loaded, total, platform,
         error: cancelled ? undefined : error instanceof Error ? error.message : "The APK download failed. Please try again."
       });
+      if (!cancelled) recordDownloadFailure(app);
     } finally {
       if (downloadAbortRef.current === controller) downloadAbortRef.current = null;
     }
