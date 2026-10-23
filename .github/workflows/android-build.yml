@@ -34,9 +34,16 @@ jobs:
               m=re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)",r.get("tagName",""))
               if m and not r.get("isDraft") and not r.get("isPrerelease"):
                   versions.append(tuple(map(int,m.groups())))
-          if not versions: v=(1,0,0)
+          if not versions:
+              v=(1,0,0)
           else:
-              major,minor,patch=max(versions); v=(major,minor,patch+1)
+              major,minor,patch=max(versions)
+              # CrownStore release trains use patches 0-9; after .9, advance the minor.
+              # This deliberately skips the accidental 1.0.10 line and selects 1.1.0.
+              if patch >= 9:
+                  v=(major,minor+1,0)
+              else:
+                  v=(major,minor,patch+1)
           with open(os.environ["GITHUB_OUTPUT"],"a") as f: f.write("app_version="+".".join(map(str,v))+"\n")
           PY
 
