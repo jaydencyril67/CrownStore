@@ -1,14 +1,14 @@
 @font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Regular.woff2") format("woff2");font-weight:100 699;font-style:normal;font-display:block}
 @font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Bold.woff2") format("woff2");font-weight:700 1000;font-style:normal;font-display:block}
 html,body,#root,*,*::before,*::after,button,input,textarea,select,option{font-family:var(--crownstore-global-font)!important;font-synthesis:none!important}
-.shelf-app-card .shelf-app-tile{width:100%;aspect-ratio:1/1;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:10px;border:1px solid rgba(139,92,246,.5);border-radius:13px;background:radial-gradient(ellipse at 0 0,rgba(255,255,255,.065),transparent 62%),linear-gradient(145deg,rgba(139,92,246,.09),rgba(255,255,255,.018));box-shadow:inset 0 1px rgba(255,255,255,.06),0 8px 22px rgba(0,0,0,.2);color:#f4efff;text-align:center;cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s}
+.shelf-app-card .shelf-app-tile{width:100%;min-height:76px;aspect-ratio:auto;box-sizing:border-box;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:11px;padding:8px 10px;border:1px solid rgba(139,92,246,.34);border-radius:12px;background:linear-gradient(145deg,rgba(139,92,246,.055),rgba(255,255,255,.015));box-shadow:inset 0 1px rgba(255,255,255,.04);color:#f4efff;text-align:left;cursor:pointer;transition:background .18s,border-color .18s,box-shadow .18s}
 .shelf-app-card .shelf-app-tile:hover,.shelf-app-card .shelf-app-tile:focus-visible{background:linear-gradient(145deg,rgba(139,92,246,.16),rgba(255,255,255,.045));border-color:rgba(139,92,246,.82);box-shadow:inset 0 1px rgba(255,255,255,.09),0 5px 16px rgba(0,0,0,.2);outline:none}
 .shelf-app-card .shelf-empty-slot{cursor:default;pointer-events:none;border:1.5px solid rgba(139,92,246,.42);border-radius:10px;background:linear-gradient(145deg,rgba(139,92,246,.045),rgba(255,255,255,.012));box-shadow:inset 0 1px rgba(255,255,255,.045)}
-.shelf-app-icon{width:56px;height:56px;display:grid;place-items:center;flex:0 0 56px;overflow:hidden;border-radius:10px;background:linear-gradient(145deg,rgba(139,92,246,.13),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px rgba(255,255,255,.08),0 4px 12px rgba(0,0,0,.18)}
+.shelf-app-icon{width:44px;height:44px;display:grid;place-items:center;flex:0 0 44px;overflow:hidden;border-radius:10px;background:linear-gradient(145deg,rgba(139,92,246,.13),rgba(255,255,255,.035));border:1px solid rgba(255,255,255,.22);box-shadow:inset 0 1px rgba(255,255,255,.08),0 4px 12px rgba(0,0,0,.18)}
 .shelf-app-icon .app-icon-image,.shelf-app-icon .app-icon-fallback{display:block;width:100%;height:100%;border:0;border-radius:8px;object-fit:cover}
 .shelf-app-icon .app-icon-fallback{display:grid;place-items:center;padding:4px;box-sizing:border-box;text-align:center;overflow-wrap:anywhere;font-size:7px;font-weight:800;line-height:1.25;letter-spacing:.035em;color:#ffb4b4;background:rgba(110,12,24,.32);border:1px solid rgba(255,100,120,.85);box-shadow:inset 0 0 0 1px rgba(255,80,100,.12)}
 .shelf-app-icon .app-icon-fallback svg{width:32px;height:32px}
-.shelf-app-name{display:block;width:100%;min-width:0;overflow:hidden;color:#e9e5da;font-size:13px;font-weight:600;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.shelf-app-copy{display:flex;flex:1 1 auto;flex-direction:column;gap:2px;min-width:0;overflow:hidden}.shelf-app-name{display:block;width:100%;min-width:0;overflow:hidden;color:#f4efff;font-size:13px;font-weight:650;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}.shelf-app-meta{display:block;min-width:0;overflow:hidden;color:#b8a9cc;font-size:10px;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}.shelf-app-description{display:-webkit-box;min-width:0;overflow:hidden;color:#a9a0bb;font-size:10px;line-height:1.3;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}.shelf-app-chevron{display:grid;place-items:center;flex:0 0 16px;color:#b8a9cc}
 :root{color-scheme:dark;--theme-text:#f4efff;--theme-muted:#b6ad96;--theme-soft:#817096;--theme-radius-sm:8px;--theme-radius-md:12px;--theme-radius-lg:16px;--theme-pill:999px;--crownstore-global-font:"STIX Two Text";--serif:var(--crownstore-global-font);font-family:var(--crownstore-global-font)!important;color:#f4efff;background:#090a0c;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;--bg:#090a0c;--line:rgba(255,255,255,.14);--muted:#b8a9cc;--gold:#8b5cf6;--gold-light:#c4b5fd;--serif:"STIX Two Text";--glass-border:rgba(226,220,228,.15);--glass-border-strong:rgba(237,224,255,.82);--glass-highlight:rgba(255,255,255,.075);--glass-surface:radial-gradient(ellipse at 0 0,rgba(255,255,255,.065),transparent 55%),linear-gradient(145deg,rgba(46,20,84,.30),rgba(10,5,20,.82));--glass-shadow:0 14px 38px rgba(0,0,0,.62),inset 0 1px rgba(255,255,255,.075);--glass-blur:blur(16px);--theme-bg:radial-gradient(ellipse at 75% 10%,rgba(76,29,149,.10),transparent 36%),#08040f;--theme-surface:radial-gradient(ellipse at 0 0,rgba(255,255,255,.065),transparent 55%),linear-gradient(145deg,rgba(46,20,84,.30),rgba(10,5,20,.82));--theme-surface-raised:radial-gradient(ellipse at 0 0,rgba(255,255,255,.075),transparent 55%),linear-gradient(145deg,rgba(62,29,112,.36),rgba(14,7,27,.88));--theme-surface-glass:radial-gradient(ellipse at 0 0,rgba(255,255,255,.065),transparent 55%),linear-gradient(145deg,rgba(40,18,75,.27),rgba(8,4,17,.78));--theme-glass-highlight:var(--glass-highlight);--theme-glass-border:var(--glass-border);--theme-glass-shadow:0 14px 38px rgba(0,0,0,.42);--theme-line:rgba(226,220,228,.105);--theme-primary:#6d28d9;--theme-primary-hover:#8b5cf6;--theme-primary-contrast:#12091f;--theme-focus:#c4b5fd;--theme-shadow-primary:0 5px 18px rgba(109,40,217,.18);--theme-header-bg:radial-gradient(ellipse at 0 0,rgba(255,255,255,.065),transparent 58%),linear-gradient(145deg,rgba(28,13,48,.97),rgba(8,4,16,.98));--theme-header-border:rgba(226,220,228,.42);--theme-header-shadow:0 14px 34px rgba(0,0,0,.68),0 2px 10px rgba(0,0,0,.42);--theme-fixed-dark-header-bg:var(--theme-header-bg);--theme-fixed-dark-header-border:var(--theme-header-border);--theme-fixed-dark-header-shadow:var(--theme-header-shadow);--theme-fixed-dark-text:#f4efff;--theme-fixed-dark-bg:#0b0614;--theme-fixed-dark-line:rgba(221,199,255,.12);--theme-fixed-dark-primary:#6d28d9;--theme-fixed-dark-primary-hover:#8b5cf6;--theme-fixed-dark-muted-text:rgba(255,255,255,.72);--theme-fixed-dark-glass-highlight:rgba(255,255,255,.065);--theme-fixed-dark-glass-highlight-soft:rgba(255,255,255,.025);--theme-fixed-dark-glass-highlight-strong:rgba(255,255,255,.085);--theme-fixed-dark-glass-border:rgba(226,220,228,.18);--theme-fixed-dark-glass-border-strong:rgba(237,224,255,.82);--theme-shadow-overlay:rgba(0,0,0,.45);--theme-shadow-color-primary:rgba(109,40,217,.22);--theme-shadow-color-soft:rgba(0,0,0,.18);--theme-shadow-color-focus:rgba(167,139,250,.32);--nowbar-content-clearance:128px}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;scroll-padding-top:90px}
@@ -127,7 +127,6 @@ button,a{-webkit-tap-highlight-color:transparent}
 }
 @media(max-width:1200px){
   .apps-section,.bottom-banner,.feature-strip{margin-left:28px;margin-right:28px}
-  .home-shelves{margin-left:28px;margin-right:28px}
 }
 @media(max-width:850px){
   .site-header{height:76px}
@@ -142,7 +141,6 @@ button,a{-webkit-tap-highlight-color:transparent}
   .apps-section{padding-top:70px}
   .app-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .section-heading h2{font-size:32px}
-  .shelf-app-card{flex-basis:104px}
 
   .shelves-heading h1{font-size:38px}
 }
@@ -193,7 +191,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   .site-footer>span:nth-child(2){grid-column:1/-1;grid-row:2}
   .footer-status{font-size:9px}
   .state-panel{padding:24px 18px}
-  .site-shell>main{padding-top:76px}
+  .site-shell>main{padding-top:58px}
   .details-modal{padding:22px;border-radius:19px}
   .details-heading h2{font-size:24px}
   .details-facts{gap:7px}
@@ -212,16 +210,17 @@ button,a{-webkit-tap-highlight-color:transparent}
   .shelves-heading>.button{width:100%}
   .shelf-count{font-size:10px;padding:4px 7px}
   .shelf-track{gap:6px}
-  .shelf-app-card{flex-basis:min(28.8vw,104px)}
-  .shelf-app-card .shelf-app-tile{gap:8px;padding:7px 3px 9px}
-  .shelf-app-icon{width:52px;height:52px;flex-basis:52px}
+  .shelf-app-card{flex-basis:min(280px,84vw)}
+  .shelf-app-card .shelf-app-tile{min-height:70px;gap:9px;padding:7px 8px}
+  .shelf-app-icon{width:42px;height:42px;flex-basis:42px}
   .shelf-app-icon .app-icon-fallback svg{width:28px;height:28px}
-  .shelf-app-name{font-size:12px;line-height:1.35}
+  .shelf-app-name{font-size:12px;line-height:1.25}
+  .shelf-app-meta,.shelf-app-description{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
-.site-shell>main{padding-top:91px}
+.site-shell>main{padding-top:66px}
 .glass-panel{background:var(--glass-surface);border:1px solid var(--glass-border);box-shadow:var(--glass-shadow);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
 .app-header{display:grid;grid-template-columns:auto max-content auto;align-items:center;gap:10px;padding:7px 16px;border-radius:28px;border:1.5px solid rgba(109,40,217,.58);background:radial-gradient(ellipse at 0 0,rgba(109,40,217,.10),transparent 62%),linear-gradient(145deg,rgba(37,29,5,.58),rgba(12,10,3,.48));box-shadow:0 0 0 1px rgba(109,40,217,.06),0 14px 34px rgba(0,0,0,.32),inset 0 1px rgba(255,226,135,.045);position:fixed;top:12px;left:50%;width:max-content;max-width:calc(100% - 20px);transform:translateX(-50%);box-sizing:border-box;z-index:50;transition:none;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .header-artwork{position:relative;width:30px;height:30px;flex-shrink:0;display:block}
@@ -328,8 +327,8 @@ button,a{-webkit-tap-highlight-color:transparent}
 .shelves-heading h1 span{color:var(--gold-light)}
 .shelves-heading p{max-width:570px;color:var(--muted);font-size:13px;line-height:1.75;margin:0}
 .shelves-heading>.button{flex-shrink:0;min-height:43px}
-.app-shelf{min-width:0;margin:0 0 16px}
-.shelf-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:8px}
+.app-shelf{min-width:0;margin:0 0 6px}
+.shelf-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
 .shelf-title-wrap{display:flex;align-items:center;gap:12px;min-width:0}
 .shelf-icon{width:39px;height:39px;flex-shrink:0;display:grid;place-items:center;border:1px solid rgba(139,92,246,.22);border-radius:13px;color:var(--gold-light);background:linear-gradient(145deg,rgba(139,92,246,.12),rgba(255,255,255,.025));box-shadow:inset 0 1px rgba(255,255,255,.06)}
 .shelf-heading h2{font:500 23px/1.2 var(--serif);margin:0 0 2px;color:#f4efff}
@@ -341,10 +340,9 @@ button,a{-webkit-tap-highlight-color:transparent}
 .shelf-heading-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
 .shelf-see-all{display:inline-flex;align-items:center;gap:3px;border:0;background:transparent;color:var(--gold-light);font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;padding:7px 0 7px 5px}
 .shelf-see-all:hover{color:#ede4ff}
-.shelf-track{display:flex;flex-direction:row;direction:ltr;justify-content:flex-start;gap:6px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding:1px 1px 5px;scroll-snap-type:x mandatory;scroll-snap-stop:normal;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-padding-inline-start:1px}
+.shelf-track{display:flex;flex-direction:row;direction:ltr;justify-content:flex-start;gap:6px;align-items:stretch;overflow-x:auto;overflow-y:hidden;padding:1px 1px 3px;scroll-snap-type:x mandatory;scroll-snap-stop:normal;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-padding-inline-start:1px}
 .shelf-track::-webkit-scrollbar{display:none}
-.shelf-app-card{flex:0 0 112px;min-width:0;scroll-snap-align:start}
-.shelf-app-card .app-card{height:100%;box-sizing:border-box}
+.shelf-app-card{flex:0 0 min(280px,82vw);min-width:0;scroll-snap-align:start}
 
 .shelf-footer-note{display:flex;align-items:center;justify-content:center;gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:#969387}
 .shelf-footer-note svg{color:var(--gold-light)}
@@ -352,8 +350,8 @@ button,a{-webkit-tap-highlight-color:transparent}
 @media(max-width:620px){
   .home-shelves{padding:8px 9px 4px}
   .shelves-heading{align-items:stretch;flex-direction:column;gap:6px;margin-bottom:10px;padding:3px 0 8px}
-  .app-shelf{margin-bottom:12px}
-  .shelf-heading{align-items:flex-start;gap:4px;margin-bottom:6px}
+  .app-shelf{margin-bottom:5px}
+  .shelf-heading{align-items:flex-start;gap:4px;margin-bottom:3px}
   .shelf-title-wrap{gap:5px}
   .shelf-icon{width:18px;height:18px;border-radius:6px}
   .shelf-heading h2{font-size:14px;line-height:1.2;margin:0 0 2px}
@@ -593,8 +591,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 
 
 /* Play Store-style install states for the live Android catalogue. */
-.shelf-app-card .shelf-app-tile{gap:5px;padding:6px 4px}
-.shelf-app-icon{width:44px;height:44px;flex-basis:44px}
 .shelf-app-status{display:block;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 7px;border:1px solid rgba(226,220,228,.16);border-radius:999px;background:rgba(8,4,17,.55);color:#d4cbe5;font-size:9px;font-weight:650;line-height:1.15}
 .shelf-app-status[data-state="update"]{border-color:rgba(253,224,71,.32);background:rgba(161,98,7,.12);color:#fde68a}
 .shelf-app-status[data-state="installed"]{border-color:rgba(203,213,225,.22);color:#e2e8f0}
@@ -608,7 +604,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .details-status.is-error{border-color:rgba(248,113,113,.28);color:#fecaca;background:rgba(127,29,29,.12)}
 .details-status.is-error .details-status-dot{background:#fca5a5}
 .details-download:disabled{opacity:.9;cursor:default}
-@media(max-width:480px){.shelf-app-card .shelf-app-tile{gap:5px;padding:6px 3px}.shelf-app-icon{width:42px;height:42px;flex-basis:42px}.shelf-app-status{font-size:8px;padding:3px 5px}}
+@media(max-width:480px){.shelf-app-status{font-size:8px;padding:3px 5px}}
 
 /* Nowbar sizing must switch instantly, matching CryBots: no resize motion. */
 .kh-nowbar-dock,
