@@ -6,26 +6,6 @@ type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" |
 type Action = { label: ActionLabel; icon: ReactNode };
 type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
 
-function getEdgeAnimation(mode: EdgeMode): string | undefined {
-  switch (mode) {
-    case "stable-light":
-    case "stable":
-      return undefined;
-    case "blink-light":
-      return "kh-light-edge-blink 3.2s ease-in-out infinite";
-    case "blink":
-      return "kh-light-glow-blink 3.2s ease-in-out infinite";
-    case "pulse-light":
-      return "kh-light-edge-pulse 3.2s ease-in-out infinite";
-    case "pulse":
-      return "kh-light-glow-pulse 3.2s ease-in-out infinite";
-    case "color-light":
-      return "kh-light-rainbow-edge 6s ease-in-out infinite";
-    case "color":
-      return "kh-light-rainbow-glow 6s ease-in-out infinite";
-  }
-}
-
 const actions: Action[] = [
   { label: "HOME", icon: <Home size={18} /> },
   { label: "SEARCH", icon: <Search size={18} /> },
@@ -74,7 +54,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
   const [expandModeEnabled, setExpandModeEnabled] = useState(() => readEnabled(EXPAND_MODE_KEY, true));
   const [swipeNavigationEnabled, setSwipeNavigationEnabled] = useState(() => readEnabled(SWIPE_NAVIGATION_KEY, true));
   const { view, mode } = barState;
-  const edgeAnimation = getEdgeAnimation(edgeSettings.mode);
   const barRef = useRef<HTMLDivElement | null>(null);
   const holdTimer = useRef<number | null>(null);
   const idleTimer = useRef<number | null>(null);
@@ -191,14 +170,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
-        style={edgeSettings.enabled ? ({
-          "--kh-light-accent": edgeSettings.color,
-          "--kh-light-glow": edgeSettings.color + "66",
-          borderColor: edgeSettings.color,
-          ...(edgeSettings.mode === "stable-light" ? { boxShadow: "0 18px 50px rgba(0,0,0,.82)" } : {}),
-          ...(edgeSettings.mode === "stable" ? { boxShadow: `0 0 0 1px rgba(255,255,255,.12), 0 0 24px ${edgeSettings.color}, 0 18px 50px rgba(0,0,0,.82), inset 0 1px 0 rgba(255,255,255,.12)` } : {}),
-          willChange: "border-color, box-shadow, filter"
-        } as CSSProperties) : undefined}
         data-nowbar-edge-style={edgeSettings.enabled ? edgeSettings.mode : undefined}
         role="button"
         tabIndex={0}
