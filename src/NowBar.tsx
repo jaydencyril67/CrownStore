@@ -21,7 +21,7 @@ const actions: Action[] = [
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
 
-export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" }) {
+export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "DETAILS" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
   const [pressing, setPressing] = useState(false);
   const { view, mode } = barState;
