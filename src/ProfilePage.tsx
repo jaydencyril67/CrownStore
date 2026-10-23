@@ -453,6 +453,22 @@ export default function ProfilePage({
       });
       const data = await response.json().catch(() => ({})) as AuthPayload;
       if (!response.ok) throw new Error(responseMessage(data, "KingsHall could not verify this Access Code."));
+      if (data.requiresExtraSecurity === true) {
+        const methods = Array.isArray(data.methods)
+          ? data.methods.filter((method): method is "2fa" | "biometric" => method === "2fa" || method === "biometric")
+          : [];
+        if (!data.challengeToken || methods.length === 0) {
+          throw new Error("KingsHall returned an incomplete extra-security challenge. Please start sign-in again.");
+        }
+        setChallengeToken(data.challengeToken);
+        setExtraMethods(methods);
+        setExtraMethod(methods.length === 1 ? methods[0] : "");
+        setExtraCode("");
+        setNotice(methods.length > 1
+          ? "Access Code verified. Choose one enabled extra-security method to finish signing in."
+          : "Access Code verified. Complete the enabled extra-security check to finish signing in.");
+        return;
+      }
       saveSession(data);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to sign in. Please try again.");
