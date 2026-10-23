@@ -37,7 +37,7 @@ for dependency in (
     '    implementation "androidx.credentials:credentials-play-services-auth:1.6.0"',
 ):
     if dependency.strip() not in gradle:
-        gradle = gradle.replace(dependency_marker, dependency_marker + "\\n" + dependency, 1)
+        gradle = gradle.replace(dependency_marker, dependency_marker + "\n" + dependency, 1)
 gradle_path.write_text(gradle, encoding="utf-8")
 
 manifest_path = target_root / "AndroidManifest.xml"
