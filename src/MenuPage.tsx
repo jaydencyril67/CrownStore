@@ -1,0 +1,180 @@
+import { useEffect, useState } from "react";
+import {
+  ArrowLeft, Bell, Check, ChevronRight, Palette, Radio, Settings2, ShieldCheck,
+  Smartphone, Sparkles, Zap
+} from "lucide-react";
+import {
+  BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT, DEFAULT_NOTIFICATION_PREFERENCES,
+  EDGE_LIGHT_KEY, EXPAND_MODE_KEY, HEADER_LIGHTING_KEY, readNotificationPreferences,
+  requestDeviceNotificationPermission, saveNotificationPreferences, SWIPE_NAVIGATION_KEY,
+  type NotificationKind, type NotificationPreferences
+} from "./notifications";
+
+type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
+type EdgeSettings = { enabled: boolean; color: string; mode: EdgeMode };
+const EDGE_MODES: { value: EdgeMode; label: string; detail: string }[] = [
+  { value: "stable-light", label: "Steady light", detail: "A clean, still edge" },
+  { value: "stable", label: "Steady glow", detail: "A constant colored glow" },
+  { value: "blink-light", label: "Blink light", detail: "A soft blinking edge" },
+  { value: "blink", label: "Blink glow", detail: "A blinking colored glow" },
+  { value: "pulse-light", label: "Pulse light", detail: "A breathing edge light" },
+  { value: "pulse", label: "Pulse glow", detail: "A breathing colored glow" },
+  { value: "color-light", label: "Rainbow light", detail: "Cycles through edge colors" },
+  { value: "color", label: "Rainbow glow", detail: "Cycles through glowing colors" }
+];
+
+const NOTIFICATION_GROUPS: { title: string; items: { key: NotificationKind; label: string; detail: string }[] }[] = [
+  { title: "Store activity", items: [
+    { key: "appUpdates", label: "App releases and updates", detail: "A new stable app release is published to CrownStore." },
+    { key: "downloads", label: "Download activity", detail: "A download finishes or needs your attention." }
+  ] },
+  { title: "Account and service", items: [
+    { key: "security", label: "Security notices", detail: "Important sign-in and account-security notices." },
+    { key: "storeNotices", label: "CrownStore announcements", detail: "Service changes and important store notices." }
+  ] }
+];
+
+function getBoolean(key: string, fallback = true): boolean {
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored === null ? fallback : stored === "true";
+  } catch { return fallback; }
+}
+function readEdge(): EdgeSettings {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as Partial<EdgeSettings>;
+    const mode = EDGE_MODES.some((item) => item.value === saved.mode) ? saved.mode! : "stable";
+    return {
+      enabled: saved.enabled === true,
+      color: typeof saved.color === "string" && /^#[0-9a-f]{6}$/i.test(saved.color) ? saved.color : DEFAULT_ACCENT,
+      mode
+    };
+  } catch { return { enabled: false, color: DEFAULT_ACCENT, mode: "stable" }; }
+}
+function writeEdge(value: EdgeSettings) {
+  try { window.localStorage.setItem(EDGE_LIGHT_KEY, JSON.stringify(value)); } catch {}
+  window.dispatchEvent(new CustomEvent("crownstore:nowbar-settings-changed", { detail: value }));
+}
+function writeBoolean(key: string, value: boolean, event = "crownstore:nowbar-settings-changed") {
+  try { window.localStorage.setItem(key, String(value)); } catch {}
+  window.dispatchEvent(new CustomEvent(event, { detail: { key, value } }));
+}
+
+function SettingSwitch({ checked, label, onChange, disabled = false }: {
+  checked: boolean; label: string; onChange: (next: boolean) => void; disabled?: boolean;
+}) {
+  return <button className={"menu-switch" + (checked ? " is-on" : "")} type="button" role="switch"
+    aria-checked={checked} aria-label={label} disabled={disabled} onClick={() => onChange(!checked)}>
+    <span />
+  </button>;
+}
+
+function SettingRow({ title, detail, trailing }: { title: string; detail: string; trailing: React.ReactNode }) {
+  return <div className="menu-setting-row"><div className="menu-setting-copy"><strong>{title}</strong><span>{detail}</span></div><div className="menu-setting-control">{trailing}</div></div>;
+}
+
+export default function MenuPage({ onBack, onOpenNotifications }: { onBack: () => void; onOpenNotifications: () => void }) {
+  const [edge, setEdge] = useState<EdgeSettings>(() => readEdge());
+  const [buttonColor, setButtonColor] = useState(() => {
+    try { const c = window.localStorage.getItem(BUTTON_COLOR_KEY); return c && /^#[0-9a-f]{6}$/i.test(c) ? c : DEFAULT_ACCENT; } catch { return DEFAULT_ACCENT; }
+  });
+  const [buttonColorEnabled, setButtonColorEnabled] = useState(() => getBoolean(BUTTON_COLOR_ENABLED_KEY, false));
+  const [swipeEnabled, setSwipeEnabled] = useState(() => getBoolean(SWIPE_NAVIGATION_KEY, true));
+  const [expandEnabled, setExpandEnabled] = useState(() => getBoolean(EXPAND_MODE_KEY, true));
+  const [preferences, setPreferences] = useState<NotificationPreferences>(() => readNotificationPreferences());
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    const refresh = () => {
+      setEdge(readEdge());
+      setPreferences(readNotificationPreferences());
+      try {
+        const savedColor = window.localStorage.getItem(BUTTON_COLOR_KEY);
+        if (savedColor && /^#[0-9a-f]{6}$/i.test(savedColor)) setButtonColor(savedColor);
+        setButtonColorEnabled(getBoolean(BUTTON_COLOR_ENABLED_KEY, false));
+        setSwipeEnabled(getBoolean(SWIPE_NAVIGATION_KEY, true));
+        setExpandEnabled(getBoolean(EXPAND_MODE_KEY, true));
+      } catch {}
+    };
+    window.addEventListener("storage", refresh);
+    window.addEventListener("crownstore:nowbar-settings-changed", refresh);
+    window.addEventListener("crownstore:notification-preferences-changed", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("crownstore:nowbar-settings-changed", refresh);
+      window.removeEventListener("crownstore:notification-preferences-changed", refresh);
+    };
+  }, []);
+
+  const savePreferences = (next: NotificationPreferences) => {
+    setPreferences(next);
+    saveNotificationPreferences(next);
+    setNotice("Your preferences have been saved on this device.");
+  };
+
+  const toggleChannel = async (channel: "inApp" | "device", enabled: boolean) => {
+    if (channel === "device" && enabled) {
+      const granted = await requestDeviceNotificationPermission();
+      if (!granted) {
+        setNotice(typeof Notification !== "undefined" && Notification.permission === "denied"
+          ? "Device notifications are blocked by your browser or Android settings."
+          : "Notification permission was not granted. In-app notifications are still available.");
+        return;
+      }
+    }
+    savePreferences({ ...preferences, channels: { ...preferences.channels, [channel]: enabled } });
+  };
+
+  return <section className="menu-page" aria-label="CrownStore menu and preferences">
+    <div className="menu-page-heading">
+      <button className="menu-back" type="button" onClick={onBack}><ArrowLeft size={16} /> Back</button>
+      <span className="eyebrow"><Settings2 size={14} /> CROWNSTORE CONTROL CENTER</span>
+      <h1>Menu</h1>
+      <p>Personalize navigation, lighting and the alerts you receive from CrownStore.</p>
+    </div>
+
+    <button className="menu-notifications-link" type="button" onClick={onOpenNotifications}>
+      <span className="menu-feature-icon"><Bell size={20} /></span>
+      <span><strong>Notifications</strong><small>View CrownStore alerts and release announcements.</small></span>
+      <ChevronRight size={18} />
+    </button>
+
+    <section className="menu-section">
+      <div className="menu-section-heading"><span className="menu-section-icon"><Zap size={18} /></span><div><h2>NowBar lighting</h2><p>Style the edge and navigation buttons.</p></div></div>
+      <SettingRow title="Edge lighting" detail="Show a colored light or glow around the NowBar." trailing={<SettingSwitch checked={edge.enabled} label="Enable NowBar edge lighting" onChange={(enabled) => { const next = { ...edge, enabled }; setEdge(next); writeEdge(next); }} />} />
+      <SettingRow title="Edge-light color" detail="Choose the accent used by the NowBar edge." trailing={<label className="menu-color-control"><span style={{ background: edge.color }} /><input aria-label="NowBar edge color" type="color" value={edge.color} onChange={(event) => { const next = { ...edge, color: event.target.value }; setEdge(next); writeEdge(next); }} /></label>} />
+      <div className="menu-subheading">Lighting behavior</div>
+      <div className="menu-mode-list">{EDGE_MODES.map((mode) => <button key={mode.value} type="button" className={"menu-mode-row" + (edge.mode === mode.value ? " is-selected" : "")} aria-pressed={edge.mode === mode.value} onClick={() => { const next = { ...edge, mode: mode.value }; setEdge(next); writeEdge(next); }}><span><strong>{mode.label}</strong><small>{mode.detail}</small></span><span className="menu-radio">{edge.mode === mode.value ? <Check size={12} /> : null}</span></button>)}</div>
+      <SettingRow title="NowBar button lighting" detail="Apply the chosen accent color to navigation buttons." trailing={<SettingSwitch checked={buttonColorEnabled} label="Enable NowBar button lighting" onChange={(enabled) => { setButtonColorEnabled(enabled); writeBoolean(BUTTON_COLOR_ENABLED_KEY, enabled, "crownstore:nowbar-settings-changed"); }} />} />
+      <SettingRow title="Button-light color" detail="Choose the color used by navigation buttons." trailing={<label className="menu-color-control"><span style={{ background: buttonColor }} /><input aria-label="NowBar button color" type="color" value={buttonColor} onChange={(event) => { setButtonColor(event.target.value); try { window.localStorage.setItem(BUTTON_COLOR_KEY, event.target.value); } catch {} window.dispatchEvent(new CustomEvent("crownstore:nowbar-settings-changed")); }} /></label>} />
+    </section>
+
+    <section className="menu-section">
+      <div className="menu-section-heading"><span className="menu-section-icon"><Palette size={18} /></span><div><h2>App header lighting</h2><p>Control the light around the CrownStore header.</p></div></div>
+      <SettingRow title="Header lighting" detail="Add a subtle colored glow around the app header." trailing={<SettingSwitch checked={preferences.headerLightingEnabled} label="Enable app header lighting" onChange={(enabled) => savePreferences({ ...preferences, headerLightingEnabled: enabled })} />} />
+      <SettingRow title="Header-light color" detail="Choose your CrownStore header accent." trailing={<label className="menu-color-control"><span style={{ background: preferences.headerLightingColor }} /><input aria-label="App header light color" type="color" value={preferences.headerLightingColor} onChange={(event) => savePreferences({ ...preferences, headerLightingColor: event.target.value })} /></label>} />
+      <SettingRow title="Notification badge color" detail="Customize the unread-alert count shown on the app header." trailing={<SettingSwitch checked={preferences.badgeColorEnabled} label="Enable custom notification badge color" onChange={(enabled) => savePreferences({ ...preferences, badgeColorEnabled: enabled })} />} />
+      {preferences.badgeColorEnabled && <SettingRow title="Badge color" detail="Pick a color for the notification count." trailing={<label className="menu-color-control"><span style={{ background: preferences.badgeColor }} /><input aria-label="Notification badge color" type="color" value={preferences.badgeColor} onChange={(event) => savePreferences({ ...preferences, badgeColor: event.target.value })} /></label>} />}
+    </section>
+
+    <section className="menu-section">
+      <div className="menu-section-heading"><span className="menu-section-icon"><Radio size={18} /></span><div><h2>Navigation behavior</h2><p>Choose how the NowBar responds to touch.</p></div></div>
+      <SettingRow title="Expand mode" detail="Allow holding the NowBar to expand its navigation buttons." trailing={<SettingSwitch checked={expandEnabled} label="Enable NowBar expand mode" onChange={(enabled) => { setExpandEnabled(enabled); writeBoolean(EXPAND_MODE_KEY, enabled); }} />} />
+      <SettingRow title="Swipe navigation" detail="Swipe left or right on the NowBar title to change pages." trailing={<SettingSwitch checked={swipeEnabled} label="Enable NowBar swipe navigation" onChange={(enabled) => { setSwipeEnabled(enabled); writeBoolean(SWIPE_NAVIGATION_KEY, enabled); }} />} />
+    </section>
+
+    <section className="menu-section">
+      <div className="menu-section-heading"><span className="menu-section-icon"><Bell size={18} /></span><div><h2>Notification channels</h2><p>Choose where CrownStore alerts may appear.</p></div></div>
+      <SettingRow title="In-app notifications" detail="Keep alerts in the CrownStore Notifications page." trailing={<SettingSwitch checked={preferences.channels.inApp} label="Enable in-app notifications" onChange={(enabled) => void toggleChannel("inApp", enabled)} />} />
+      <SettingRow title="Device notifications" detail="Show notifications on this device while CrownStore is active and connected. Browser/Android permission is required." trailing={<SettingSwitch checked={preferences.channels.device} label="Enable device notifications" onChange={(enabled) => void toggleChannel("device", enabled)} />} />
+      <p className="menu-inline-note"><Smartphone size={14} /> Background delivery while CrownStore is closed is not guaranteed by this channel.</p>
+    </section>
+
+    <section className="menu-section">
+      <div className="menu-section-heading"><span className="menu-section-icon"><ShieldCheck size={18} /></span><div><h2>Notification types</h2><p>Turn specific CrownStore alerts on or off.</p></div></div>
+      {NOTIFICATION_GROUPS.map((group) => <div key={group.title} className="menu-notification-group"><h3>{group.title}</h3>{group.items.map((item) => <SettingRow key={item.key} title={item.label} detail={item.detail} trailing={<SettingSwitch checked={preferences.types[item.key]} label={"Enable " + item.label} onChange={(enabled) => savePreferences({ ...preferences, types: { ...preferences.types, [item.key]: enabled } })} />} />)}</div>)}
+    </section>
+    <div className="menu-page-footer"><Sparkles size={14} /> Preferences are stored on this device and apply immediately.</div>
+    {notice && <p className="menu-status" role="status">{notice}<button type="button" onClick={() => setNotice("")} aria-label="Dismiss message">Dismiss</button></p>}
+  </section>;
+}
