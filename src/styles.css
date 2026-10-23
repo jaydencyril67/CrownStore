@@ -417,6 +417,14 @@ html,body,#root,.site-shell,.site-shell *:not(input):not(textarea):not(select):n
   user-select:text;
   -webkit-touch-callout:default;
 }
+/* Keep controls inside their parent cards without changing intentional full-width actions. */
+.site-shell button,.site-shell [role="button"],.site-shell a.button{
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  white-space:normal;
+}
 .site-shell button:not(.kh-nowbar-title):not(.kh-nowbar-action),.site-shell a,.site-shell [role="button"],
 .site-shell .app-card,.site-shell .shelf-app-tile,
 .site-shell .category-filter{
