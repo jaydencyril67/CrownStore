@@ -18,4 +18,4 @@ jobs:
       - name: Dispatch the normal manual-release workflow
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run android-build.yml --ref main
+        run: gh workflow run android-build.yml --repo jaydencyril67/CrownStore --ref main
