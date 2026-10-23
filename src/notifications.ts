@@ -16,8 +16,6 @@ export type CrownNotification = {
 export type NotificationPreferences = {
   channels: { inApp: boolean; device: boolean };
   types: Record<NotificationKind, boolean>;
-  badgeColorEnabled: boolean;
-  badgeColor: string;
   headerLightingEnabled: boolean;
   headerLightingColor: string;
 };
@@ -35,8 +33,6 @@ export const DEFAULT_ACCENT = "#c4b5fd";
 export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   channels: { inApp: true, device: false },
   types: { appUpdates: true, downloads: true, security: true, storeNotices: true },
-  badgeColorEnabled: true,
-  badgeColor: DEFAULT_ACCENT,
   headerLightingEnabled: false,
   headerLightingColor: DEFAULT_ACCENT
 };
@@ -69,8 +65,6 @@ export function readNotificationPreferences(): NotificationPreferences {
       security: types.security !== false,
       storeNotices: types.storeNotices !== false
     },
-    badgeColorEnabled: saved.badgeColorEnabled !== false,
-    badgeColor: validColor(saved.badgeColor, DEFAULT_NOTIFICATION_PREFERENCES.badgeColor),
     headerLightingEnabled: saved.headerLightingEnabled === true,
     headerLightingColor: validColor(saved.headerLightingColor, DEFAULT_NOTIFICATION_PREFERENCES.headerLightingColor)
   };
