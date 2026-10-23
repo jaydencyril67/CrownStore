@@ -3,7 +3,7 @@ import { Capacitor, registerPlugin } from "@capacitor/core";
 import { App as CapacitorApp } from "@capacitor/app";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  ArrowDownToLine, ArrowLeft, CheckCircle2, ChevronRight, Clock3, Download,
+  ArrowDownToLine, CheckCircle2, ChevronRight, Clock3, Download,
   Fingerprint, KeyRound, LogOut, RefreshCw, ShieldCheck,
   Smartphone, X
 } from "lucide-react";
@@ -1060,7 +1060,6 @@ export default function ProfilePage({
 
   return <section className="profile-page" aria-labelledby="profile-page-title">
     <div className="profile-page-topbar">
-      <button className="profile-back" type="button" onClick={onBack} aria-label="Back to CrownStore"><ArrowLeft size={18} /></button>
       <span>PROFILE</span>
       {user && <button className="profile-signout" type="button" onClick={signOut}><LogOut size={15} /> Sign out</button>}
     </div>
