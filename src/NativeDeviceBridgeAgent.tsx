@@ -22,6 +22,7 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
     let stopped = false;
     let activeCommandId = "";
     let activeCommandPackageId = "";
+    let handledScanRequestId = "";
     let pendingInstall: { packageId: string; downloadId: number } | null = null;
     const listeners: Array<{ remove: () => Promise<void> }> = [];
 
@@ -82,6 +83,22 @@ export default function NativeDeviceBridgeAgent({ session }: Props) {
             }
           }
           const snapshot = await bridgeFetch<BridgeSnapshot>(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId));
+          // A PWA Scan tap creates one server request. Respond by taking a fresh device
+          // inventory and posting it directly to the API, without navigating away.
+          if (snapshot.scanRequestId && snapshot.scanRequestId !== handledScanRequestId) {
+            const scanRequestId = snapshot.scanRequestId;
+            handledScanRequestId = scanRequestId;
+            try {
+              const freshInventory = await NativeAppUpdate.getInstalledApps({ packageIds });
+              if (stopped) return;
+              await bridgeFetch(activeSession, "/api/device-bridge/sessions/" + encodeURIComponent(activeSession.sessionId) + "/report", {
+                method: "POST",
+                body: JSON.stringify({ installedApps: freshInventory.apps || [], scanRequestId }),
+              });
+            } catch {
+              // The PWA's single scan request will time out with a clear message if Android cannot report.
+            }
+          }
           const command = snapshot.command;
           if (command && snapshot.commandStatus === "pending" && command.commandId !== activeCommandId) {
             activeCommandId = command.commandId;
