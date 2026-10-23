@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  ArrowLeft, Bell, Check, ChevronRight, Palette, Radio, Settings2, ShieldCheck,
+  ArrowLeft, Bell, Check, Palette, Radio, Settings2, ShieldCheck,
   Smartphone, Sparkles, Zap
 } from "lucide-react";
 import {
@@ -73,7 +73,7 @@ function SettingRow({ title, detail, trailing }: { title: string; detail: string
   return <div className="menu-setting-row"><div className="menu-setting-copy"><strong>{title}</strong><span>{detail}</span></div><div className="menu-setting-control">{trailing}</div></div>;
 }
 
-export default function MenuPage({ onBack, onOpenNotifications }: { onBack: () => void; onOpenNotifications: () => void }) {
+export default function MenuPage({ onBack }: { onBack: () => void }) {
   const [edge, setEdge] = useState<EdgeSettings>(() => readEdge());
   const [buttonColor, setButtonColor] = useState(() => {
     try { const c = window.localStorage.getItem(BUTTON_COLOR_KEY); return c && /^#[0-9a-f]{6}$/i.test(c) ? c : DEFAULT_ACCENT; } catch { return DEFAULT_ACCENT; }
@@ -136,11 +136,6 @@ export default function MenuPage({ onBack, onOpenNotifications }: { onBack: () =
       <p>Personalize navigation, lighting and the alerts you receive from CrownStore.</p>
     </div>
 
-    <button className="menu-notifications-link" type="button" onClick={onOpenNotifications}>
-      <span className="menu-feature-icon"><Bell size={20} /></span>
-      <span><strong>Notifications</strong><small>View CrownStore alerts and release announcements.</small></span>
-      <ChevronRight size={18} />
-    </button>
 
     <section className="menu-section">
       <div className="menu-section-heading"><span className="menu-section-icon"><Zap size={18} /></span><div><h2>NowBar lighting</h2><p>Style the edge and navigation buttons.</p></div></div>
