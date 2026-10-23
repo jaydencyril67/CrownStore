@@ -4,6 +4,7 @@ import NowBar from "./NowBar";
 import DeviceUpdatesPanel from "./DeviceUpdatesPanel";
 import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
 import NativeSelfUpdate from "./NativeSelfUpdate";
+import ProfilePage from "./ProfilePage";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
@@ -17,9 +18,10 @@ import {
 import type { AppsResponse, CrownApp } from "./types";
 import "./search.css";
 import "./app-details.css";
+import "./profile.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
-type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH";
+type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE";
 
 function formatSize(value: number | string | null) {
   const bytes = Number(value);
@@ -804,8 +806,9 @@ export default function App() {
   const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>(() => {
     try {
+      if (new URLSearchParams(window.location.search).get("profile") === "1") return "PROFILE";
       const saved = window.localStorage.getItem("crownstore-current-view");
-      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" ? saved : "HOME";
+      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" || saved === "PROFILE" ? saved : "HOME";
     } catch { return "HOME"; }
   });
 
@@ -1169,6 +1172,24 @@ export default function App() {
     }
   }
 
+  function recordDownloadedApp(app: CrownApp) {
+    const entry = {
+      packageId: app.packageId,
+      appName: app.name,
+      slug: app.slug,
+      iconUrl: app.iconUrl || "",
+      versionName: app.versionName || "",
+      downloadedAt: Date.now()
+    };
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem("crownstore-downloaded-apps") || "[]");
+      const previous = Array.isArray(parsed) ? parsed : [];
+      const next = [entry, ...previous.filter((item: { packageId?: unknown }) => item?.packageId !== app.packageId)].slice(0, 100);
+      window.localStorage.setItem("crownstore-downloaded-apps", JSON.stringify(next));
+      window.dispatchEvent(new Event("crownstore-download-history-changed"));
+    } catch { /* Downloads continue if browser storage is unavailable. */ }
+  }
+
   async function downloadRelease(app: CrownApp): Promise<void> {
     if (!app.releaseId) return;
     if (Capacitor.getPlatform() === "android" && downloadProgress?.releaseId === app.releaseId && downloadProgress.status === "permission" && downloadProgress.downloadId) {
@@ -1208,6 +1229,7 @@ export default function App() {
             error: errorMessage
           };
         });
+        if (status === "complete" || status === "permission") recordDownloadedApp(app);
       };
 
       try {
@@ -1357,6 +1379,7 @@ export default function App() {
       link.remove();
       window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 
+      recordDownloadedApp(app);
       setDownloadProgress({ releaseId, appName: app.name, filename, status: "complete", loaded, total: loaded, platform });
     } catch (error) {
       const cancelled = controller.signal.aborted;
@@ -1541,6 +1564,30 @@ export default function App() {
         onRefreshInstalledApps={() => installedScanRef.current()}
         allApps={apps}
         onOpenApp={openAppDetails}
+      /> : view === "PROFILE" ? <ProfilePage
+        apps={apps}
+        isAndroidApp={isAndroidApp}
+        installedApps={installedApps}
+        installedScanStatus={installedScanStatus}
+        installedScanError={installedScanError}
+        onRefreshInstalledApps={() => installedScanRef.current()}
+        onOpenApp={openAppDetails}
+        onOpenCrownStoreDetails={() => {
+          const crownStoreApp = apps.find((item) => item.packageId === "online.kingshall.crownstore" || item.slug.toLowerCase() === "crownstore");
+          if (crownStoreApp) {
+            openAppDetails(crownStoreApp);
+            return;
+          }
+          void requestStoreJson<{ app: CrownApp }>(API_BASE + "/api/apps/crownstore").then((payload) => {
+            if (payload.app) {
+              setApps((current) => current.some((item) => item.slug === payload.app.slug) ? current : [...current, payload.app]);
+              openAppDetails(payload.app);
+            } else {
+              setView("APPS");
+            }
+          }).catch(() => setView("APPS"));
+        }}
+        onBack={() => { setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }}
       /> : view === "SEARCH" ? <section id="search-page" className="store-search-page" aria-label="Search CrownStore apps">
         <div className="store-search-heading"><span className="eyebrow"><Search size={14} /> CROWNSTORE DISCOVERY</span><h1>Find your next app.</h1><p>Search official apps by name, category, description, or package ID.</p></div>
         <form className="store-search-bar glass-panel" role="search" onSubmit={(event) => { event.preventDefault(); submitSearch(); }}>
@@ -1649,7 +1696,7 @@ export default function App() {
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
-    <NowBar activePage={selectedApp ? "DETAILS" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} />
+    <NowBar activePage={selectedApp ? "DETAILS" : view === "PROFILE" ? "PROFILE" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
       <DownloadFeedback
         progress={downloadProgress}
