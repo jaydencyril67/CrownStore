@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: crownstore-webauthn-association
+  group: crownstore-android-release
   cancel-in-progress: false
 
 jobs:
