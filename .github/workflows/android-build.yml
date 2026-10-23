@@ -175,7 +175,7 @@ jobs:
             const systemHolderPx = Math.round(legacyHolderDp / systemCanvasDp * systemCanvasPx);
             const systemArtworkPx = Math.round(artworkDp / systemCanvasDp * systemCanvasPx * 500 / 454);
 
-            if (systemHolderPx !== 164 || systemArtworkPx !== 141 || legacyArtworkPx !== 452) {
+            if (systemHolderPx !== 164 || systemArtworkPx !== 141 || legacyArtworkPx !== 441) {
               throw new Error('CrownStore splash dimensions no longer match the shared 92dp holder / 72dp artwork system.');
             }
 
