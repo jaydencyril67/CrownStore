@@ -1621,7 +1621,7 @@ export default function App() {
         onRefreshInstalledApps={() => installedScanRef.current()}
         allApps={apps}
         onOpenApp={openAppDetails}
-      /> : view === "MENU" ? <MenuPage onBack={() => navigate("HOME")} onOpenNotifications={() => navigate("NOTIFICATIONS")} /> : view === "NOTIFICATIONS" ? <NotificationsPage onBack={() => navigate("MENU")} onOpenApp={(slug) => {
+      /> : view === "MENU" ? <MenuPage onBack={() => navigate("HOME")} /> : view === "NOTIFICATIONS" ? <NotificationsPage onBack={() => navigate("MENU")} onOpenApp={(slug) => {
         const app = apps.find((item) => item.slug === slug);
         if (app) openAppDetails(app);
       }} /> : view === "PROFILE" ? <ProfilePage
