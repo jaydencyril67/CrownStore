@@ -379,6 +379,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar-icon{width:20px;height:20px;display:grid;place-items:center;flex:0 0 20px}
 .kh-nowbar-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .kh-nowbar-label-compact{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.58rem;font-weight:700;letter-spacing:.04em;line-height:1}
+.kh-nowbar-action .kh-nowbar-label-compact{font-size:.58rem;letter-spacing:.04em}
 .kh-nowbar-action.is-active{border-color:rgba(241,211,108,.88);background:linear-gradient(180deg,rgba(139,92,246,.22),rgba(139,92,246,.07));color:#fff1b8}
 /* Direct grid children match CryBots and avoid a display:contents reflow on state changes. */
 .kh-nowbar-dock.is-expanded .kh-nowbar{display:grid;width:fit-content;max-width:100%;height:100%;min-height:0;grid-template-columns:repeat(3,minmax(112px,max-content));grid-auto-rows:minmax(54px,auto);align-items:stretch;align-self:flex-end;gap:8px;padding:12px;border-radius:26px;overflow-x:hidden;overflow-y:auto;white-space:normal;align-content:start}
