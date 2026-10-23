@@ -182,7 +182,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
   };
 
   return (
-    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""} ${edgeSettings.enabled ? "kh-nowbar-edge-enabled kh-nowbar-light-" + edgeSettings.mode : ""}`}>
+    <div className={`kh-nowbar-dock ${mode === "expanded" ? "is-expanded" : ""} ${"kh-nowbar-light-" + (edgeSettings.enabled ? edgeSettings.mode : "stable-light")}`}>
       <div
         ref={barRef}
         className={`kh-nowbar ${view === "title" ? "is-title" : "is-actions"} ${mode === "expanded" ? "is-expanded" : ""}`}
