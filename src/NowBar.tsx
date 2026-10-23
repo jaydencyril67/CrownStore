@@ -154,7 +154,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
                   aria-label={action.label}
                   onClick={() => {
                     if (holdTriggered.current) { holdTriggered.current = false; return; }
-                    if (action.label === "HOME" || action.label === "SEARCH") activate(action.label);
+                    if (action.label === "HOME" || action.label === "SEARCH" || action.label === "UPDATES") activate(action.label);
                   }}
                 >
                   <span className="kh-nowbar-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={action.icon} /></svg></span>
