@@ -43,13 +43,13 @@ function getBoolean(key: string, fallback = true): boolean {
 function readEdge(): EdgeSettings {
   try {
     const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as Partial<EdgeSettings>;
-    const mode = EDGE_MODES.some((item) => item.value === saved.mode) ? saved.mode! : "stable";
+    const mode = EDGE_MODES.some((item) => item.value === saved.mode) ? saved.mode! : "stable-light";
     return {
       enabled: saved.enabled === true,
       color: typeof saved.color === "string" && /^#[0-9a-f]{6}$/i.test(saved.color) ? saved.color : DEFAULT_ACCENT,
       mode
     };
-  } catch { return { enabled: false, color: DEFAULT_ACCENT, mode: "stable" }; }
+  } catch { return { enabled: false, color: DEFAULT_ACCENT, mode: "stable-light" }; }
 }
 function writeEdge(value: EdgeSettings) {
   try { window.localStorage.setItem(EDGE_LIGHT_KEY, JSON.stringify(value)); } catch {}
