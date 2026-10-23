@@ -106,10 +106,8 @@
 .profile-extra-security>.profile-text-button{justify-self:center}
 .profile-extra-security .profile-external-help{margin:0}
 
-/* Keep profile loading indicators independent while respecting the device's reduced-motion setting. */
-@media (prefers-reduced-motion: reduce) {
-  .profile-page .profile-spinner {
-    animation: none !important;
-    transform: none !important;
-  }
+/* Profile spinners deliberately ignore the device's reduced-motion preference. */
+.profile-page .profile-spinner {
+  animation: profile-spin .8s linear infinite !important;
+  animation-play-state: running !important;
 }
