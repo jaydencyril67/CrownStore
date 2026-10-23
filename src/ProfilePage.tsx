@@ -771,8 +771,8 @@ export default function ProfilePage({
     {!user ? <div className="profile-auth-layout">
       <section className="profile-auth-panel" aria-labelledby="profile-page-title">
         <span className="profile-auth-emblem"><ShieldCheck size={26} /></span>
-        <h1 id="profile-page-title">{identity ? "Confirm your KingsHall account" : "Sign in to CrownStore"}</h1>
-        <p className="profile-auth-description">{identity || "Continue with your KingsHall account to view your profile."}</p>
+        <h1 id="profile-page-title">{challengeToken ? "Complete extra security" : identity ? "Confirm your KingsHall account" : "Sign in to CrownStore"}</h1>
+        <p className="profile-auth-description">{challengeToken ? "Your Access Code was accepted. Complete the required security check to finish signing in." : identity || "Continue with your KingsHall account to view your profile."}</p>
 
         {!identity && browserAccounts.length > 0 && <div className="profile-saved-accounts">
           <strong>Saved KingsHall accounts</strong>
@@ -791,11 +791,11 @@ export default function ProfilePage({
           <strong>{busy ? "Checking accounts…" : "Sign in with KingsHall"}</strong>
         </div>}
 
-        {identity && <form className="profile-access-form" onSubmit={verifyAccessCode}>
+        {identity && !challengeToken && <form className="profile-access-form" onSubmit={verifyAccessCode}>
           <label htmlFor="crownstore-access-code">Bound six-digit Access Code</label>
           <input id="crownstore-access-code" value={accessCode} onChange={(event) => setAccessCode(event.target.value.replace(/\D/g, "").slice(0, 6))} type="password" inputMode="numeric" autoComplete="off" placeholder="••••••" minLength={6} maxLength={6} pattern="[0-9]{6}" required />
           <button className="profile-primary-button" type="submit" disabled={busy || accessCode.length !== 6}>{busy ? <span className="profile-spinner" /> : "Verify and continue"}</button>
-          <button className="profile-text-button" type="button" onClick={() => { setIdentity(""); setAccessCode(""); setError(""); setNotice(""); }}>Cancel request</button>
+          <button className="profile-text-button" type="button" onClick={cancelSecurityChallenge}>Cancel request</button>
         </form>}
 
         {checkingSession && <p className="profile-notice" role="status">Restoring your CrownStore session…</p>}
