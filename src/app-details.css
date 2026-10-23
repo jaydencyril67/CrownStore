@@ -5,6 +5,7 @@
 }
 .app-detail-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
 .app-detail-back{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid rgba(196,181,253,.25);border-radius:12px;background:rgba(255,255,255,.035);color:#e9ddff;font:inherit;font-size:12px;cursor:pointer}
+.app-detail-back-icon{width:38px;min-width:38px;padding:0}
 .app-detail-back svg{color:#c4b5fd}
 .app-detail-top-label{font-size:9px;letter-spacing:1.5px;color:#a99ac5;font-weight:700}
 .app-detail-hero{position:relative;overflow:hidden;padding:clamp(18px,4vw,30px);border-radius:24px;isolation:isolate}
