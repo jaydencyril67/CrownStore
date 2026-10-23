@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
-import { addCrownNotification, mergeCrownNotifications, readNotificationPreferences, type NotificationKind } from "./notifications";
+import { addCrownNotification, mergeCrownNotifications, readNotificationPreferences, saveNotificationPreferences, type NotificationKind } from "./notifications";
 import { loadCrownStoreAccountNotificationPreferences, refreshCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
 
 const SESSION_KEY = "crownstore-profile-token";
@@ -86,9 +86,18 @@ export default function PushNotificationAgent() {
           const saved = await loadCrownStoreAccountNotificationPreferences(token);
           if (!saved) {
             const local = readNotificationPreferences();
+            // Email is account-linked. Never carry an email opt-in from a previous
+            // signed-in account into a new account on the same device.
+            const firstAccountPreferences = {
+              ...local,
+              channels: { ...local.channels, email: false }
+            };
+            if (local.channels.email) {
+              saveNotificationPreferences(firstAccountPreferences);
+            }
             await syncCrownStorePushPreferences(token, local.channels.device, {
               inApp: local.channels.inApp,
-              email: local.channels.email
+              email: false
             });
           }
           if (readNotificationPreferences().channels.device) await refreshCrownStorePush(token);
