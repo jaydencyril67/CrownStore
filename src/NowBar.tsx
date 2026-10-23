@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type TouchEvent, type ReactNode } from "react";
-import { Home, Search, Download, Sparkles, Menu, Bell, Crosshair, ListFilter, Plus, UserRound } from "lucide-react";
+import { Home, Search, Download, Sparkles, Menu, Crosshair, ListFilter, Plus, UserRound } from "lucide-react";
 import { BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, EDGE_LIGHT_KEY, EXPAND_MODE_KEY, SWIPE_NAVIGATION_KEY } from "./notifications";
 
 type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "OPTION 4" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
@@ -11,7 +11,6 @@ const actions: Action[] = [
   { label: "UPDATES", icon: <Download size={18} /> },
   { label: "PROFILE", icon: <UserRound size={18} /> },
   { label: "OPTION 4", icon: <Sparkles size={18} /> },
-  { label: "NOTIFICATIONS", icon: <Bell size={18} /> },
   { label: "MENU", icon: <Menu size={18} /> },
   { label: "OPTION 7", icon: <Crosshair size={18} /> },
   { label: "OPTION 8", icon: <ListFilter size={18} /> },
