@@ -1598,13 +1598,13 @@ export default function App() {
   const updatesAvailable = apps.some((app) => Boolean(app.releaseId));
   return <div className="site-shell">
     <div className="ambient ambient-one" /><div className="ambient ambient-two" />
-    <header className={"app-header glass-panel" + (notificationPreferences.headerLightingEnabled ? " header-lighting-enabled" : "")} style={{ "--crownstore-header-light": notificationPreferences.headerLightingColor } as CSSProperties} aria-label="CrownStore">
-      <button type="button" className="header-artwork notification-header-trigger" aria-label="Open CrownStore notifications" onClick={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }}><span className="header-logo brand-mark"><StoreMark size={19} /></span></button>
+    <header className={"app-header glass-panel" + (notificationPreferences.headerLightingEnabled ? " header-lighting-enabled" : "")} style={{ "--crownstore-header-light": notificationPreferences.headerLightingColor } as CSSProperties} aria-label="CrownStore" role="button" tabIndex={0} onClick={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); closeAppDetails(); navigate("NOTIFICATIONS"); } }}>
+      <span className="header-artwork"><span className="header-logo brand-mark"><StoreMark size={19} /></span></span>
       <div className={"header-brand" + (!isOnline ? " header-brand-offline" : "")} aria-live="polite"><div className="header-brand-copy"><p className="header-brand-title">{isOnline ? "CrownStore" : "NO INTERNET"}</p>{!isOnline && <p className="header-brand-subtitle">Check your connection</p>}</div></div>
-      <button type="button" className="header-right-artwork notification-header-trigger" aria-label={"Open CrownStore notifications. " + unreadAlerts + " unread."} onClick={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }}>
+      <span className="header-right-artwork" aria-label={unreadAlerts > 0 ? unreadAlerts + " unread notifications" : "Notifications"}>
         <span className="header-logo brand-mark"><StoreMark size={19} /></span>
-        {unreadAlerts > 0 && <span className="notification-header-badge" style={notificationPreferences.badgeColorEnabled ? { backgroundColor: notificationPreferences.badgeColor } : undefined}>{unreadAlerts > 99 ? "99+" : unreadAlerts}</span>}
-      </button>
+        {unreadAlerts > 0 && <span className="notification-header-badge" style={notificationPreferences.badgeColorEnabled ? { backgroundColor: notificationPreferences.badgeColor } : undefined} aria-label={unreadAlerts + " unread notifications"}>{unreadAlerts > 99 ? "99+" : unreadAlerts}</span>}
+      </span>
     </header>
     <main id="home">
       {selectedApp ? <AppDetailsPage
