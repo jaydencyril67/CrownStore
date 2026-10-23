@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type TouchEvent } from "react";
 
 type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "OPTION 3" | "OPTION 4" | "OPTION 5";
 type Action = { label: ActionLabel; icon: string };
@@ -49,7 +49,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
     }, 700);
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (view !== "actions" || mode !== "compact" || !barRef.current) return;
     let saved: string | null = null;
     try { saved = window.localStorage.getItem("crownstore-nowbar-action"); } catch {}
@@ -63,8 +63,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
       barRef.current.scrollLeft = Math.max(0, Math.min(left, max));
     };
     centerTarget();
-    const frame = window.requestAnimationFrame(centerTarget);
-    return () => window.cancelAnimationFrame(frame);
   }, [view, mode]);
 
   useEffect(() => () => {
@@ -110,7 +108,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
         onPointerLeave={stopHold}
         onPointerCancel={stopHold}
         onTouchStart={(event) => {
-          startHold();
           const titleTarget = (event.target as HTMLElement).closest(".kh-nowbar-title");
           if (titleTarget && event.touches.length === 1) {
             swipeStart.current = { x: event.touches[0].clientX, y: event.touches[0].clientY };
