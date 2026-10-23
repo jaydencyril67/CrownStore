@@ -424,7 +424,91 @@ jobs:
         run: |
           set -euo pipefail
           cp android/app/build/outputs/apk/release/app-release.apk CrownStore.apk
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose CrownStore.apk
+          SIGNER_REPORT="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs CrownStore.apk 2>&1)"
+          printf '%s\n' "$SIGNER_REPORT"
+          CERT_SHA256="$(printf '%s\n' "$SIGNER_REPORT" | sed -nE 's/.*certificate SHA-256 digest: ([0-9A-Fa-f]{64}).*/\1/p' | head -n 1 | tr '[:lower:]' '[:upper:]')"
+          test -n "$CERT_SHA256" || { echo "::error::Could not read CrownStore APK signing certificate fingerprint."; exit 1; }
+
+          # Publish CrownStore's own WebAuthn/Digital Asset Links association from
+          # the exact APK signing certificate. Other app/site statements are retained.
+          APK_CERT_SHA256="$CERT_SHA256" python3 - <<'PY'
+          import base64
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          package = "online.kingshall.crownstore"
+          site = "https://crownstore.kingshall.online"
+          fingerprint = os.environ["APK_CERT_SHA256"].strip().upper()
+          if not re.fullmatch(r"[0-9A-F]{64}", fingerprint):
+              raise SystemExit("APK signer fingerprint is not a 32-byte SHA-256 value.")
+          fingerprint = ":".join(fingerprint[i:i+2] for i in range(0, 64, 2))
+          origin = "android:apk-key-hash:" + base64.urlsafe_b64encode(
+              bytes.fromhex(fingerprint.replace(":", ""))
+          ).decode("ascii").rstrip("=")
+
+          path = Path("public/.well-known/assetlinks.json")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+          if not isinstance(data, list):
+              raise SystemExit("public/.well-known/assetlinks.json must contain a JSON statement list.")
+
+          preserved = []
+          fingerprints = []
+          android_relations = set()
+          web_relations = set()
+          for statement in data:
+              target = statement.get("target", {}) if isinstance(statement, dict) else {}
+              namespace = target.get("namespace")
+              if namespace == "android_app" and target.get("package_name") == package:
+                  for value in target.get("sha256_cert_fingerprints", []):
+                      value = str(value).strip().upper()
+                      if re.fullmatch(r"(?:[0-9A-F]{2}:){31}[0-9A-F]{2}", value) and value not in fingerprints:
+                          fingerprints.append(value)
+                  android_relations.update(statement.get("relation", []))
+              elif namespace == "web" and target.get("site") == site:
+                  web_relations.update(statement.get("relation", []))
+              else:
+                  preserved.append(statement)
+
+          if fingerprint not in fingerprints:
+              fingerprints.append(fingerprint)
+          android_relations.update([
+              "delegate_permission/common.handle_all_urls",
+              "delegate_permission/common.get_login_creds"
+          ])
+          web_relations.add("delegate_permission/common.get_login_creds")
+          preserved.extend([
+              {
+                  "relation": sorted(android_relations),
+                  "target": {
+                      "namespace": "android_app",
+                      "package_name": package,
+                      "sha256_cert_fingerprints": fingerprints
+                  }
+              },
+              {
+                  "relation": sorted(web_relations),
+                  "target": {"namespace": "web", "site": site}
+              }
+          ])
+          path.write_text(json.dumps(preserved, indent=2) + "\n", encoding="utf-8")
+          print("CrownStore WebAuthn RP ID: crownstore.kingshall.online")
+          print("CrownStore Android WebAuthn origin: " + origin)
+          print("Preserved unrelated Digital Asset Links statements and retained prior CrownStore signing fingerprints.")
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/.well-known/assetlinks.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh CrownStore Android passkey association"
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          else
+            echo "CrownStore assetlinks.json is already current."
+          fi
+
           sha256sum CrownStore.apk > CrownStore.apk.sha256
           gh release create "v$APP_VERSION" CrownStore.apk CrownStore.apk.sha256 --target "$GITHUB_SHA" --title "CrownStore $APP_VERSION" --notes "CrownStore Android production APK $APP_VERSION. Android will ask the user to approve installation."
       - name: Notify ApiCrownStore about the published APK release
