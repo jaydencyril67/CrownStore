@@ -1545,7 +1545,7 @@ export default function App() {
         <div className="store-search-heading"><span className="eyebrow"><Search size={14} /> CROWNSTORE DISCOVERY</span><h1>Find your next app.</h1><p>Search official apps by name, category, description, or package ID.</p></div>
         <form className="store-search-bar glass-panel" role="search" onSubmit={(event) => { event.preventDefault(); submitSearch(); }}>
           <Search size={20} aria-hidden="true" />
-          <input autoFocus autoComplete="off" autoCapitalize="none" spellCheck={false} value={searchPageQuery} onChange={(event) => setSearchPageQuery(event.target.value)} placeholder="Search apps…" aria-label="Search apps" />
+          <input autoComplete="off" autoCapitalize="none" spellCheck={false} value={searchPageQuery} onChange={(event) => setSearchPageQuery(event.target.value)} placeholder="Search apps…" aria-label="Search apps" />
           {searchPageQuery && <button type="button" onClick={() => setSearchPageQuery("")} aria-label="Clear search"><X size={17} /></button>}
           <button className="store-search-submit" type="submit" disabled={!searchPageQuery.trim()}>Search</button>
         </form>
