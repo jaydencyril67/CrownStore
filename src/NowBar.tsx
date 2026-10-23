@@ -144,7 +144,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
           </button>
         ) : (
-            {actions.map((action) => (
+          actions.map((action) => (
               <div className={`kh-nowbar-slot ${mode === "expanded" ? "is-expanded" : ""}`} key={action.label}>
                 <button
                   data-nowbar-label={action.label}
@@ -161,7 +161,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, activePage = "HOME
                   {mode === "expanded" && <span className="kh-nowbar-label-expanded">{action.label.length > 12 ? <span className="kh-nowbar-marquee">{action.label.toUpperCase()} · {action.label.toUpperCase()}</span> : action.label}</span>}
                 </button>
               </div>
-            ))}
+          ))
         )}
       </div>
     </div>
