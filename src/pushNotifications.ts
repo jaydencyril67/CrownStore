@@ -155,12 +155,13 @@ async function registerWeb(token: string, askPermission: boolean): Promise<boole
 export async function syncCrownStorePushPreferences(token = sessionToken(), deviceEnabled?: boolean): Promise<void> {
   if (!token) return;
   const preferences = readNotificationPreferences();
-  const body: { channels?: { device: boolean }; types: typeof preferences.types } = {
+  const body: { channels: { inApp: boolean; email: boolean; device?: boolean }; types: typeof preferences.types } = {
+    channels: { inApp: preferences.channels.inApp, email: preferences.channels.email },
     types: preferences.types
   };
-  // Omit channel state for routine syncs so a fresh browser/device cannot silently
-  // turn off push delivery configured on another device for the same account.
-  if (deviceEnabled !== undefined) body.channels = { device: deviceEnabled };
+  // Routine syncs update account-level in-app/email choices but preserve the account's
+  // existing push choice. Only an explicit push toggle is allowed to change device.
+  if (deviceEnabled !== undefined) body.channels.device = deviceEnabled;
   await requestApi("/api/notifications/preferences", token, "PUT", body);
 }
 
