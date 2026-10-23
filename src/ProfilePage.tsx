@@ -965,6 +965,13 @@ export default function ProfilePage({
     setNotice("");
     setExternalLogin(null);
     setBrowserAccounts([]);
+    setSecurityStatus(null);
+    setTwoFactorSetupSecret("");
+    setTwoFactorSetupUri("");
+    setTwoFactorSetupCode("");
+    setTwoFactorRemovalCode("");
+    setSecurityError("");
+    setSecurityNotice("");
   }
 
   async function openUsageSettings() {
