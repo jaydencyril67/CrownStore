@@ -730,7 +730,6 @@ export default function ProfilePage({
           <div className="profile-section-heading"><h2>Most used apps</h2><span>Last 30 days</span></div>
           {usageError ? <div className="profile-inline-error"><span>{usageError}</span><button type="button" onClick={() => void refreshUsage()}>Retry</button></div> : usagePermissionRequired ? <div className="profile-permission-prompt"><div><strong>Enable app usage access</strong><p>Android keeps this private until you allow usage access in system settings.</p></div><button className="profile-secondary-button" type="button" onClick={() => void openUsageSettings()}><Smartphone size={16} /> Enable access</button></div>
             : usageLoading ? <p className="profile-empty">Loading app activity…</p>
-            : usageError ? <div className="profile-inline-error"><span>{usageError}</span><button type="button" onClick={() => void refreshUsage()}>Retry</button></div>
             : mostUsed.length ? <div className="profile-app-list">{mostUsed.map(({ item, app }) => <ProfileAppRow key={item.packageId} app={app} detail={humanDuration(item.totalTimeInForeground) + " in foreground"} onClick={() => onOpenApp(app)} />)}</div>
             : <p className="profile-empty">There isn't enough usage history to rank your apps yet.</p>}
           {!usagePermissionRequired && <button className="profile-refresh-usage" type="button" onClick={() => void refreshUsage()} disabled={usageLoading}><RefreshCw size={14} /> {usageLoading ? "Refreshing…" : "Refresh usage"}</button>}
@@ -746,6 +745,7 @@ export default function ProfilePage({
       <div className="profile-signout-bottom"><button className="profile-text-button" type="button" onClick={signOut}><LogOut size={15} /> Sign out of CrownStore</button></div>
     </div>}
 
+    {busy && !identity && <div className="profile-loading-backdrop" role="status" aria-live="polite"><div className="profile-loading-dialog"><span className="profile-spinner" /><strong>Checking KingsHall accounts</strong><span>Your sign-in is being prepared.</span></div></div>}
     {showNoAccountModal && <div className="profile-modal-backdrop" role="presentation" onClick={() => setShowNoAccountModal(false)}>
       <section className="profile-no-account-modal" role="alertdialog" aria-modal="true" aria-labelledby="profile-no-account-title" onClick={(event) => event.stopPropagation()}>
         <span className="profile-auth-emblem"><KeyRound size={23} /></span>
