@@ -11,6 +11,8 @@ import {
 } from "./notifications";
 import { disableCrownStorePush, enableCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
+
 type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
 type EdgeSettings = { enabled: boolean; color: string; mode: EdgeMode };
 const EDGE_MODES: { value: EdgeMode; label: string; detail: string }[] = [
@@ -100,7 +102,27 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
   const [expandEnabled, setExpandEnabled] = useState(() => getBoolean(EXPAND_MODE_KEY, true));
   const [preferences, setPreferences] = useState<NotificationPreferences>(() => readNotificationPreferences());
   const [loggedIn, setLoggedIn] = useState(() => hasCrownStoreSession());
+  const [emailDeliveryReady, setEmailDeliveryReady] = useState<boolean | null>(null);
+  const [pushDeliveryReady, setPushDeliveryReady] = useState<boolean | null>(null);
   const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void fetch(API_BASE + "/api/notifications/capabilities", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to read notification delivery readiness.");
+        return await response.json() as { emailConfigured?: boolean; firebaseConfigured?: boolean; webPushConfigured?: boolean };
+      })
+      .then((data) => {
+        if (!active) return;
+        setEmailDeliveryReady(data.emailConfigured === true);
+        setPushDeliveryReady(data.firebaseConfigured === true || data.webPushConfigured === true);
+      })
+      .catch(() => {
+        if (active) { setEmailDeliveryReady(null); setPushDeliveryReady(null); }
+      });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const refresh = () => {
@@ -210,7 +232,9 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
       <SettingRow title="In-app notifications" detail="Keep alerts in the CrownStore Notifications page." trailing={<SettingSwitch checked={preferences.channels.inApp} label="Enable in-app notifications" onChange={(enabled) => void toggleChannel("inApp", enabled)} />} />
       <SettingRow title="Device notifications" detail="Receive app releases and CrownStore alerts even when the app or browser is in the background. Sign-in and notification permission are required." trailing={<SettingSwitch checked={preferences.channels.device} label="Enable device notifications" onChange={(enabled) => void toggleChannel("device", enabled)} />} />
       {loggedIn && <SettingRow title="Email notifications" detail="Send enabled CrownStore alert types to the email address on your signed-in KingsHall account." trailing={<SettingSwitch checked={preferences.channels.email} label="Enable email notifications" onChange={(enabled) => void toggleChannel("email", enabled)} />} />}
-      <p className="menu-inline-note"><Smartphone size={14} /> Uses Firebase Cloud Messaging in the Android app and Web Push in supported browsers/PWAs. Push delivery also requires the CrownStore notification services to be configured.</p>
+      <p className="menu-inline-note"><Smartphone size={14} /> Uses Firebase Cloud Messaging in the Android app and Web Push in supported browsers/PWAs. {pushDeliveryReady === false ? "Push delivery is not configured on the CrownStore API yet." : "Push delivery requires the matching Firebase or VAPID setup and device permission."}</p>
+      {loggedIn && emailDeliveryReady === false && <p className="menu-inline-note" role="status"><Mail size={14} /> Email notifications are available here, but Resend is not configured on the CrownStore API. Add RESEND_API_KEY and RESEND_FROM_EMAIL to the ApiCrownStore service to deliver email alerts.</p>}
+      {loggedIn && emailDeliveryReady === null && <p className="menu-inline-note" role="status"><Mail size={14} /> Email delivery readiness could not be checked. Your signed-in account can still save its email notification preference.</p>}
     </section>
 
     <section className="menu-section">
