@@ -436,3 +436,15 @@
   }
   .home-shelves .shelf-app-copy {gap:2px!important}
 }
+
+
+/* Subtle white outline to separate app logos from the dark home background. */
+.home-shelves .shelf-app-icon {
+  border:1px solid rgba(255,255,255,.82)!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+.home-shelves .shelf-app-icon .app-icon-image,
+.home-shelves .shelf-app-icon .app-icon-fallback {
+  border-radius:inherit!important;
+}
