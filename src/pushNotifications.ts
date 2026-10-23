@@ -110,11 +110,13 @@ async function registerNative(token: string, askPermission: boolean): Promise<bo
   }).catch(() => undefined);
 
   let deviceToken = "";
-  try { deviceToken = window.localStorage.getItem(FCM_TOKEN_KEY) || ""; } catch {}
-  if (!deviceToken) {
+  try {
     deviceToken = await waitForNativeToken();
-    try { window.localStorage.setItem(FCM_TOKEN_KEY, deviceToken); } catch {}
+  } catch (caught) {
+    try { deviceToken = window.localStorage.getItem(FCM_TOKEN_KEY) || ""; } catch {}
+    if (!deviceToken) throw caught;
   }
+  try { window.localStorage.setItem(FCM_TOKEN_KEY, deviceToken); } catch {}
   await requestApi("/api/notifications/native-token", token, "POST", { token: deviceToken, platform: "android" });
   return true;
 }
@@ -181,9 +183,9 @@ export async function refreshCrownStorePush(token = sessionToken()): Promise<voi
 }
 
 export async function disableCrownStorePush(token = sessionToken()): Promise<void> {
-  if (token) {
-    await syncCrownStorePushPreferences(token, false);
-  }
+  // Local opt-out must still take effect when the API is temporarily unreachable.
+  if (token) await syncCrownStorePushPreferences(token, false).catch(() => undefined);
+
   if (Capacitor.getPlatform() === "android") {
     if (token) {
       let deviceToken = "";
@@ -191,11 +193,16 @@ export async function disableCrownStorePush(token = sessionToken()): Promise<voi
       await requestApi("/api/notifications/native-token", token, "DELETE", deviceToken ? { token: deviceToken } : {}).catch(() => undefined);
     }
   } else if ("serviceWorker" in navigator) {
-    const registration = await navigator.serviceWorker.getRegistration("/");
-    const subscription = await registration?.pushManager.getSubscription();
-    const endpoint = subscription?.endpoint || (() => {
-      try { return window.localStorage.getItem(WEB_ENDPOINT_KEY) || ""; } catch { return ""; }
-    })();
+    let registration: ServiceWorkerRegistration | undefined;
+    let subscription: PushSubscription | null = null;
+    try {
+      registration = await navigator.serviceWorker.getRegistration("/");
+      subscription = await registration?.pushManager.getSubscription() || null;
+    } catch { /* Continue clearing this device's local subscription state. */ }
+    let endpoint = subscription?.endpoint || "";
+    if (!endpoint) {
+      try { endpoint = window.localStorage.getItem(WEB_ENDPOINT_KEY) || ""; } catch {}
+    }
     if (token) {
       await requestApi("/api/notifications/web-push-subscription", token, "DELETE", endpoint ? { endpoint } : {}).catch(() => undefined);
     }
