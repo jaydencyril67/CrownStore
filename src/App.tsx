@@ -764,6 +764,22 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     pendingScreenshotsRef.current = pendingScreenshots;
   }, [pendingScreenshots]);
 
+  useEffect(() => {
+    const closeScreenshotActions = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest(".screenshot-preview-item-wrap")) setActionScreenshot(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setActionScreenshot(null);
+    };
+    document.addEventListener("pointerdown", closeScreenshotActions);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeScreenshotActions);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
   useEffect(() => () => {
     pendingScreenshotsRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl));
   }, []);
@@ -1030,16 +1046,41 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
             {uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}
             {(form.screenshotsText.trim() || pendingScreenshots.length > 0) && <div className="screenshot-preview-list" aria-label="App screenshots">
               {savedScreenshotUrls.map((url, index) => <div className="screenshot-preview-item" key={"saved-" + url + "-" + index}>
-                <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot({ kind: "saved", url })} aria-label={"Screenshot " + (index + 1) + " actions"}>
-                  <img src={url} alt={"Screenshot " + (index + 1)} loading="lazy" />
-                </button>
-                <span>Screenshot {index + 1}</span>
-              </div>)}
-              {pendingScreenshots.map((item, index) => <div className="screenshot-preview-item is-pending" key={item.id}>
-                <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot({ kind: "pending", id: item.id })} aria-label={"Selected screenshot " + (savedScreenshotUrls.length + index + 1) + " actions"}>
-                  <img src={item.previewUrl} alt={"Selected screenshot " + (index + 1)} />
-                </button>
-                <span>Screenshot {savedScreenshotUrls.length + index + 1} · Not uploaded yet</span>
+                <div className="screenshot-preview-item-wrap" key={"saved-" + url + "-" + index}>
+                  <div className="screenshot-preview-item">
+                    <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot((current) => current?.kind === "saved" && current.url === url ? null : { kind: "saved", url })} aria-label={"Screenshot " + (index + 1) + " actions"} aria-expanded={actionScreenshot?.kind === "saved" && actionScreenshot.url === url}>
+                      <img src={url} alt={"Screenshot " + (index + 1)} loading="lazy" />
+                    </button>
+                    <span>Screenshot {index + 1}</span>
+                  </div>
+                  {actionScreenshot?.kind === "saved" && actionScreenshot.url === url && <div className="screenshot-actions-popout" role="group" aria-label="Screenshot actions">
+                    <button type="button" title="Crop screenshot" aria-label="Crop screenshot" onClick={() => { setCropTarget(actionScreenshot); setCropSource(url); setActionScreenshot(null); }}><Crop size={17} /></button>
+                    <button type="button" title="View screenshot" aria-label="View screenshot" onClick={() => { setPreviewScreenshot(url); setActionScreenshot(null); }}><Eye size={17} /></button>
+                    <button type="button" className="is-danger" title="Remove screenshot" aria-label="Remove screenshot" onClick={() => {
+                      setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }));
+                      setActionScreenshot(null);
+                      setUploadMessage("Screenshot removed from the draft. Save application changes to apply the change.");
+                    }}><Trash2 size={17} /></button>
+                  </div>}
+                </div>
+              ))}
+              {pendingScreenshots.map((item, index) => <div className="screenshot-preview-item-wrap" key={item.id}>
+                <div className="screenshot-preview-item is-pending">
+                  <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot((current) => current?.kind === "pending" && current.id === item.id ? null : { kind: "pending", id: item.id })} aria-label={"Selected screenshot " + (savedScreenshotUrls.length + index + 1) + " actions"} aria-expanded={actionScreenshot?.kind === "pending" && actionScreenshot.id === item.id}>
+                    <img src={item.previewUrl} alt={"Selected screenshot " + (index + 1)} />
+                  </button>
+                  <span>Screenshot {savedScreenshotUrls.length + index + 1} · Not uploaded yet</span>
+                </div>
+                {actionScreenshot?.kind === "pending" && actionScreenshot.id === item.id && <div className="screenshot-actions-popout" role="group" aria-label="Screenshot actions">
+                  <button type="button" title="Crop screenshot" aria-label="Crop screenshot" onClick={() => { setCropTarget(actionScreenshot); setCropSource(item.previewUrl); setActionScreenshot(null); }}><Crop size={17} /></button>
+                  <button type="button" title="View screenshot" aria-label="View screenshot" onClick={() => { setPreviewScreenshot(item.previewUrl); setActionScreenshot(null); }}><Eye size={17} /></button>
+                  <button type="button" className="is-danger" title="Remove screenshot" aria-label="Remove screenshot" onClick={() => {
+                    URL.revokeObjectURL(item.previewUrl);
+                    setPendingScreenshots((current) => current.filter((entry) => entry.id !== item.id));
+                    setActionScreenshot(null);
+                    setUploadMessage("Screenshot removed from the draft. Save application changes to apply the change.");
+                  }}><Trash2 size={17} /></button>
+                </div>}
               </div>)}
             </div>}
           </div>
@@ -1050,27 +1091,6 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       {message && <p className="publisher-message manager-message" role="status">{message}</p>}
     </div>
   </section>
-  {actionScreenshot && actionScreenshotUrl && <div className="screenshot-actions-overlay" role="presentation" onClick={() => setActionScreenshot(null)}>
-    <section className="screenshot-actions-modal" role="dialog" aria-modal="true" aria-labelledby="screenshot-actions-title" onClick={(event) => event.stopPropagation()}>
-      <div className="screenshot-actions-heading"><strong id="screenshot-actions-title">Screenshot actions</strong><button type="button" onClick={() => setActionScreenshot(null)} aria-label="Close screenshot actions"><X size={19} /></button></div>
-      <img className="screenshot-actions-image" src={actionScreenshotUrl} alt="Selected screenshot preview" />
-      <div className="screenshot-actions-buttons">
-        <button type="button" onClick={() => { setCropTarget(actionScreenshot); setCropSource(actionScreenshotUrl); setActionScreenshot(null); }}><Crop size={17} /> Crop</button>
-        <button type="button" onClick={() => { setPreviewScreenshot(actionScreenshotUrl); setActionScreenshot(null); }}><Eye size={17} /> View</button>
-        <button type="button" className="is-danger" onClick={() => {
-          if (actionScreenshot.kind === "saved") {
-            setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== actionScreenshot.url).join("\n") }));
-          } else {
-            const item = pendingScreenshots.find((entry) => entry.id === actionScreenshot.id);
-            if (item) URL.revokeObjectURL(item.previewUrl);
-            setPendingScreenshots((current) => current.filter((entry) => entry.id !== actionScreenshot.id));
-          }
-          setActionScreenshot(null);
-          setUploadMessage("Screenshot removed from the draft. Save application changes to apply the change.");
-        }}><Trash2 size={17} /> Remove</button>
-      </div>
-    </section>
-  </div>}
   {cropSource && <ScreenshotCropModal imageUrl={cropSource} onCancel={cancelScreenshotCrop} onDone={confirmScreenshotCrop} title="Crop app screenshot" aspectRatio={9 / 16} />}
   {previewScreenshot && <ImagePreviewModal imageUrl={previewScreenshot} onClose={() => setPreviewScreenshot(null)} title="Screenshot preview" />}
   </>;
