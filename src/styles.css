@@ -902,3 +902,17 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .crown-toast.is-warning .crown-toast-icon{color:#fcd34d}
 @keyframes crown-toast-enter{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.crown-toast{animation:none}}
+
+
+/* Manage Apps save button doubles as the live screenshot upload meter. */
+.manager-save-button{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;overflow:hidden;padding:11px 14px}
+.manager-save-button.is-uploading{justify-content:space-between;cursor:progress;background:linear-gradient(120deg,rgba(109,40,217,.95),rgba(76,29,149,.98));border-color:rgba(221,214,254,.4);box-shadow:0 5px 22px rgba(109,40,217,.22),inset 0 1px rgba(255,255,255,.12)}
+.manager-save-copy{display:flex;flex:1;min-width:0;flex-direction:column;align-items:flex-start;gap:3px;text-align:left}
+.manager-save-copy>span{font-size:13px;font-weight:850;line-height:1.25}
+.manager-save-copy>small{max-width:100%;overflow:hidden;color:rgba(255,255,255,.75);font-size:10px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.manager-save-percent{flex:0 0 auto;font-size:15px;font-variant-numeric:tabular-nums}
+.manager-save-progress{position:absolute;left:0;right:0;bottom:0;height:4px;overflow:hidden;background:rgba(12,7,24,.35)}
+.manager-save-progress>span{position:relative;display:block;height:100%;min-width:2px;border-radius:0 5px 5px 0;background:linear-gradient(90deg,#ddd6fe,#fff,#c4b5fd);box-shadow:0 0 12px rgba(255,255,255,.55);transition:width .16s linear}
+.manager-save-progress>span::after{position:absolute;inset:0;content:"";background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.85) 45%,transparent 75%);transform:translateX(-100%);animation:manager-save-shimmer 1.15s ease-in-out infinite}
+@keyframes manager-save-shimmer{to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.manager-save-progress>span{transition:none}.manager-save-progress>span::after{animation:none}}
