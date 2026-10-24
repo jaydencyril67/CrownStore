@@ -40,9 +40,17 @@ public class KingsHallAccountPlugin extends Plugin {
     private void handleChooseAccountResult(PluginCall call, ActivityResult result) {
         if (call == null) return;
         if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null) {
-            JSObject cancelled = new JSObject();
-            cancelled.put("cancelled", true);
-            call.resolve(cancelled);
+            boolean hasSelectableAccount = false;
+            for (Account account : AccountManager.get(getContext()).getAccountsByType(ACCOUNT_TYPE)) {
+                if (account.name != null && account.name.trim().contains("@")) {
+                    hasSelectableAccount = true;
+                    break;
+                }
+            }
+            JSObject outcome = new JSObject();
+            if (hasSelectableAccount) outcome.put("cancelled", true);
+            else outcome.put("noAccount", true);
+            call.resolve(outcome);
             return;
         }
         String email = result.getData().getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
