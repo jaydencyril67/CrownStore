@@ -1,3 +1,24 @@
+
+/* CrownStore administrator selectors: native-looking glass trigger with a scrollable custom list. */
+.custom-select{position:relative;width:100%;min-width:0}
+.publisher-form .custom-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;padding:11px 12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(0,0,0,.24);color:#f4efff;text-align:left;font:11px var(--serif);cursor:pointer;box-sizing:border-box}
+.custom-select-trigger>span{min-width:0;overflow-wrap:anywhere}
+.custom-select-trigger svg{flex:none;color:#c4b5fd;transition:transform .15s ease}
+.custom-select.is-open .custom-select-trigger{border-color:rgba(196,181,253,.72);border-bottom-left-radius:7px;border-bottom-right-radius:7px}
+.custom-select.is-open .custom-select-trigger svg{transform:rotate(180deg)}
+.custom-select-trigger:focus-visible,.custom-select-option:focus-visible{outline:2px solid rgba(196,181,253,.85);outline-offset:2px}
+.custom-select-trigger:disabled{opacity:.55;cursor:not-allowed}
+.custom-select-options{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:90;max-height:230px;overflow-y:auto;overscroll-behavior:contain;padding:5px;border:1px solid rgba(196,181,253,.3);border-radius:12px;background:rgba(19,16,29,.98);box-shadow:0 14px 34px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.04);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);scrollbar-width:thin;scrollbar-color:rgba(196,181,253,.5) rgba(255,255,255,.04)}
+.custom-select-options::-webkit-scrollbar{width:5px}
+.custom-select-options::-webkit-scrollbar-track{background:rgba(255,255,255,.035);border-radius:8px}
+.custom-select-options::-webkit-scrollbar-thumb{background:rgba(196,181,253,.48);border-radius:8px}
+.custom-select-option{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:42px;padding:10px 11px;border:0;border-radius:8px;background:transparent;color:#e9e2f7;text-align:left;font:12px var(--serif);cursor:pointer;overflow-wrap:anywhere}
+.custom-select-option>span{min-width:0}
+.custom-select-option svg{flex:none;color:#c4b5fd}
+.custom-select-option:hover,.custom-select-option.is-selected{background:rgba(139,92,246,.16);color:#fff}
+.custom-select-empty{padding:10px 11px;margin:0;color:#b8a9cc;font-size:12px}
+@media(max-width:600px){.custom-select-options{max-height:210px}.custom-select-option{min-height:44px;font-size:12px}}
+
 @font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Regular.woff2") format("woff2");font-weight:100 699;font-style:normal;font-display:block}
 @font-face{font-family:"STIX Two Text";src:url("/fonts/STIXTwoText-Bold.woff2") format("woff2");font-weight:700 1000;font-style:normal;font-display:block}
 html,body,#root,*,*::before,*::after,button,input,textarea,select,option{font-family:var(--crownstore-global-font)!important;font-synthesis:none!important}
