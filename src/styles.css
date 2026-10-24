@@ -869,3 +869,21 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .screenshot-preview-open{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:zoom-in}
 .screenshot-preview-open img{display:block;width:100%;height:auto;aspect-ratio:9/16;object-fit:cover;background:rgba(255,255,255,.025)}
 .screenshot-preview-open:focus-visible{outline:2px solid rgba(196,181,253,.8);outline-offset:-3px}
+
+
+/* Per-screenshot actions — previews stay local until the admin saves the catalogue entry. */
+.screenshot-preview-open{display:block;width:100%;padding:0;border:0;border-radius:0;background:transparent;cursor:pointer;text-align:inherit;line-height:0;touch-action:manipulation}
+.screenshot-preview-open img{transition:none!important}
+.screenshot-preview-open:focus-visible{outline:2px solid #c4b5fd;outline-offset:-3px}
+.screenshot-preview-item.is-pending{border-color:rgba(196,181,253,.55);box-shadow:inset 0 0 0 1px rgba(139,92,246,.12)}
+.screenshot-preview-item.is-pending>span{color:#ded2ff}
+.screenshot-actions-overlay{position:fixed;inset:0;z-index:10010;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:rgba(5,3,14,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.screenshot-actions-modal{width:min(100%,390px);max-height:calc(100dvh - 40px);overflow:auto;padding:16px;border:1px solid rgba(196,181,253,.27);border-radius:20px;background:linear-gradient(155deg,rgba(40,27,61,.98),rgba(13,9,22,.98));box-shadow:0 24px 70px rgba(0,0,0,.55);color:#f4efff}
+.screenshot-actions-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px;font-size:15px}
+.screenshot-actions-heading>button{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;padding:0;border:1px solid rgba(196,181,253,.23);border-radius:11px;background:rgba(139,92,246,.13);color:inherit;cursor:pointer}
+.screenshot-actions-image{display:block;width:100%;max-height:40dvh;aspect-ratio:9/16;object-fit:contain;border-radius:12px;background:rgba(0,0,0,.25)}
+.screenshot-actions-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+.screenshot-actions-buttons>button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:43px;padding:8px 7px;border:1px solid rgba(196,181,253,.24);border-radius:12px;background:rgba(139,92,246,.13);color:#f4efff;font:inherit;font-size:13px;cursor:pointer;touch-action:manipulation}
+.screenshot-actions-buttons>button:active{background:rgba(139,92,246,.2)}
+.screenshot-actions-buttons>button.is-danger{border-color:rgba(248,113,113,.28);background:rgba(127,29,29,.2);color:#fecaca}
+@media(max-width:390px){.screenshot-actions-overlay{padding:14px}.screenshot-actions-modal{padding:13px;border-radius:17px}.screenshot-actions-buttons{gap:6px}.screenshot-actions-buttons>button{gap:5px;font-size:12px}}
