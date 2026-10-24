@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ColorPickerTarget } from "./ColorPickerPage";
 import {
   Bell, Check, Palette, Radio, ShieldCheck,
-  Smartphone, Sparkles, Zap, Mail
+  Sparkles, Zap, Mail
 } from "lucide-react";
 import {
   BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT,
@@ -104,7 +104,6 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
   const [preferences, setPreferences] = useState<NotificationPreferences>(() => readNotificationPreferences());
   const [loggedIn, setLoggedIn] = useState(() => hasCrownStoreSession());
   const [emailDeliveryReady, setEmailDeliveryReady] = useState<boolean | null>(null);
-  const [pushDeliveryReady, setPushDeliveryReady] = useState<boolean | null>(null);
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
@@ -112,15 +111,14 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
     void fetch(API_BASE + "/api/notifications/capabilities", { cache: "no-store" })
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to read notification delivery readiness.");
-        return await response.json() as { emailConfigured?: boolean; firebaseConfigured?: boolean; webPushConfigured?: boolean };
+        return await response.json() as { emailConfigured?: boolean };
       })
       .then((data) => {
         if (!active) return;
         setEmailDeliveryReady(data.emailConfigured === true);
-        setPushDeliveryReady(data.firebaseConfigured === true || data.webPushConfigured === true);
       })
       .catch(() => {
-        if (active) { setEmailDeliveryReady(null); setPushDeliveryReady(null); }
+        if (active) setEmailDeliveryReady(null);
       });
     return () => { active = false; };
   }, []);
