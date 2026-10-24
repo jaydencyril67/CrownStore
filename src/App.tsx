@@ -17,7 +17,7 @@ import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
 import {
-  ArrowDownToLine, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, ChevronRight,
+  ArrowLeft, CheckCircle2, ChevronDown, ChevronRight,
   Crop, Download, Eye, Image as ImageIcon, MessageCircle, PackageCheck, Search, Send, Star,
   ShieldCheck, Smartphone, Sparkles, Trash2, X
 } from "lucide-react";
@@ -286,7 +286,6 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
 }) {
   const [expanded, setExpanded] = useState(false);
   const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
-  const [nativeGalleryOpen, setNativeGalleryOpen] = useState(false);
   const [reviewerToken] = useState(() => getReviewerToken());
   const [reviewPayload, setReviewPayload] = useState<AppReviewsPayload | null>(null);
   const [reviewLoading, setReviewLoading] = useState(true);
@@ -768,6 +767,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [cropTarget, setCropTarget] = useState<ScreenshotActionTarget | null>(null);
   const [actionScreenshot, setActionScreenshot] = useState<ScreenshotActionTarget | null>(null);
   const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
+  const [nativeGalleryOpen, setNativeGalleryOpen] = useState(false);
 
   useEffect(() => {
     pendingScreenshotsRef.current = pendingScreenshots;
@@ -1145,12 +1145,10 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isOnline, setIsOnline] = useState(() => typeof navigator === "undefined" ? true : navigator.onLine);
-  const [search, setSearch] = useState("");
   const [searchPageQuery, setSearchPageQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try { const saved = JSON.parse(window.localStorage.getItem("crownstore-recent-searches") || "[]"); return Array.isArray(saved) ? saved.filter((item): item is string => typeof item === "string").slice(0, 8) : []; } catch { return []; }
   });
-  const [category, setCategory] = useState("All apps");
   const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
   const detailHistoryPushedRef = useRef(false);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
@@ -1915,15 +1913,6 @@ export default function App() {
   }
 
   const categories = useMemo(() => ["All apps", ...Array.from(new Set(apps.map((app) => app.category).filter((item): item is string => Boolean(item && item.trim())))).sort((a, b) => a.localeCompare(b))], [apps]);
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return apps.filter((app) => {
-      const categoryMatches = category === "All apps" || app.category?.toLowerCase() === category.toLowerCase();
-      const searchMatches = !q || [app.name, app.shortDescription, app.description, app.category, app.packageId].some((value) => value?.toLowerCase().includes(q));
-      return categoryMatches && searchMatches;
-    }).sort((a, b) => a.name.localeCompare(b.name));
-  }, [apps, search, category]);
-
   const searchResults = useMemo(() => {
     const query = searchPageQuery.trim().toLowerCase();
     if (!query) return [];
