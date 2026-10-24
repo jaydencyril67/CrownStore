@@ -91,6 +91,42 @@ jobs:
       - name: Sync native plugins
         run: npx cap sync android
 
+      - name: Install and verify custom Android native plugins
+        run: |
+          set -euo pipefail
+          python3 scripts/install-android-native-plugins.py
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path("android/app/src/main")
+          activity = root / "java/online/kingshall/crownstore/MainActivity.java"
+          required_plugins = (
+              "NativeAppUpdatePlugin",
+              "KingsHallAccountPlugin",
+              "NativeProfileUsagePlugin",
+              "NativeWebAuthnPlugin",
+          )
+
+          missing_sources = [
+              name for name in required_plugins
+              if not (root / "java/online/kingshall/crownstore" / f"{name}.java").is_file()
+          ]
+          if missing_sources:
+              raise SystemExit("Native plugin source files were not installed: " + ", ".join(missing_sources))
+
+          if not activity.is_file():
+              raise SystemExit("Generated MainActivity.java is missing after native plugin installation.")
+          activity_text = activity.read_text(encoding="utf-8")
+          missing_registrations = [
+              name for name in required_plugins
+              if f"registerPlugin({name}.class);" not in activity_text
+          ]
+          if missing_registrations:
+              raise SystemExit("MainActivity is missing native plugin registrations: " + ", ".join(missing_registrations))
+
+          print("Verified all four custom CrownStore Android plugin classes and MainActivity registrations.")
+          PY
+
       - name: Configure Firebase for CrownStore Android push
         env:
           FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
