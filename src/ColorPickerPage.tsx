@@ -1,5 +1,6 @@
-import { useState, type MouseEvent as ReactMouseEvent, type CSSProperties } from "react";
+import { useEffect, useState, type MouseEvent as ReactMouseEvent, type CSSProperties } from "react";
 import { ArrowLeft, Check, ChevronRight } from "lucide-react";
+import { showToast } from "./toast";
 import {
   BUTTON_COLOR_KEY,
   DEFAULT_ACCENT,
@@ -135,6 +136,8 @@ export default function ColorPickerPage({ target, onBack }: {
   const [error, setError] = useState("");
   const copy = TARGET_COPY[target];
 
+  useEffect(() => { if (error) showToast(error, "error"); }, [error]);
+
   const selectColor = (nextColor: string) => {
     if (!isHexColor(nextColor)) return;
     const normalized = nextColor.toLowerCase();
@@ -220,7 +223,7 @@ export default function ColorPickerPage({ target, onBack }: {
         <div className="alert-color-rgb-row">
           {(["r", "g", "b"] as const).map((channel) => <label key={channel}>{channel.toUpperCase()}<input aria-label={channel.toUpperCase() + " color value"} type="number" min="0" max="255" value={rgb[channel]} onChange={(event) => updateRgb(channel, event.target.value)} /></label>)}
         </div>
-        {error && <p className="alert-color-error" role="alert">{error}</p>}
+
       </section>
       <p className="crown-color-saved"><Check size={14} /> Color changes are applied and saved as you choose them.</p>
       <button type="button" className="alert-color-done" onClick={onBack}><ChevronRight size={15} /> Done</button>
