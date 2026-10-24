@@ -122,7 +122,7 @@ button,a{-webkit-tap-highlight-color:transparent}
   .app-card h3{margin-top:15px}
   .app-description{min-height:0}
   .app-meta{margin-top:16px}
-  .bottom-banner>.button{grid-column:1/-1;width:100%}
+  
   .site-footer{padding:20px 18px;display:grid;grid-template-columns:1fr auto;gap:15px}
   .site-footer>span:nth-child(2){grid-column:1/-1;grid-row:2}
   .footer-status{font-size:9px}
@@ -166,7 +166,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .header-brand-title{margin:0;max-width:calc(100vw - 112px);overflow:hidden;text-overflow:ellipsis;font-size:14px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap}
 .live-dot{background:#8b5cf6;box-shadow:0 0 10px rgba(139,92,246,.45)}
 
-.eyebrow,.trust-row svg,.floating-chip svg,.feature-strip svg,.catalogue-footnote svg{color:var(--gold-light)}
+
 .category-pill.is-ready{color:#ddd0ff}
 .app-card-details{display:block;text-align:left;width:100%;border:0;padding:0;background:transparent;cursor:pointer}
 .details-link{display:inline-flex;align-items:center;gap:3px;margin-top:10px;color:var(--gold-light);font-size:10px}
@@ -505,24 +505,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .site-shell .app-card h3{margin:14px 0 6px}
 .site-shell .app-description{min-height:0}
 .site-shell .app-meta{margin:13px 0 12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07)}
-.site-shell .feature-strip{
-  border:0;
-  border-top:1px solid rgba(226,220,228,.14);
-  border-bottom:1px solid rgba(226,220,228,.14);
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-  -webkit-backdrop-filter:none;
-  backdrop-filter:none;
-}
-.site-shell .bottom-banner{
-  border:0;
-  border-top:1px solid rgba(226,220,228,.14);
-  border-bottom:1px solid rgba(226,220,228,.14);
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-}
+
+
 .site-shell .state-panel{
   border:0;
   border-top:1px solid rgba(226,220,228,.14);
@@ -547,8 +531,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 /* Keep home shelves' intentional square Play-Store-style slots unchanged. */
 @media(max-width:620px){
   .site-shell .app-card{padding:15px 1px}
-  .site-shell .feature-strip{padding:10px 0}
-  .site-shell .bottom-banner{padding:20px 0}
+  
+  
   .site-shell .app-meta{flex-wrap:wrap}
 }
 
