@@ -787,7 +787,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 
 
 /* Simple recent-release feed: only the seven-day release list, no scan controls. */
-.updates-page{max-width:1144px;margin:0 auto;padding:24px 0 60px;box-sizing:border-box}
+.updates-page{width:100%;max-width:1176px;margin:0 auto;padding:16px 16px 60px;box-sizing:border-box}
 .updates-page-heading{margin-bottom:16px}
 .updates-page-heading .eyebrow{display:flex;align-items:center;gap:8px;color:var(--gold-light);font-size:10px;font-weight:700;letter-spacing:2.2px}
 .updates-page-heading h1{font-weight:500;font-size:clamp(28px,4.2vw,42px);letter-spacing:-.8px;line-height:1.15;margin:8px 0}
@@ -795,5 +795,4 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .updates-page-count{margin:0 0 16px;color:var(--muted);font-size:12px}
 .updates-page .app-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px}
 .updates-page .state-panel{width:100%;box-sizing:border-box}
-@media(max-width:1200px){.updates-page{margin-left:28px;margin-right:28px}}
-@media(max-width:620px){.updates-page{margin:0;padding:28px 17px 54px}.updates-page-heading h1{font-size:clamp(28px,8vw,36px)}.updates-page .app-grid{grid-template-columns:1fr;gap:12px}}
+@media(max-width:620px){.updates-page{padding:8px 9px 54px}.updates-page-heading h1{font-size:clamp(28px,8vw,36px)}.updates-page .app-grid{grid-template-columns:1fr;gap:12px}}
