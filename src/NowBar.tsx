@@ -15,7 +15,7 @@ const actions: Action[] = [
   { label: "MENU", icon: <Menu size={18} /> },
 ];
 
-const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
+const ORDER: Array<"HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "ABOUT" | "MENU"> = ["HOME", "SEARCH", "UPDATES", "PROFILE", "ABOUT", "MENU"];
 
 export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotifications, onMenu, onAbout, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; onNotifications: () => void; onMenu: () => void; onAbout: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "ABOUT" | "DETAILS" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
@@ -140,14 +140,19 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
     const dx = touch.clientX - start.x;
     const dy = touch.clientY - start.y;
     if (Math.abs(dx) < 50 || Math.abs(dx) <= Math.abs(dy)) return;
-    if (activePage !== "HOME" && activePage !== "SEARCH" && activePage !== "UPDATES") return;
-    const currentPage: "HOME" | "SEARCH" | "UPDATES" = activePage;
+    if (!ORDER.includes(activePage as (typeof ORDER)[number])) return;
+    const currentPage = activePage as (typeof ORDER)[number];
     const index = ORDER.indexOf(currentPage);
     const next = ORDER[index + (dx < 0 ? 1 : -1)];
     if (!next) return;
     swipeHandled.current = true;
     try { window.localStorage.setItem("crownstore-nowbar-action", next); } catch {}
-    if (next === "HOME") onHome(); else if (next === "SEARCH") onSearch(); else onUpdates();
+    if (next === "HOME") onHome();
+    else if (next === "SEARCH") onSearch();
+    else if (next === "UPDATES") onUpdates();
+    else if (next === "PROFILE") onProfile();
+    else if (next === "ABOUT") onAbout();
+    else onMenu();
     setBarState({ view: "title", mode: "compact" });
     resetIdle();
   };
