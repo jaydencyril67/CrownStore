@@ -12,7 +12,7 @@ import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
 import {
-  ArrowDownToLine, ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronRight,
+  ArrowDownToLine, ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronDown, ChevronRight,
   Download, Image as ImageIcon, Info, Layers3, MessageCircle, PackageCheck, Search, Send, Star,
   ShieldCheck, Smartphone, Sparkles, X
 } from "lucide-react";
@@ -544,6 +544,65 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
   </section>;
 }
 
+type CustomSelectOption = { value: string; label: string };
+
+function CustomSelect({ value, onChange, options, ariaLabel, disabled = false }: {
+  value: string;
+  onChange: (value: string) => void;
+  options: CustomSelectOption[];
+  ariaLabel: string;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const selected = options.find((option) => option.value === value) || options[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return <div className={"custom-select" + (open ? " is-open" : "")} ref={rootRef}>
+    <button
+      type="button"
+      className="custom-select-trigger"
+      aria-label={ariaLabel}
+      aria-haspopup="listbox"
+      aria-expanded={open}
+      disabled={disabled}
+      onClick={() => setOpen((current) => !current)}
+    >
+      <span>{selected?.label || "Choose an option"}</span>
+      <ChevronDown size={17} aria-hidden="true" />
+    </button>
+    {open && <div className="custom-select-options" role="listbox" aria-label={ariaLabel}>
+      {options.map((option) => <button
+        type="button"
+        role="option"
+        aria-selected={option.value === value}
+        className={"custom-select-option" + (option.value === value ? " is-selected" : "")}
+        key={option.value}
+        onClick={() => { onChange(option.value); setOpen(false); }}
+      >
+        <span>{option.label}</span>
+        {option.value === value && <CheckCircle2 size={16} aria-hidden="true" />}
+      </button>)}
+      {options.length === 0 && <p className="custom-select-empty">No options available</p>}
+    </div>}
+  </div>;
+}
+
 function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; apps: CrownApp[]; onPublished: () => void }) {
   const [token, setToken] = useState("");
   const [appSlug, setAppSlug] = useState(apps[0]?.slug || "kingshall");
@@ -632,9 +691,13 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
         <button className="button button-outline publisher-submit" type="button" onClick={() => void syncSourceReleases()} disabled={busy || syncBusy || !token.trim()}>{syncBusy ? "Checking latest releases…" : "Sync latest source releases now"}</button>
       </div>
       <form onSubmit={submit} className="publisher-form">
-        <label>Application<select value={appSlug} onChange={(event) => setAppSlug(event.target.value)} required disabled={apps.length === 0}>
-          {apps.map((item) => <option value={item.slug} key={item.id}>{item.name} ({item.slug})</option>)}
-        </select></label>
+        <label>Application<CustomSelect
+          value={appSlug}
+          onChange={setAppSlug}
+          disabled={apps.length === 0}
+          options={apps.map((item) => ({ value: item.slug, label: item.name + " (" + item.slug + ")" }))}
+          ariaLabel="Choose application to publish"
+        /></label>
         {apps.length === 0 && <p className="publisher-message">No listed apps are available to publish. Add and list an app in Manage Apps first.</p>}
         <div className="publisher-fields">
           <label>Release tag<input value={tagName} onChange={(event) => setTagName(event.target.value)} required placeholder="v1.0.0" /></label>
@@ -758,10 +821,15 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       </div>
       {loaded && <>
         <form onSubmit={submit} className="publisher-form manager-form">
-          <label>Application<select value={editingSlug} onChange={(event) => selectEntry(event.target.value)}>
-            <option value="__new__">+ Add a new application</option>
-            {catalogue.map((item) => <option value={item.slug} key={item.id}>{item.name}{item.isListed ? "" : " (hidden)"}</option>)}
-          </select></label>
+          <label>Application<CustomSelect
+            value={editingSlug}
+            onChange={selectEntry}
+            options={[
+              { value: "__new__", label: "+ Add a new application" },
+              ...catalogue.map((item) => ({ value: item.slug, label: item.name + (item.isListed ? "" : " (hidden)") }))
+            ]}
+            ariaLabel="Choose an application to manage"
+          /></label>
           <div className="publisher-fields">
             <label>App name<input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required maxLength={80} placeholder="My KingsHall App" /></label>
             <label>URL slug<input value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} required maxLength={80} pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="my-app" /></label>
