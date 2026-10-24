@@ -1943,7 +1943,7 @@ export default function App() {
       if (next === "UPDATES" || next === "SEARCH" || next === "ABOUT" || next === "MENU" || next === "NOTIFICATIONS" || next === "COLOR_PICKER") {
         window.scrollTo({ top: 0, behavior: "auto" });
       } else {
-        const targetId = next === "HOME" ? "home" : next === "ABOUT" ? "about" : "apps";
+        const targetId = next === "HOME" ? "home" : "apps";
         document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     });
