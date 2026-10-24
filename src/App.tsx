@@ -6,6 +6,7 @@ import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
 import NativeSelfUpdate from "./NativeSelfUpdate";
 import ProfilePage from "./ProfilePage";
 import MenuPage from "./MenuPage";
+import ColorPickerPage, { type ColorPickerTarget } from "./ColorPickerPage";
 import NotificationsPage from "./NotificationsPage";
 import { addCrownNotification, readNotificationPreferences, unreadNotificationCount } from "./notifications";
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
@@ -24,7 +25,7 @@ import "./app-details.css";
 import "./profile.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
-type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS";
+type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "COLOR_PICKER";
 
 function formatSize(value: number | string | null) {
   const bytes = Number(value);
@@ -817,6 +818,7 @@ export default function App() {
     } catch { return "HOME"; }
   });
 
+  const [colorPickerTarget, setColorPickerTarget] = useState<ColorPickerTarget>("nowbar");
   const [notificationPreferences, setNotificationPreferences] = useState(() => readNotificationPreferences());
   const [unreadAlerts, setUnreadAlerts] = useState(() => unreadNotificationCount());
 
@@ -1576,7 +1578,7 @@ export default function App() {
     setView(next);
     // Updates and Search always open at the page top, regardless of the previous scroll position.
     window.requestAnimationFrame(() => {
-      if (next === "UPDATES" || next === "SEARCH" || next === "MENU" || next === "NOTIFICATIONS") {
+      if (next === "UPDATES" || next === "SEARCH" || next === "MENU" || next === "NOTIFICATIONS" || next === "COLOR_PICKER") {
         window.scrollTo({ top: 0, behavior: "auto" });
       } else {
         const targetId = next === "HOME" ? "home" : next === "ABOUT" ? "about" : "apps";
@@ -1664,7 +1666,7 @@ export default function App() {
         onRefreshInstalledApps={() => installedScanRef.current()}
         allApps={apps}
         onOpenApp={openAppDetails}
-      /> : view === "MENU" ? <MenuPage onBack={() => navigate("HOME")} /> : view === "NOTIFICATIONS" ? <NotificationsPage onBack={() => navigate("MENU")} onOpenApp={(slug) => {
+      /> : view === "COLOR_PICKER" ? <ColorPickerPage target={colorPickerTarget} onBack={() => navigate("MENU")} /> : view === "MENU" ? <MenuPage onBack={() => navigate("HOME")} onChooseColor={(target) => { setColorPickerTarget(target); navigate("COLOR_PICKER"); }} /> : view === "NOTIFICATIONS" ? <NotificationsPage onBack={() => navigate("MENU")} onOpenApp={(slug) => {
         const app = apps.find((item) => item.slug === slug);
         if (app) openAppDetails(app);
       }} /> : view === "PROFILE" ? <ProfilePage
@@ -1795,12 +1797,12 @@ export default function App() {
         <div className="catalogue-footnote"><ShieldCheck size={15} /> Downloads resolve through the official CrownStore API and published release catalogue.</div>
       </section>
       </>}
-      {view !== "HOME" && view !== "SEARCH" && view !== "UPDATES" && view !== "PROFILE" && view !== "MENU" && view !== "NOTIFICATIONS" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
+      {view !== "HOME" && view !== "SEARCH" && view !== "UPDATES" && view !== "PROFILE" && view !== "MENU" && view !== "NOTIFICATIONS" && view !== "COLOR_PICKER" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
     <NativeDeviceBridgeAgent session={bridgeSession} />
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
-    <NowBar activePage={selectedApp ? "DETAILS" : view === "PROFILE" ? "PROFILE" : view === "MENU" ? "MENU" : view === "NOTIFICATIONS" ? "NOTIFICATIONS" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} onMenu={() => { closeAppDetails(); navigate("MENU"); }} onNotifications={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }} />
+    <NowBar activePage={selectedApp ? "DETAILS" : view === "COLOR_PICKER" ? "MENU" : view === "PROFILE" ? "PROFILE" : view === "MENU" ? "MENU" : view === "NOTIFICATIONS" ? "NOTIFICATIONS" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} onMenu={() => { closeAppDetails(); navigate("MENU"); }} onNotifications={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
       <DownloadFeedback
         progress={downloadProgress}
