@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Check, X } from "lucide-react";
+import { showToast } from "./toast";
 
 type ScreenshotCropModalProps = {
   imageUrl: string;
@@ -32,6 +33,8 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
   const [ready, setReady] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => { if (errorMessage) showToast(errorMessage, "error"); }, [errorMessage]);
 
   const updateCrop = (next: CropRect) => {
     cropRef.current = next;
@@ -362,7 +365,7 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
           </div>}
         </div>
       </div>
-      {errorMessage && <div className="crownstore-screenshot-crop-error" role="alert">{errorMessage}</div>}
+
     </div>
   );
 }
