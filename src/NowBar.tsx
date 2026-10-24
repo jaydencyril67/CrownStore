@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type TouchEvent, type ReactNode } from "react";
-import { Home, Search, Download, Sparkles, Menu, Crosshair, ListFilter, Plus, UserRound } from "lucide-react";
+import { Home, Search, Download, Sparkles, Menu, Crosshair, ListFilter, Plus, UserRound, Info } from "lucide-react";
 import { BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, EDGE_LIGHT_KEY, EDGE_LIGHT_ENABLED_KEY, EDGE_LIGHT_COLOR_KEY, EDGE_LIGHT_MODE_KEY, EXPAND_MODE_KEY, SWIPE_NAVIGATION_KEY } from "./notifications";
 
-type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "OPTION 4" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
+type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "ABOUT" | "OPTION 4" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
 type Action = { label: ActionLabel; icon: ReactNode };
 type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
 
@@ -11,7 +11,7 @@ const actions: Action[] = [
   { label: "SEARCH", icon: <Search size={18} /> },
   { label: "UPDATES", icon: <Download size={18} /> },
   { label: "PROFILE", icon: <UserRound size={18} /> },
-  { label: "OPTION 4", icon: <Sparkles size={18} /> },
+  { label: "ABOUT", icon: <Info size={18} /> },
   { label: "MENU", icon: <Menu size={18} /> },
   { label: "OPTION 7", icon: <Crosshair size={18} /> },
   { label: "OPTION 8", icon: <ListFilter size={18} /> },
@@ -22,7 +22,7 @@ const actions: Action[] = [
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
 
-export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotifications, onMenu, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; onNotifications: () => void; onMenu: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "ABOUT" | "DETAILS" }) {
+export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotifications, onMenu, onAbout, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; onNotifications: () => void; onMenu: () => void; onAbout: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "ABOUT" | "DETAILS" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
   const [pressing, setPressing] = useState(false);
   const readEdgeSettings = (): { enabled: boolean; color: string; mode: EdgeMode } => {
@@ -133,11 +133,11 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
   }, []);
 
   const activate = (label: ActionLabel) => {
-    if (!["HOME", "SEARCH", "UPDATES", "PROFILE", "NOTIFICATIONS", "MENU"].includes(label)) return;
+    if (!["HOME", "SEARCH", "UPDATES", "PROFILE", "NOTIFICATIONS", "MENU", "ABOUT"].includes(label)) return;
     try { window.localStorage.setItem("crownstore-nowbar-action", label); } catch {}
     resetIdle();
     setBarState({ view: "title", mode: "compact" });
-    if (label === "HOME") onHome(); else if (label === "SEARCH") onSearch(); else if (label === "UPDATES") onUpdates(); else if (label === "PROFILE") onProfile(); else if (label === "NOTIFICATIONS") onNotifications(); else onMenu();
+    if (label === "HOME") onHome(); else if (label === "SEARCH") onSearch(); else if (label === "UPDATES") onUpdates(); else if (label === "PROFILE") onProfile(); else if (label === "NOTIFICATIONS") onNotifications(); else if (label === "ABOUT") onAbout(); else onMenu();
   };
 
   const finishSwipe = (event: TouchEvent<HTMLDivElement>) => {
@@ -229,7 +229,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
                   aria-label={action.label}
                   onClick={() => {
                     if (holdTriggered.current) { holdTriggered.current = false; return; }
-                    if (["HOME", "SEARCH", "UPDATES", "PROFILE", "NOTIFICATIONS", "MENU"].includes(action.label)) activate(action.label);
+                    if (["HOME", "SEARCH", "UPDATES", "PROFILE", "NOTIFICATIONS", "MENU", "ABOUT"].includes(action.label)) activate(action.label);
                   }}
                 >
                   <span className="kh-nowbar-icon">{action.icon}</span>
