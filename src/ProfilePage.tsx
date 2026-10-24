@@ -13,6 +13,7 @@ import type { CrownApp } from "./types";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { NativeProfileUsage } from "./native/nativeProfileUsage";
 import "./profile.css";
+import { showToast, toastKindForMessage } from "./toast";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 const TOKEN_KEY = "crownstore-profile-token";
@@ -372,6 +373,15 @@ export default function ProfilePage({
   const [twoFactorSetupCode, setTwoFactorSetupCode] = useState("");
   const [twoFactorRemovalCode, setTwoFactorRemovalCode] = useState("");
   const [showRemoveTwoFactorConfirm, setShowRemoveTwoFactorConfirm] = useState(false);
+
+  useEffect(() => { if (notice) showToast(notice, toastKindForMessage(notice)); }, [notice]);
+  useEffect(() => { if (error) showToast(error, "error"); }, [error]);
+  useEffect(() => { if (externalNotice) showToast(externalNotice, toastKindForMessage(externalNotice)); }, [externalNotice]);
+  useEffect(() => { if (externalError) showToast(externalError, "error"); }, [externalError]);
+  useEffect(() => { if (usageError) showToast(usageError, "error"); }, [usageError]);
+  useEffect(() => { if (securityNotice) showToast(securityNotice, toastKindForMessage(securityNotice)); }, [securityNotice]);
+  useEffect(() => { if (securityError) showToast(securityError, "error"); }, [securityError]);
+  useEffect(() => { if (installedScanError) showToast(installedScanError, "error"); }, [installedScanError]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("crownstore:profile-session-changed", { detail: { token } }));
@@ -1129,9 +1139,9 @@ export default function ProfilePage({
           {!extraMethod && <p className="profile-external-help">Select an available security method above.</p>}
           <button className="profile-text-button" type="button" disabled={busy} onClick={cancelSecurityChallenge}>Cancel sign-in</button>
         </section>}
-        {checkingSession && <p className="profile-notice" role="status">Restoring your CrownStore session…</p>}
-        {notice && <p className="profile-notice" role="status">{notice}</p>}
-        {error && <p className="profile-error" role="alert">{error}</p>}
+        
+        
+        
         <p className="profile-auth-footnote">Your KingsHall Access Code is verified securely. CrownStore does not store it.</p>
         <p className="profile-kingshall-link">Need an account? <button className="profile-text-button" type="button" onClick={redirectToKingsHall}>Open KingsHall</button></p>
       </section>
@@ -1139,8 +1149,8 @@ export default function ProfilePage({
       <section className="profile-external-panel">
         <div className="profile-external-heading"><span><Fingerprint size={18} /></span><div><h2>Signing in on another device?</h2><p>Approve this device in KingsHall, then enter that account’s six-digit Access Code here to finish signing in.</p></div></div>
         {!externalLogin && <button className="profile-secondary-button" type="button" disabled={busy || externalBusy || Boolean(challengeToken)} onClick={() => void startExternalLogin()}>{externalBusy ? <span className="profile-spinner" /> : <KeyRound size={16} />} Use external-device sign-in</button>}
-        {externalNotice && <p className="profile-notice" role="status">{externalNotice}</p>}
-        {externalError && <p className="profile-error" role="alert">{externalError}</p>}
+        
+        
         {externalLogin && <>
           {!externalApproved ? <>
             <p className="profile-external-help">Scan this QR code in KingsHall, or enter the code in External Login. It expires in five minutes.</p>
@@ -1188,8 +1198,8 @@ export default function ProfilePage({
           <span>{securityLoading ? "Checking…" : "CrownStore profile"}</span>
         </div>
         <p className="profile-security-intro">Configure two-factor authentication and passkey/biometric security for this CrownStore profile. These settings are stored by ApiCrownStore and remain separate from your KingsHall account security settings.</p>
-        {securityError && <p className="profile-error" role="alert">{securityError}</p>}
-        {securityNotice && <p className="profile-notice" role="status">{securityNotice}</p>}
+        
+        
         {securityLoading && !securityStatus ? <p className="profile-empty">Loading security settings…</p> : <>
           <div className="profile-security-item">
             <div className="profile-security-item-heading"><span className="profile-security-icon"><ShieldCheck size={19} /></span><div><h3>Authenticator app (2FA)</h3><p>Use a time-based six-digit code from Google Authenticator, Authy or another compatible app.</p></div></div>
@@ -1250,7 +1260,7 @@ export default function ProfilePage({
         <section className="profile-section">
           <div className="profile-section-heading"><h2>Apps needing updates</h2><span>{updatesNeeded.length}</span></div>
           {installedScanStatus === "checking" ? <p className="profile-empty">Checking installed apps…</p>
-            : installedScanStatus === "error" ? <div className="profile-inline-error"><span>{installedScanError || "Installed apps could not be checked."}</span><button type="button" onClick={onRefreshInstalledApps}>Retry</button></div>
+            : installedScanStatus === "error" ? <div className="profile-inline-error"><button type="button" onClick={onRefreshInstalledApps}>Retry installed-app check</button></div>
             : updatesNeeded.length ? <div className="profile-app-list">{updatesNeeded.map((app) => <ProfileAppRow key={app.packageId} app={app} detail={"Installed " + (installedApps[app.packageId]?.versionName || "version unknown") + " · Latest " + (app.versionName || "new release")} trailing="Update" onClick={() => onOpenApp(app)} />)}</div>
             : <p className="profile-empty">You're up to date. No installed CrownStore apps need an update.</p>}
         </section>
@@ -1258,7 +1268,7 @@ export default function ProfilePage({
         <section className="profile-section">
           <div className="profile-section-heading"><h2>Installed KingsHall apps</h2><span>{installedCatalogueApps.length}</span></div>
           {installedScanStatus === "checking" ? <p className="profile-empty">Checking installed apps…</p>
-            : installedScanStatus === "error" ? <p className="profile-empty">Installed app details are temporarily unavailable.</p>
+            : installedScanStatus === "error" ? <p className="profile-empty"><button className="profile-text-button" type="button" onClick={onRefreshInstalledApps}>Retry installed-app check</button></p>
             : installedCatalogueApps.length ? <div className="profile-app-list">{installedCatalogueApps.map((app) => <ProfileAppRow key={app.packageId} app={app} detail={"Version " + (installedApps[app.packageId]?.versionName || "unknown")} trailing={updatesNeeded.some((item) => item.packageId === app.packageId) ? "Update" : "Installed"} onClick={() => onOpenApp(app)} />)}</div>
             : <p className="profile-empty">No listed KingsHall apps are installed on this device yet.</p>}
         </section>
@@ -1273,7 +1283,7 @@ export default function ProfilePage({
 
         <section className="profile-section">
           <div className="profile-section-heading"><h2>Most used apps</h2><span>Last 30 days</span></div>
-          {usageError ? <div className="profile-inline-error"><span>{usageError}</span><button type="button" onClick={() => void refreshUsage()}>Retry</button></div> : usagePermissionRequired ? <div className="profile-permission-prompt"><div><strong>Enable app usage access</strong><p>Android keeps this private until you allow usage access in system settings.</p></div><button className="profile-secondary-button" type="button" onClick={() => void openUsageSettings()}><Smartphone size={16} /> Enable access</button></div>
+          {usageError ? <div className="profile-inline-error"><button type="button" onClick={() => void refreshUsage()}>Retry usage check</button></div> : usagePermissionRequired ? <div className="profile-permission-prompt"><div><strong>Enable app usage access</strong><p>Android keeps this private until you allow usage access in system settings.</p></div><button className="profile-secondary-button" type="button" onClick={() => void openUsageSettings()}><Smartphone size={16} /> Enable access</button></div>
             : usageLoading ? <p className="profile-empty">Loading app activity…</p>
             : mostUsed.length ? <div className="profile-app-list">{mostUsed.map(({ item, app }) => <ProfileAppRow key={item.packageId} app={app} detail={humanDuration(item.totalTimeInForeground) + " in foreground"} onClick={() => onOpenApp(app)} />)}</div>
             : <p className="profile-empty">There isn't enough usage history to rank your apps yet.</p>}
@@ -1282,7 +1292,7 @@ export default function ProfilePage({
 
         <section className="profile-section">
           <div className="profile-section-heading"><h2>Recently used</h2><span>Last 30 days</span></div>
-          {usageError ? <p className="profile-empty">{usageError}</p> : usagePermissionRequired ? <p className="profile-empty">Enable app usage access to see your recent app activity.</p>
+          {usageError ? <p className="profile-empty"><button className="profile-text-button" type="button" onClick={() => void refreshUsage()}>Retry usage check</button></p> : usagePermissionRequired ? <p className="profile-empty">Enable app usage access to see your recent app activity.</p>
             : recentlyUsed.length ? <div className="profile-app-list">{recentlyUsed.map(({ item, app }) => <ProfileAppRow key={item.packageId} app={app} detail={"Last used " + dateLabel(item.lastTimeUsed)} trailing={<Clock3 size={15} />} onClick={() => onOpenApp(app)} />)}</div>
             : <p className="profile-empty">Recent app activity will appear here when Android has usage history.</p>}
         </section>
