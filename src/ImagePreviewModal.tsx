@@ -32,6 +32,7 @@ export default function ImagePreviewModal({ imageUrl, onClose, title = "Screensh
     });
   };
   useEffect(() => {
+    document.body.classList.add("crownstore-image-focus-mode");
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const keyHandler = (event: KeyboardEvent) => {
@@ -40,6 +41,7 @@ export default function ImagePreviewModal({ imageUrl, onClose, title = "Screensh
     window.addEventListener("keydown", keyHandler);
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.classList.remove("crownstore-image-focus-mode");
       window.removeEventListener("keydown", keyHandler);
       if (viewFrameRef.current !== null) cancelAnimationFrame(viewFrameRef.current);
       viewFrameRef.current = null;
