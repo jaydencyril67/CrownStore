@@ -879,7 +879,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .screenshot-preview-open:focus-visible{outline:2px solid #c4b5fd;outline-offset:-3px}
 .screenshot-preview-item.is-pending{border-color:rgba(196,181,253,.55);box-shadow:inset 0 0 0 1px rgba(139,92,246,.12)}
 .screenshot-preview-item.is-pending>span{color:#ded2ff}
-.screenshot-actions-popout{position:absolute;z-index:95;inset:1px 1px 37px;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px;border:1px solid rgba(196,181,253,.38);border-radius:12px;background:rgba(13,9,22,.68);box-shadow:inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.screenshot-actions-popout{position:absolute;z-index:95;inset:1px 1px 37px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:8px;border:1px solid rgba(196,181,253,.38);border-radius:12px;background:rgba(13,9,22,.68);box-shadow:inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
 .screenshot-actions-popout>button{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;padding:0;border:1px solid rgba(196,181,253,.2);border-radius:11px;background:rgba(139,92,246,.14);color:#f4efff;cursor:pointer;touch-action:manipulation}
 .screenshot-actions-popout>button:focus-visible{outline:2px solid #c4b5fd;outline-offset:2px}
 .screenshot-actions-popout>button.is-danger{border-color:rgba(248,113,113,.3);background:rgba(127,29,29,.22);color:#fecaca}
