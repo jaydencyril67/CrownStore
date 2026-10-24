@@ -1194,41 +1194,41 @@ export default function ProfilePage({
             <div className="profile-security-item-heading"><span className="profile-security-icon"><ShieldCheck size={19} /></span><div><h3>Authenticator app (2FA)</h3><p>Use a time-based six-digit code from Google Authenticator, Authy or another compatible app.</p></div></div>
             <div className="profile-security-status-row">
               <span className={securityStatus?.twoFactor.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.twoFactor.configured ? "Configured" : securityStatus?.twoFactor.pending ? "Setup pending" : "Not configured"}</span>
-              <span className={securityStatus?.twoFactor.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.twoFactor.enabled ? "Protection enabled" : "Protection off"}</span>
+              <span className={securityStatus?.twoFactor.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.twoFactor.enabled ? "Protection on" : "Protection off"}</span>
             </div>
-            {!securityStatus?.twoFactor.configured && <button className="profile-secondary-button" type="button" disabled={twoFactorSetupBusy} onClick={() => void beginTwoFactorSetup()}>{twoFactorSetupBusy ? <span className="profile-spinner" /> : <KeyRound size={15} />} {securityStatus?.twoFactor.pending ? "Restart authenticator setup" : "Configure authenticator"}</button>}
+            {!securityStatus?.twoFactor.configured && <button className="profile-secondary-button" type="button" disabled={twoFactorSetupBusy} onClick={() => void beginTwoFactorSetup()}>{twoFactorSetupBusy ? <span className="profile-spinner" /> : <KeyRound size={15} />} {securityStatus?.twoFactor.pending ? "Restart setup" : "Set up 2FA"}</button>}
             {twoFactorSetupUri && <form className="profile-security-setup" onSubmit={verifyTwoFactorSetup}>
               <p>1. Scan this QR code in your authenticator app.</p>
               <div className="profile-security-qr"><QRCodeSVG value={twoFactorSetupUri} size={176} includeMargin /></div>
               <label htmlFor="crown-profile-totp-key">Manual setup key</label>
-              <div className="profile-security-manual-key"><code id="crown-profile-totp-key">{twoFactorSetupSecret}</code><button className="profile-text-button" type="button" onClick={() => { void navigator.clipboard?.writeText(twoFactorSetupSecret).then(() => setSecurityNotice("Authenticator setup key copied."), () => setSecurityError("Could not copy the setup key on this device.")); }}>Copy key</button></div>
-              <label htmlFor="crown-profile-totp-code">2. Enter the current six-digit code to verify setup</label>
+              <div className="profile-security-manual-key"><code id="crown-profile-totp-key">{twoFactorSetupSecret}</code><button className="profile-text-button" type="button" onClick={() => { void navigator.clipboard?.writeText(twoFactorSetupSecret).then(() => setSecurityNotice("Authenticator setup key copied."), () => setSecurityError("Could not copy the setup key on this device.")); }}>Copy</button></div>
+              <label htmlFor="crown-profile-totp-code">2. Verification code</label>
               <input id="crown-profile-totp-code" value={twoFactorSetupCode} onChange={(event) => setTwoFactorSetupCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" required />
-              <button className="profile-primary-button" type="submit" disabled={twoFactorVerifyBusy || twoFactorSetupCode.length !== 6}>{twoFactorVerifyBusy ? <span className="profile-spinner" /> : "Verify and finish setup"}</button>
-              <button className="profile-text-button" type="button" disabled={twoFactorCancelBusy} onClick={() => void cancelTwoFactorSetup()}>Cancel setup</button>
+              <button className="profile-primary-button" type="submit" disabled={twoFactorVerifyBusy || twoFactorSetupCode.length !== 6}>{twoFactorVerifyBusy ? <span className="profile-spinner" /> : "Verify & finish"}</button>
+              <button className="profile-text-button" type="button" disabled={twoFactorCancelBusy} onClick={() => void cancelTwoFactorSetup()}>Cancel</button>
             </form>}
             {securityStatus?.twoFactor.configured && <div className="profile-security-actions">
-              <button className={securityStatus.twoFactor.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={twoFactorEnforcementBusy} onClick={() => void changeTwoFactorEnforcement(!securityStatus.twoFactor.enabled)}>{twoFactorEnforcementBusy ? <span className="profile-spinner" /> : <ShieldCheck size={15} />} {securityStatus.twoFactor.enabled ? "Disable 2FA protection" : "Enable 2FA protection"}</button>
-              <label htmlFor="crown-profile-totp-remove">Authenticator code required to remove 2FA</label>
+              <button className={securityStatus.twoFactor.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={twoFactorEnforcementBusy} onClick={() => void changeTwoFactorEnforcement(!securityStatus.twoFactor.enabled)}>{twoFactorEnforcementBusy ? <span className="profile-spinner" /> : <ShieldCheck size={15} />} {securityStatus.twoFactor.enabled ? "Disable 2FA" : "Enable 2FA"}</button>
+              <label htmlFor="crown-profile-totp-remove">Code to remove 2FA</label>
               <input id="crown-profile-totp-remove" value={twoFactorRemovalCode} onChange={(event) => setTwoFactorRemovalCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" />
-              <button className="profile-text-button" type="button" disabled={twoFactorRemoveBusy || twoFactorRemovalCode.length !== 6} onClick={() => void removeTwoFactor()}>Remove authenticator</button>
+              <button className="profile-text-button" type="button" disabled={twoFactorRemoveBusy || twoFactorRemovalCode.length !== 6} onClick={() => void removeTwoFactor()}>Remove 2FA</button>
             </div>}
           </div>
 
           <div className="profile-security-item">
             <div className="profile-security-item-heading"><span className="profile-security-icon"><Fingerprint size={19} /></span><div><h3>Passkey / biometric security</h3><p>Register a device passkey. Your fingerprint, face or device-unlock check is handled by the device; CrownStore does not receive biometric templates.</p></div></div>
             <div className="profile-security-status-row">
-              <span className={securityStatus?.biometric.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.biometric.configured ? "Passkey configured" : "No passkey configured"}</span>
+              <span className={securityStatus?.biometric.configured ? "profile-security-pill is-configured" : "profile-security-pill"}>{securityStatus?.biometric.configured ? "Passkey set" : "No passkey"}</span>
               <span className={securityStatus?.biometric.enabled ? "profile-security-pill is-enabled" : "profile-security-pill"}>{securityStatus?.biometric.enabled ? "Protection enabled" : "Protection off"}</span>
             </div>
             <div className="profile-security-actions">
-              {!securityStatus?.biometric.configured && <button className="profile-secondary-button" type="button" disabled={biometricRegisterBusy || !securityStatus} onClick={() => void registerBiometricPasskey()}>{biometricRegisterBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} Configure passkey on this device</button>}
+              {!securityStatus?.biometric.configured && <button className="profile-secondary-button" type="button" disabled={biometricRegisterBusy || !securityStatus} onClick={() => void registerBiometricPasskey()}>{biometricRegisterBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} Add passkey</button>}
               {securityStatus?.biometric.enabled && <p className="profile-security-meta">A passkey is already configured. Remove the existing passkey before configuring another.</p>}
-              {securityStatus?.biometric.configured && <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={biometricEnforcementBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{biometricEnforcementBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable biometric protection" : "Enable biometric protection"}</button>}
+              {securityStatus?.biometric.configured && <button className={securityStatus.biometric.enabled ? "profile-secondary-button" : "profile-primary-button"} type="button" disabled={biometricEnforcementBusy} onClick={() => void changeBiometricEnforcement(!securityStatus.biometric.enabled)}>{biometricEnforcementBusy ? <span className="profile-spinner" /> : <Fingerprint size={15} />} {securityStatus.biometric.enabled ? "Disable passkey" : "Enable passkey"}</button>}
               {securityStatus?.biometric.configured && <p className="profile-security-meta">{securityStatus.biometric.credentialCount} passkey credential{securityStatus.biometric.credentialCount === 1 ? "" : "s"} linked to your CrownStore profile. Remove the existing passkey before configuring another.</p>}
               {(securityStatus?.biometric.credentials || []).map((credential, index) => <div className="profile-security-passkey" key={credential.id}>
                 <div><strong>Bound passkey {index + 1}</strong><span>{credential.createdAt ? "Added " + new Date(credential.createdAt).toLocaleDateString() : "Added date unavailable"}</span></div>
-                <button className="profile-text-button" type="button" disabled={biometricRemoveBusy} onClick={() => void removeBiometricPasskey(credential.id)}>Unbind passkey</button>
+                <button className="profile-text-button" type="button" disabled={biometricRemoveBusy} onClick={() => void removeBiometricPasskey(credential.id)}>Remove</button>
               </div>)}
             </div>
           </div>
