@@ -848,7 +848,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     return imageUrl;
   }
 
-  function selectScreenshotFiles(files: FileList | null) {
+  function selectScreenshotFiles(files: FileList | File[] | null) {
     if (!files?.length || uploadBusy || busy) return;
     const savedUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
     const selectedFiles = Array.from(files);
