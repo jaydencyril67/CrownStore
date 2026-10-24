@@ -745,10 +745,8 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
 
   async function uploadScreenshots(files: FileList | null) {
     if (!files?.length) return;
-    const cloudName = String(import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "").trim();
-    const uploadPreset = String(import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "").trim();
-    if (!cloudName || !uploadPreset) {
-      setUploadMessage("Cloudinary is not configured yet. Add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET to the CrownStore Pages environment.");
+    if (!token.trim()) {
+      setUploadMessage("Enter the publishing token and load the catalogue before uploading screenshots.");
       return;
     }
     setUploadBusy(true); setUploadMessage("");
@@ -757,17 +755,29 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       for (const file of Array.from(files)) {
         if (!file.type.startsWith("image/")) throw new Error(file.name + " is not an image.");
         if (file.size > 10 * 1024 * 1024) throw new Error(file.name + " is larger than 10 MB.");
+        const authResponse = await fetch(API_BASE + "/api/publishing/imagekit-auth", {
+          headers: { Authorization: "Bearer " + token.trim() },
+          cache: "no-store"
+        });
+        const auth = await authResponse.json() as { publicKey?: string; token?: string; expire?: number; signature?: string; error?: string };
+        if (!authResponse.ok || !auth.publicKey || !auth.token || !auth.expire || !auth.signature) {
+          throw new Error(auth.error || "Could not authorize ImageKit upload.");
+        }
         const body = new FormData();
         body.append("file", file);
-        body.append("upload_preset", uploadPreset);
-        body.append("folder", "crownstore/screenshots");
-        const response = await fetch("https://api.cloudinary.com/v1_1/" + encodeURIComponent(cloudName) + "/image/upload", { method: "POST", body });
-        const data = await response.json() as { secure_url?: string; error?: { message?: string } };
-        if (!response.ok || !data.secure_url) throw new Error(data.error?.message || "Cloudinary could not upload " + file.name + ".");
-        uploaded.push(data.secure_url);
+        body.append("fileName", file.name);
+        body.append("publicKey", auth.publicKey);
+        body.append("token", auth.token);
+        body.append("expire", String(auth.expire));
+        body.append("signature", auth.signature);
+        body.append("folder", "/crownstore/screenshots");
+        const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", { method: "POST", body });
+        const data = await response.json() as { url?: string; message?: string; help?: string };
+        if (!response.ok || !data.url) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
+        uploaded.push(data.url);
       }
-      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\n") }));
-      setUploadMessage(uploaded.length + " screenshot" + (uploaded.length === 1 ? "" : "s") + " uploaded to Cloudinary.");
+      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\\n") }));
+      setUploadMessage(uploaded.length + " screenshot" + (uploaded.length === 1 ? "" : "s") + " uploaded to ImageKit.");
     } catch (error) {
       setUploadMessage(error instanceof Error ? error.message : "Screenshot upload failed.");
     } finally { setUploadBusy(false); }
@@ -872,7 +882,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
           <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
-          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots</label><p>Choose image files to upload them to Cloudinary. Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
+          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots</label><p>Choose image files to upload them to ImageKit. Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
