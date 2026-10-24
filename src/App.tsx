@@ -22,6 +22,7 @@ import "./app-details.css";
 import "./profile.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
+const IMAGEKIT_URL_ENDPOINT = (import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT || "").trim().replace(/\/+$/, "");
 type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "COLOR_PICKER" | "ADMIN_MANAGE" | "ADMIN_PUBLISH";
 
 function formatSize(value: number | string | null) {
@@ -772,9 +773,16 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
         body.append("signature", auth.signature);
         body.append("folder", "/crownstore/screenshots");
         const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", { method: "POST", body });
-        const data = await response.json() as { url?: string; message?: string; help?: string };
-        if (!response.ok || !data.url) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
-        uploaded.push(data.url);
+        const data = await response.json() as { url?: string; filePath?: string; message?: string; help?: string };
+        if (!response.ok || (!data.url && !data.filePath)) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
+        // Prefer the configured delivery endpoint + ImageKit file path so deployments
+        // consistently use VITE_IMAGEKIT_URL_ENDPOINT rather than a hardcoded host.
+        const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\\/+/, "") : "";
+        const imageUrl = IMAGEKIT_URL_ENDPOINT && imagePath
+          ? IMAGEKIT_URL_ENDPOINT + "/" + imagePath
+          : data.url;
+        if (!imageUrl) throw new Error("ImageKit returned no usable image URL for " + file.name + ".");
+        uploaded.push(imageUrl);
       }
       setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\\n") }));
       setUploadMessage(uploaded.length + " screenshot" + (uploaded.length === 1 ? "" : "s") + " uploaded to ImageKit.");
