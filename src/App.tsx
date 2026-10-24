@@ -762,7 +762,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", { method: "POST", body });
     const data = await response.json() as { url?: string; filePath?: string; message?: string; help?: string };
     if (!response.ok || (!data.url && !data.filePath)) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
-    const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\\/+/, "") : "";
+    const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\/+/, "") : "";
     const imageUrl = IMAGEKIT_URL_ENDPOINT && imagePath
       ? IMAGEKIT_URL_ENDPOINT + "/" + imagePath
       : data.url;
