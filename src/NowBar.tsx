@@ -22,7 +22,7 @@ const actions: Action[] = [
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
 
-export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotifications, onMenu, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; onNotifications: () => void; onMenu: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "DETAILS" }) {
+export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotifications, onMenu, activePage = "HOME" }: { onHome: () => void; onSearch: () => void; onUpdates: () => void; onProfile: () => void; onNotifications: () => void; onMenu: () => void; activePage?: "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "ABOUT" | "DETAILS" }) {
   const [barState, setBarState] = useState<{ view: "title" | "actions"; mode: "compact" | "expanded" }>({ view: "title", mode: "compact" });
   const [pressing, setPressing] = useState(false);
   const readEdgeSettings = (): { enabled: boolean; color: string; mode: EdgeMode } => {
