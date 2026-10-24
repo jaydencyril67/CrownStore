@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, CheckCheck, Download, Info, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, ChevronDown, ChevronUp, Download, Info, ShieldCheck, Trash2 } from "lucide-react";
 import {
   clearNotifications, markAllNotificationsRead, markNotificationRead, mergeCrownNotifications, readNotifications,
   type CrownNotification, type NotificationKind
@@ -37,6 +37,7 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
   const [filter, setFilter] = useState<"all" | "unread">("all");
   const [confirmClear, setConfirmClear] = useState(false);
   const [syncNotice, setSyncNotice] = useState("");
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(() => new Set());
 
   async function syncAccountInbox(token = sessionToken()) {
     if (!token) return;
@@ -141,9 +142,7 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
       <div className="app-detail-topbar">
         <span className="app-detail-top-label">NOTIFICATIONS</span>
       </div>
-      <span className="eyebrow"><Bell size={14} /> CROWNSTORE ALERTS</span>
-      <h1>Notifications</h1>
-      <p>Sign-in alerts, app releases, completed downloads and important CrownStore notices.</p>
+      <div className="notifications-title-row"><h1>Notifications</h1>{unread > 0 && <span className="notifications-unread-count">{unread} unread</span>}</div>
       <div className="notifications-toolbar">
         <div className="notifications-filters" role="group" aria-label="Filter notifications">
           <button type="button" className={filter === "all" ? "is-selected" : ""} aria-pressed={filter === "all"} onClick={() => setFilter("all")}>All <span>{items.length}</span></button>
@@ -162,14 +161,18 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
     {visible.length ? <div className="notifications-list">{visible.map((item) => <article key={item.id} className={"notification-item" + (!item.readAt ? " is-unread" : "")}>
       <button type="button" className="notification-main" onClick={() => openItem(item)} aria-label={item.appSlug ? "Open " + item.title : "Read " + item.title}>
         <span className="notification-type-icon">{kindIcon(item.kind)}</span>
-        <span className="notification-copy"><span className="notification-kind">{KIND_LABELS[item.kind]}</span><strong>{item.title}</strong><span className="notification-body">{item.body}</span><time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time></span>
+        <span className="notification-copy"><span className="notification-kind">{KIND_LABELS[item.kind]}</span><strong>{item.title}</strong><span className={"notification-body" + (expandedItems.has(item.id) ? " is-expanded" : "")}>{item.body}</span><time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time></span>
         {!item.readAt && <span className="notification-unread-dot" aria-label="Unread" />}
       </button>
-      <div className="notification-item-actions">
-        {!item.readAt && <button type="button" onClick={() => void markOneRead(item)}>Mark read</button>}
-        {item.appSlug && <button type="button" onClick={() => onOpenApp(item.appSlug!)}>View app</button>}
+      <div className="notification-item-footer">
+        <button type="button" className="notification-expand-toggle" aria-expanded={expandedItems.has(item.id)} onClick={() => setExpandedItems((current) => { const next = new Set(current); if (next.has(item.id)) next.delete(item.id); else next.add(item.id); return next; })}>
+          {expandedItems.has(item.id) ? <ChevronUp size={13} /> : <ChevronDown size={13} />} {expandedItems.has(item.id) ? "Less" : "More"}
+        </button>
+        {expandedItems.has(item.id) && <div className="notification-item-actions">
+          {!item.readAt && <button type="button" onClick={() => void markOneRead(item)}>Mark read</button>}
+          {item.appSlug && <button type="button" onClick={() => onOpenApp(item.appSlug!)}>View app</button>}
+        </div>}
       </div>
-    </article>)}</div> : <div className="notifications-empty"><span><Bell size={22} /></span><strong>{filter === "unread" ? "You’re all caught up" : "No notifications yet"}</strong><p>{filter === "unread" ? "New unread CrownStore alerts will show up here." : "When CrownStore has a sign-in alert, new release, completed download or important notice, you’ll find it here."}<button type="button" onClick={() => setFilter("all")}><Sparkles size={14} /> View all notifications</button></p></div>}
-    <p className="notifications-footnote">Account-linked notifications sync from CrownStore when you are signed in. Device alerts require notification permission, and email alerts require the email channel to be enabled in Menu.</p>
+    </article>)}</div> : <div className="notifications-empty"><span><Bell size={22} /></span><strong>{filter === "unread" ? "You’re all caught up" : "No notifications yet"}</strong><p>{filter === "unread" ? "You have no unread alerts." : "New alerts will appear here."}{filter === "unread" && <button type="button" onClick={() => setFilter("all")}>View all</button>}</p></div>}
   </section>;
 }
