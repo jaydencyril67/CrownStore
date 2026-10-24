@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import NowBar from "./NowBar";
+import ScreenshotCropModal from "./ScreenshotCropModal";
+import ImagePreviewModal from "./ImagePreviewModal";
 import NativeSelfUpdate from "./NativeSelfUpdate";
 import ProfilePage from "./ProfilePage";
 import MenuPage from "./MenuPage";
@@ -347,15 +349,6 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
     return () => { active = false; };
   }, [app.slug, reviewerToken]);
 
-  useEffect(() => {
-    if (!previewScreenshot) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setPreviewScreenshot(null);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [previewScreenshot]);
-
   async function submitReview(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (reviewSubmitting) return;
@@ -538,10 +531,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
       </button>)}</div>
     </section>}
 
-    {previewScreenshot && <div className="app-screenshot-lightbox" role="dialog" aria-modal="true" aria-label={app.name + " screenshot preview"} onClick={() => setPreviewScreenshot(null)}>
-      <button type="button" aria-label="Close screenshot" onClick={(event) => { event.stopPropagation(); setPreviewScreenshot(null); }}><X size={20} /></button>
-      <img src={previewScreenshot} alt={app.name + " full screenshot"} onClick={(event) => event.stopPropagation()} />
-    </div>}
+    {previewScreenshot && <ImagePreviewModal imageUrl={previewScreenshot} onClose={() => setPreviewScreenshot(null)} title={app.name + " screenshot preview"} />}
   </section>;
 }
 
@@ -743,9 +733,45 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [message, setMessage] = useState("");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [cropSource, setCropSource] = useState<string | null>(null);
+  const cropObjectUrlRef = useRef<string | null>(null);
+  const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
+
+  useEffect(() => () => {
+    if (cropObjectUrlRef.current) URL.revokeObjectURL(cropObjectUrlRef.current);
+  }, []);
+
+  async function uploadScreenshotToImageKit(file: File): Promise<string> {
+    const authResponse = await fetch(API_BASE + "/api/publishing/imagekit-auth", {
+      headers: { Authorization: "Bearer " + token.trim() },
+      cache: "no-store"
+    });
+    const auth = await authResponse.json() as { publicKey?: string; token?: string; expire?: number; signature?: string; error?: string };
+    if (!authResponse.ok || !auth.publicKey || !auth.token || !auth.expire || !auth.signature) {
+      throw new Error(auth.error || "Could not authorize ImageKit upload.");
+    }
+    const body = new FormData();
+    body.append("file", file);
+    body.append("fileName", file.name);
+    body.append("publicKey", auth.publicKey);
+    body.append("token", auth.token);
+    body.append("expire", String(auth.expire));
+    body.append("signature", auth.signature);
+    body.append("folder", "/crownstore/screenshots");
+    const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", { method: "POST", body });
+    const data = await response.json() as { url?: string; filePath?: string; message?: string; help?: string };
+    if (!response.ok || (!data.url && !data.filePath)) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
+    const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\\/+/, "") : "";
+    const imageUrl = IMAGEKIT_URL_ENDPOINT && imagePath
+      ? IMAGEKIT_URL_ENDPOINT + "/" + imagePath
+      : data.url;
+    if (!imageUrl) throw new Error("ImageKit returned no usable image URL for " + file.name + ".");
+    return imageUrl;
+  }
 
   async function uploadScreenshots(files: FileList | null) {
-    if (!files?.length) return;
+    if (!files?.length || uploadBusy) return;
     const currentScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
     const selectedFiles = Array.from(files);
     if (currentScreenshotUrls.length + selectedFiles.length > 6) {
@@ -756,45 +782,57 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       setUploadMessage("Enter the publishing token and load the catalogue before uploading screenshots.");
       return;
     }
-    setUploadBusy(true); setUploadMessage("");
-    const uploaded: string[] = [];
-    try {
-      for (const file of selectedFiles) {
-        if (!file.type.startsWith("image/")) throw new Error(file.name + " is not an image.");
-        if (file.size > 10 * 1024 * 1024) throw new Error(file.name + " is larger than 10 MB.");
-        const authResponse = await fetch(API_BASE + "/api/publishing/imagekit-auth", {
-          headers: { Authorization: "Bearer " + token.trim() },
-          cache: "no-store"
-        });
-        const auth = await authResponse.json() as { publicKey?: string; token?: string; expire?: number; signature?: string; error?: string };
-        if (!authResponse.ok || !auth.publicKey || !auth.token || !auth.expire || !auth.signature) {
-          throw new Error(auth.error || "Could not authorize ImageKit upload.");
-        }
-        const body = new FormData();
-        body.append("file", file);
-        body.append("fileName", file.name);
-        body.append("publicKey", auth.publicKey);
-        body.append("token", auth.token);
-        body.append("expire", String(auth.expire));
-        body.append("signature", auth.signature);
-        body.append("folder", "/crownstore/screenshots");
-        const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", { method: "POST", body });
-        const data = await response.json() as { url?: string; filePath?: string; message?: string; help?: string };
-        if (!response.ok || (!data.url && !data.filePath)) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
-        // Prefer the configured delivery endpoint + ImageKit file path so deployments
-        // consistently use VITE_IMAGEKIT_URL_ENDPOINT rather than a hardcoded host.
-        const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\/+/, "") : "";
-        const imageUrl = IMAGEKIT_URL_ENDPOINT && imagePath
-          ? IMAGEKIT_URL_ENDPOINT + "/" + imagePath
-          : data.url;
-        if (!imageUrl) throw new Error("ImageKit returned no usable image URL for " + file.name + ".");
-        uploaded.push(imageUrl);
+    for (const file of selectedFiles) {
+      if (!file.type.startsWith("image/")) {
+        setUploadMessage(file.name + " is not an image.");
+        return;
       }
-      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\n") }));
-      setUploadMessage(uploaded.length + " screenshot" + (uploaded.length === 1 ? "" : "s") + " uploaded to ImageKit.");
-    } catch (error) {
-      setUploadMessage(error instanceof Error ? error.message : "Screenshot upload failed.");
-    } finally { setUploadBusy(false); }
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadMessage(file.name + " is larger than 10 MB.");
+        return;
+      }
+    }
+    setUploadBusy(true);
+    setUploadMessage("Crop each screenshot before uploading it to ImageKit.");
+    setCropQueue(selectedFiles);
+    const objectUrl = URL.createObjectURL(selectedFiles[0]);
+    cropObjectUrlRef.current = objectUrl;
+    setCropSource(objectUrl);
+  }
+
+  async function confirmScreenshotCrop(croppedFile: File) {
+    const originalFile = cropQueue[0];
+    if (!originalFile) return;
+    const baseName = originalFile.name.replace(/\.[^.]+$/, "") || "crownstore-screenshot";
+    const uploadFile = new File([croppedFile], baseName + "-cropped.jpg", { type: croppedFile.type || "image/jpeg" });
+    const imageUrl = await uploadScreenshotToImageKit(uploadFile);
+    setForm((current) => ({
+      ...current,
+      screenshotsText: [...current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean), imageUrl].join("\n")
+    }));
+    const remaining = cropQueue.slice(1);
+    setCropQueue(remaining);
+    if (cropObjectUrlRef.current) URL.revokeObjectURL(cropObjectUrlRef.current);
+    cropObjectUrlRef.current = null;
+    if (remaining.length > 0) {
+      const nextUrl = URL.createObjectURL(remaining[0]);
+      cropObjectUrlRef.current = nextUrl;
+      setCropSource(nextUrl);
+      setUploadMessage("Screenshot uploaded. Crop the next selected image.");
+    } else {
+      setCropSource(null);
+      setUploadBusy(false);
+      setUploadMessage(cropQueue.length + " screenshot" + (cropQueue.length === 1 ? "" : "s") + " cropped and uploaded to ImageKit.");
+    }
+  }
+
+  function cancelScreenshotCrop() {
+    if (cropObjectUrlRef.current) URL.revokeObjectURL(cropObjectUrlRef.current);
+    cropObjectUrlRef.current = null;
+    setCropQueue([]);
+    setCropSource(null);
+    setUploadBusy(false);
+    setUploadMessage("Screenshot cropping cancelled. Completed uploads have been kept.");
   }
 
   async function loadCatalogue() {
@@ -870,7 +908,8 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     } finally { setBusy(false); }
   }
 
-  return <section className="admin-page manager-page" aria-labelledby="manager-title">
+  return <>
+  <section className="admin-page manager-page" aria-labelledby="manager-title">
     <button className="admin-page-back" type="button" onClick={onClose}><ArrowLeft size={17} /> Back to store</button>
     <div className="publisher-modal glass-panel">
       <span className="eyebrow">CATALOGUE ADMINISTRATION</span>
@@ -901,14 +940,17 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
           <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
-          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label><p>Choose image files to upload them to ImageKit. {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length}/6 screenshots · Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
+          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label><p>Choose image files to crop and upload to ImageKit. {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length}/6 screenshots · Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Crop and apply each screenshot to upload it…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><button type="button" className="screenshot-preview-open" onClick={() => setPreviewScreenshot(url)} aria-label={"Preview screenshot " + (index + 1)}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /></button><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
       </>}
       {message && <p className="publisher-message manager-message" role="status">{message}</p>}
     </div>
-  </section>;
+  </section>
+  {cropSource && <ScreenshotCropModal imageUrl={cropSource} onCancel={cancelScreenshotCrop} onDone={confirmScreenshotCrop} title="Crop app screenshot" aspectRatio={9 / 16} />}
+  {previewScreenshot && <ImagePreviewModal imageUrl={previewScreenshot} onClose={() => setPreviewScreenshot(null)} title="Uploaded screenshot preview" />}
+  </>;
 }
 
 export default function App() {
