@@ -836,7 +836,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       request.onabort = () => reject(new Error("Upload cancelled for " + file.name + "."));
       request.send(body);
     });
-    const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\\/+/, "") : "";
+    const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\/+/, "") : "";
     const imageUrl = IMAGEKIT_URL_ENDPOINT && imagePath
       ? IMAGEKIT_URL_ENDPOINT + "/" + imagePath
       : data.url;
