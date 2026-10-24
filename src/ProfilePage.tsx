@@ -603,13 +603,10 @@ export default function ProfilePage({
       await new Promise((resolve) => window.setTimeout(resolve, 150));
       if (Capacitor.isNativePlatform()) {
         if (!Capacitor.isPluginAvailable("KingsHallAccount")) throw new Error("This CrownStore APK needs an update to use the KingsHall account manager.");
-        const availability = await DeviceAccount.hasAccounts();
+        // Ask Android's native account picker directly. A separate visibility pre-check can
+        // incorrectly block the picker before Android has a chance to return the selectable account.
         const remaining = 5000 - (Date.now() - startedAt);
         if (remaining > 0) await new Promise((resolve) => window.setTimeout(resolve, remaining));
-        if (!availability.hasAccount) {
-          setShowNoAccountModal(true);
-          return;
-        }
         const selected = await DeviceAccount.chooseAccount();
         if (selected.noAccount) {
           setShowNoAccountModal(true);
