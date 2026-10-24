@@ -14,6 +14,7 @@ import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { NativeProfileUsage } from "./native/nativeProfileUsage";
 import "./profile.css";
 import { showToast, toastKindForMessage } from "./toast";
+import { openEcosystemApp } from "./utils/crossAppLauncher";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 const TOKEN_KEY = "crownstore-profile-token";
@@ -413,10 +414,11 @@ export default function ProfilePage({
   }, [token]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const returnedEmail = (params.get("kingshall_account") || hashParams.get("kingshall_account") || "").trim().toLowerCase();
-    if (EMAIL_PATTERN.test(returnedEmail)) {
+    const consumeReturnedAccount = () => {
+      const params = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const returnedEmail = (params.get("kingshall_account") || hashParams.get("kingshall_account") || "").trim().toLowerCase();
+      if (!EMAIL_PATTERN.test(returnedEmail)) return;
       localStorage.setItem(ACCOUNT_HINT_KEY, returnedEmail);
       setIdentity(returnedEmail);
       setNotice("KingsHall account received. Enter its bound Access Code to continue.");
@@ -424,7 +426,14 @@ export default function ProfilePage({
       cleaned.searchParams.delete("kingshall_account");
       if (cleaned.hash.includes("kingshall_account=")) cleaned.hash = "";
       window.history.replaceState({}, "", cleaned.pathname + cleaned.search + cleaned.hash);
-    }
+    };
+    consumeReturnedAccount();
+    window.addEventListener("popstate", consumeReturnedAccount);
+    window.addEventListener("hashchange", consumeReturnedAccount);
+    return () => {
+      window.removeEventListener("popstate", consumeReturnedAccount);
+      window.removeEventListener("hashchange", consumeReturnedAccount);
+    };
   }, []);
 
   useEffect(() => {
@@ -569,7 +578,14 @@ export default function ProfilePage({
   }
 
   function redirectToKingsHall() {
-    const returnTo = window.location.origin + window.location.pathname + "?profile=1";
+    const returnTo = "https://crownstore.kingshall.online/?profile=1";
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
+      const targetUrl = new URL("kingshall://signin");
+      targetUrl.searchParams.set("app", "crownstore");
+      targetUrl.searchParams.set("returnTo", returnTo);
+      void openEcosystemApp("kingshall", "kingshall", targetUrl.toString(), (message) => setNotice(message));
+      return;
+    }
     const url = new URL("https://kingshall.online/signin");
     url.searchParams.set("app", "crownstore");
     url.searchParams.set("returnTo", returnTo);
