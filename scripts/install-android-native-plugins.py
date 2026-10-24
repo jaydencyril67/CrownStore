@@ -150,6 +150,9 @@ if "webView.setVerticalScrollBarEnabled(false);" not in activity:
 activity_path.write_text(activity, encoding="utf-8")
 print("Installed CrownStore account picker, Android usage insights, passkey authentication, native APK installer, hidden WebView scrollbars, and app deep links.")
 
+# Install the KingsHall-style custom Android photo gallery before the shared launcher.
+subprocess.run([sys.executable, "scripts/install-android-native-gallery.py"], check=True)
+
 # Install the shared native APK launcher after MainActivity and its other plugins exist.
 import subprocess
 import sys
