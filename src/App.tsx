@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import NowBar from "./NowBar";
-import DeviceUpdatesPanel from "./DeviceUpdatesPanel";
-import NativeDeviceBridgeAgent from "./NativeDeviceBridgeAgent";
 import NativeSelfUpdate from "./NativeSelfUpdate";
 import ProfilePage from "./ProfilePage";
 import MenuPage from "./MenuPage";
@@ -13,7 +11,6 @@ import { Capacitor, CapacitorHttp } from "@capacitor/core";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
 import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
-import type { BridgeSessionRef } from "./native/deviceBridgeTypes";
 import {
   ArrowDownToLine, ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronRight,
   Download, Image as ImageIcon, Info, Layers3, MessageCircle, PackageCheck, Search, Send, Star,
@@ -787,6 +784,9 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
 
 export default function App() {
   const [apps, setApps] = useState<CrownApp[]>([]);
+  const [recentApps, setRecentApps] = useState<CrownApp[]>([]);
+  const [updatesLoading, setUpdatesLoading] = useState(true);
+  const [updatesError, setUpdatesError] = useState("");
   const [installedApps, setInstalledApps] = useState<Record<string, NativeInstalledApp>>({});
   const [installedScanStatus, setInstalledScanStatus] = useState<InstalledScanStatus>(Capacitor.getPlatform() === "android" ? "checking" : "unsupported");
   const [installedScanError, setInstalledScanError] = useState("");
@@ -851,21 +851,6 @@ export default function App() {
   useEffect(() => {
     try { window.localStorage.setItem("crownstore-current-view", view); } catch { /* Keep navigation working when storage is unavailable. */ }
   }, [view]);
-  const [bridgeSession, setBridgeSession] = useState<BridgeSessionRef | null>(() => {
-    try {
-      const saved = window.localStorage.getItem("crownstore-device-bridge-session");
-      if (!saved) return null;
-      const parsed = JSON.parse(saved) as BridgeSessionRef;
-      return parsed?.sessionId && parsed?.secret ? parsed : null;
-    } catch { return null; }
-  });
-
-  useEffect(() => {
-    try {
-      if (bridgeSession) window.localStorage.setItem("crownstore-device-bridge-session", JSON.stringify(bridgeSession));
-      else window.localStorage.removeItem("crownstore-device-bridge-session");
-    } catch { /* Keep the bridge usable if browser storage is unavailable. */ }
-  }, [bridgeSession]);
   const [requestedAppSlug, setRequestedAppSlug] = useState(() => {
     try { return new URLSearchParams(window.location.search).get("app")?.trim().toLowerCase() || ""; } catch { return ""; }
   });
@@ -886,12 +871,6 @@ export default function App() {
           }
           return;
         }
-        if (url.hostname !== "connect") return;
-        const sessionId = url.searchParams.get("sessionId") || "";
-        const secret = url.searchParams.get("secret") || "";
-        if (!sessionId || !secret) return;
-        setBridgeSession({ sessionId, secret, deepLink: value, expiresAt: "" });
-        setView("UPDATES");
       } catch { /* Ignore unrelated Android intents. */ }
     };
     void CapacitorApp.getLaunchUrl().then((launch) => {
@@ -945,6 +924,19 @@ export default function App() {
     const frame = window.requestAnimationFrame(resetShelves);
     return () => window.cancelAnimationFrame(frame);
   }, [loading, apps.length, view]);
+
+  async function loadRecentApps() {
+    setUpdatesLoading(true);
+    setUpdatesError("");
+    try {
+      const payload = await requestStoreJson<AppsResponse>(API_BASE + "/api/apps/updates");
+      setRecentApps(Array.isArray(payload.apps) ? payload.apps : []);
+    } catch (caught) {
+      setUpdatesError(caught instanceof Error ? caught.message : "CrownStore could not load recent releases.");
+    } finally {
+      setUpdatesLoading(false);
+    }
+  }
 
   async function loadApps(signal?: AbortSignal, silent = false) {
     if (!silent) {
@@ -1042,6 +1034,11 @@ export default function App() {
     void loadApps(controller.signal);
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (view !== "UPDATES") return;
+    void loadRecentApps();
+  }, [view, apps]);
 
   // Web/PWA clients listen for completed release events only while the page is visible.
   // Android APK clients refresh on resume instead of keeping an SSE connection open.
@@ -1538,19 +1535,13 @@ export default function App() {
 
   const categories = useMemo(() => ["All apps", ...Array.from(new Set(apps.map((app) => app.category).filter((item): item is string => Boolean(item && item.trim())))).sort((a, b) => a.localeCompare(b))], [apps]);
   const filtered = useMemo(() => {
-    const base = view === "UPDATES"
-      ? apps.filter((app) => app.releaseId && (!isAndroidApp || getAppInstallState(app, installedApps, installedScanStatus) === "update"))
-      : apps;
     const q = search.trim().toLowerCase();
-    return base.filter((app) => {
+    return apps.filter((app) => {
       const categoryMatches = category === "All apps" || app.category?.toLowerCase() === category.toLowerCase();
       const searchMatches = !q || [app.name, app.shortDescription, app.description, app.category, app.packageId].some((value) => value?.toLowerCase().includes(q));
       return categoryMatches && searchMatches;
-    }).sort((a, b) => {
-      if (view === "UPDATES") return new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime();
-      return a.name.localeCompare(b.name);
-    });
-  }, [apps, search, category, view, installedApps, installedScanStatus, isAndroidApp]);
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [apps, search, category]);
 
   const searchResults = useMemo(() => {
     const query = searchPageQuery.trim().toLowerCase();
@@ -1638,7 +1629,6 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "auto" });
   }
 
-  const updatesAvailable = apps.some((app) => Boolean(app.releaseId));
   // Match KingsHall: header alert styling is active only while unread notifications exist.
   const showHeaderAlerts = unreadAlerts > 0;
   return <div className="site-shell">
@@ -1734,6 +1724,20 @@ export default function App() {
                     ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={openAppDetails} />)}</div>
                     : <div className="search-empty-prompt"><Search size={24} /><strong>No apps are listed yet</strong><span>Official apps will appear here when they are published to CrownStore.</span></div>}
             </section>}
+      </section> : view === "UPDATES" ? <section className="updates-page" aria-labelledby="updates-title">
+        <div className="updates-page-heading">
+          <div className="eyebrow"><Download size={14} /> RECENT RELEASES</div>
+          <h1 id="updates-title">New releases</h1>
+          <p>Apps with a stable release published within the last 7 days.</p>
+        </div>
+        {!updatesLoading && !updatesError && <p className="updates-page-count">{recentApps.length} {recentApps.length === 1 ? "app" : "apps"} published in the last 7 days</p>}
+        {updatesLoading
+          ? <div className="state-panel"><div className="loader-ring" /><strong>Loading recent releases</strong><span>Checking releases published in the last 7 days…</span></div>
+          : updatesError
+            ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Recent releases are unavailable</strong><span>{updatesError}</span><button className="button button-outline" onClick={() => void loadRecentApps()}>Try again</button></div>
+            : recentApps.length
+              ? <div className="app-grid">{recentApps.map((app) => <AppCard key={app.id} app={app} onDetails={openAppDetails} />)}</div>
+              : <div className="state-panel"><div className="state-icon"><Download size={22} /></div><strong>No new releases in the last 7 days</strong><span>Only apps with a recent published stable release appear here.</span></div>}
       </section> : view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
         {[
           { id: "recommended", title: "Recommended for you", subtitle: "Explore the official KingsHall app collection.", icon: Sparkles, select: (_app: CrownApp) => true, sort: (a: CrownApp, b: CrownApp) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name) },
@@ -1755,7 +1759,7 @@ export default function App() {
         })}
         <div className="shelf-footer-note"><ShieldCheck size={15} /> Official apps and verified Android releases, all in one trusted place.</div>
       </section> : <>
-      <section className={`hero ${view === "UPDATES" ? "updates-hero" : ""}`}>
+      <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div>
           <h1>All your apps.<br /><span>One royal home.</span></h1>
@@ -1765,10 +1769,9 @@ export default function App() {
         </div>
         <div className="hero-art"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-glow" /><div className="hero-crown"><StoreMark size={61} /><span>CROWNSTORE</span></div><div className="floating-chip chip-one"><Smartphone size={17} /> Android apps</div><div className="floating-chip chip-two"><ShieldCheck size={17} /> Verified builds</div><div className="floating-chip chip-three"><ArrowDownToLine size={17} /> Direct downloads</div></div>
       </section>
-            {view === "UPDATES" && !isAndroidApp && <DeviceUpdatesPanel launchSession={bridgeSession} onConnect={setBridgeSession} />}
-      <section className={`apps-section ${view === "UPDATES" ? "updates-page" : ""}`} id="apps">
+      <section className="apps-section" id="apps">
         <div className="section-heading">
-          <div><div className="eyebrow">{view === "UPDATES" ? "LATEST PUBLISHED BUILDS" : "THE COLLECTION"}</div><h2>{view === "UPDATES" ? "Latest releases" : "Find your next app."}</h2><p>{view === "UPDATES" ? "The latest stable APKs published to CrownStore." : "Browse the official KingsHall app family."}</p></div>
+          <div><div className="eyebrow">THE COLLECTION</div><h2>Find your next app.</h2><p>Browse the official KingsHall app family.</p></div>
           <label className="search-box"><Search size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search apps or package names..." aria-label="Search applications" />{search && <button onClick={() => setSearch("")} aria-label="Clear search"><X size={15} /></button>}</label>
         </div>
         {!loading && !error && apps.length > 0 && <div className="catalogue-controls">
@@ -1781,26 +1784,17 @@ export default function App() {
           ? <div className="state-panel"><div className="loader-ring" /><strong>Opening the collection</strong><span>Fetching published apps…</span></div>
           : error
             ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Catalogue temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
-            : view === "UPDATES" && isAndroidApp && installedScanStatus === "checking"
-              ? <div className="state-panel"><div className="loader-ring" /><strong>Checking your installed apps</strong><span>Comparing installed version codes with the latest verified releases…</span></div>
-              : view === "UPDATES" && isAndroidApp && installedScanStatus === "error"
-                ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Installed apps could not be checked</strong><span>{installedScanError || "CrownStore couldn't read this phone's installed app versions."}</span><button className="button button-outline" onClick={() => installedScanRef.current()}>Try again</button></div>
-                : filtered.length
+            : filtered.length
               ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} onDetails={openAppDetails} />)}</div>
-              : view === "UPDATES" && isAndroidApp && installedScanStatus === "ready" && !search.trim() && category === "All apps"
-                ? <div className="state-panel"><div className="state-icon"><CheckCircle2 size={22} /></div><strong>You’re all caught up</strong><span>Every installed CrownStore app is using the latest published version. Apps you haven’t installed remain available in the collection.</span></div>
-              : view === "UPDATES" && !search.trim() && category === "All apps" && !updatesAvailable
-                ? <div className="state-panel"><div className="state-icon"><Download size={22} /></div><strong>No published updates yet</strong><span>The apps are in the catalogue, but no stable APK release has been published yet. Check back after the first release is verified.</span></div>
-                : apps.length
-                  ? <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No matching applications</strong><span>Try another search term or category.</span><button className="button button-outline" onClick={() => { setSearch(""); setCategory("All apps"); }}>Clear filters</button></div>
-                  : <div className="state-panel"><div className="state-icon"><StoreMark size={23} /></div><strong>The collection is getting ready</strong><span>Official apps appear here as soon as the catalogue is configured.</span></div>}
+              : apps.length
+                ? <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No matching applications</strong><span>Try another search term or category.</span><button className="button button-outline" onClick={() => { setSearch(""); setCategory("All apps"); }}>Clear filters</button></div>
+                : <div className="state-panel"><div className="state-icon"><StoreMark size={23} /></div><strong>The collection is getting ready</strong><span>Official apps appear here as soon as the catalogue is configured.</span></div>}
         <div className="catalogue-footnote"><ShieldCheck size={15} /> Downloads resolve through the official CrownStore API and published release catalogue.</div>
       </section>
       </>}
       {view !== "HOME" && view !== "SEARCH" && view !== "UPDATES" && view !== "PROFILE" && view !== "MENU" && view !== "NOTIFICATIONS" && view !== "COLOR_PICKER" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
-    <NativeDeviceBridgeAgent session={bridgeSession} />
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
     <NowBar activePage={selectedApp ? "DETAILS" : view === "COLOR_PICKER" ? "MENU" : view === "PROFILE" ? "PROFILE" : view === "MENU" ? "MENU" : view === "NOTIFICATIONS" ? "NOTIFICATIONS" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} onMenu={() => { closeAppDetails(); navigate("MENU"); }} onNotifications={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
