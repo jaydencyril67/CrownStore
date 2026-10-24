@@ -984,7 +984,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     }
   }
 
-  const savedScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+  const savedScreenshotUrls = savedScreenshotUrls;
   const actionScreenshotUrl = actionScreenshot
     ? actionScreenshot.kind === "saved" ? actionScreenshot.url : pendingScreenshots.find((item) => item.id === actionScreenshot.id)?.previewUrl || null
     : null;
@@ -1023,23 +1023,23 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
           <div className="screenshot-upload-field">
             <label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label>
-            <p>Tap any image to choose Crop, View, or Remove. New images appear as previews first and upload to ImageKit only when you save. {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length + pendingScreenshots.length}/6 screenshots · Up to 10 MB per image.</p>
+            <p>Tap any image to choose Crop, View, or Remove. New images appear as previews first and upload to ImageKit only when you save. {savedScreenshotUrls.length + pendingScreenshots.length}/6 screenshots · Up to 10 MB per image.</p>
             <input id="catalogue-screenshot-upload" className="screenshot-file-input" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { selectScreenshotFiles(event.target.files); event.currentTarget.value = ""; }} />
             <label className={"button button-outline screenshot-add-button" + (uploadBusy || busy ? " is-disabled" : "")} htmlFor="catalogue-screenshot-upload" aria-disabled={uploadBusy || busy}>Add Screenshot</label>
             {uploadBusy && <p role="status">Uploading screenshots to ImageKit. Keep this page open until the save finishes…</p>}
             {uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}
             {(form.screenshotsText.trim() || pendingScreenshots.length > 0) && <div className="screenshot-preview-list" aria-label="App screenshots">
-              {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={"saved-" + url + "-" + index}>
+              {savedScreenshotUrls.map((url, index) => <div className="screenshot-preview-item" key={"saved-" + url + "-" + index}>
                 <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot({ kind: "saved", url })} aria-label={"Screenshot " + (index + 1) + " actions"}>
                   <img src={url} alt={"Screenshot " + (index + 1)} loading="lazy" />
                 </button>
                 <span>Screenshot {index + 1}</span>
               </div>)}
               {pendingScreenshots.map((item, index) => <div className="screenshot-preview-item is-pending" key={item.id}>
-                <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot({ kind: "pending", id: item.id })} aria-label={"Selected screenshot " + (form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).length + index + 1) + " actions"}>
+                <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot({ kind: "pending", id: item.id })} aria-label={"Selected screenshot " + (savedScreenshotUrls.length + index + 1) + " actions"}>
                   <img src={item.previewUrl} alt={"Selected screenshot " + (index + 1)} />
                 </button>
-                <span>Screenshot {form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).length + index + 1} · Not uploaded yet</span>
+                <span>Screenshot {savedScreenshotUrls.length + index + 1} · Not uploaded yet</span>
               </div>)}
             </div>}
           </div>
