@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type TouchEvent, type ReactNode } from "react";
-import { Home, Search, Download, Sparkles, Menu, Crosshair, ListFilter, Plus, UserRound, Info } from "lucide-react";
+import { Home, Search, Download, Menu, UserRound, Info } from "lucide-react";
 import { BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, EDGE_LIGHT_KEY, EDGE_LIGHT_ENABLED_KEY, EDGE_LIGHT_COLOR_KEY, EDGE_LIGHT_MODE_KEY, EXPAND_MODE_KEY, SWIPE_NAVIGATION_KEY } from "./notifications";
 
-type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "ABOUT" | "OPTION 4" | "OPTION 7" | "OPTION 8" | "OPTION 9" | "OPTION 10" | "OPTION 11";
+type ActionLabel = "HOME" | "SEARCH" | "UPDATES" | "PROFILE" | "NOTIFICATIONS" | "MENU" | "ABOUT";
 type Action = { label: ActionLabel; icon: ReactNode };
 type EdgeMode = "stable-light" | "stable" | "blink-light" | "blink" | "pulse-light" | "pulse" | "color-light" | "color";
 
@@ -13,11 +13,6 @@ const actions: Action[] = [
   { label: "PROFILE", icon: <UserRound size={18} /> },
   { label: "ABOUT", icon: <Info size={18} /> },
   { label: "MENU", icon: <Menu size={18} /> },
-  { label: "OPTION 7", icon: <Crosshair size={18} /> },
-  { label: "OPTION 8", icon: <ListFilter size={18} /> },
-  { label: "OPTION 9", icon: <ListFilter size={18} /> },
-  { label: "OPTION 10", icon: <Plus size={18} /> },
-  { label: "OPTION 11", icon: <Download size={18} /> },
 ];
 
 const ORDER: Array<"HOME" | "SEARCH" | "UPDATES"> = ["HOME", "SEARCH", "UPDATES"];
@@ -29,7 +24,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
     try {
       const saved = JSON.parse(window.localStorage.getItem(EDGE_LIGHT_KEY) || "{}") as { enabled?: boolean; color?: string; mode?: string };
       const modes: EdgeMode[] = ["stable-light", "stable", "blink-light", "blink", "pulse-light", "pulse", "color-light", "color"];
-      // Prefer the dedicated keys (same pattern as KingsHall); fall back to the combined key for older installs.
       const dedicatedMode = window.localStorage.getItem(EDGE_LIGHT_MODE_KEY);
       const storedMode = modes.includes(dedicatedMode as EdgeMode) ? dedicatedMode : saved.mode;
       const storedColor = window.localStorage.getItem(EDGE_LIGHT_COLOR_KEY) ?? saved.color;
@@ -69,8 +63,6 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
       setExpandModeEnabled(readEnabled(EXPAND_MODE_KEY, true));
       setSwipeNavigationEnabled(readEnabled(SWIPE_NAVIGATION_KEY, true));
     };
-    // Navigation can remount this component or restore a page from the back-forward cache.
-    // Re-read persisted preferences rather than letting an old in-memory snapshot win.
     const refreshWhenRestored = () => refreshSettings();
     window.addEventListener("storage", refreshSettings);
     window.addEventListener("crownstore:nowbar-settings-changed", refreshSettings);
@@ -229,7 +221,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
                   aria-label={action.label}
                   onClick={() => {
                     if (holdTriggered.current) { holdTriggered.current = false; return; }
-                    if (["HOME", "SEARCH", "UPDATES", "PROFILE", "NOTIFICATIONS", "MENU", "ABOUT"].includes(action.label)) activate(action.label);
+                    activate(action.label);
                   }}
                 >
                   <span className="kh-nowbar-icon">{action.icon}</span>
