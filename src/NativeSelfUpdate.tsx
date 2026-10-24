@@ -3,7 +3,7 @@ import { Download, RefreshCw, Smartphone } from "lucide-react";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import type { CrownApp } from "./types";
-import { API_BASE } from "./native/deviceBridge";
+const API_BASE = "https://apicrownstore.kingshall.online";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
 
 type Props = {
