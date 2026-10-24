@@ -15,8 +15,8 @@ import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
 import {
   ArrowDownToLine, ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronDown, ChevronRight,
-  Download, Image as ImageIcon, Info, Layers3, MessageCircle, PackageCheck, Search, Send, Star,
-  ShieldCheck, Smartphone, Sparkles, X
+  Crop, Download, Eye, Image as ImageIcon, Info, Layers3, MessageCircle, PackageCheck, Search, Send, Star,
+  ShieldCheck, Smartphone, Sparkles, Trash2, X
 } from "lucide-react";
 import type { AppsResponse, CrownApp } from "./types";
 import "./search.css";
@@ -711,6 +711,8 @@ type CatalogueForm = {
   name: string; slug: string; packageId: string; shortDescription: string; description: string;
   category: string; sourceRepo: string; iconUrl: string; screenshotsText: string; isListed: boolean;
 };
+type PendingScreenshot = { id: string; file: File; previewUrl: string };
+type ScreenshotActionTarget = { kind: "saved"; url: string } | { kind: "pending"; id: string };
 const emptyCatalogueForm = (): CatalogueForm => ({
   name: "", slug: "", packageId: "", shortDescription: "", description: "",
   category: "Utilities", sourceRepo: "", iconUrl: "", screenshotsText: "", isListed: true
@@ -751,14 +753,30 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [message, setMessage] = useState("");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
-  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [pendingScreenshots, setPendingScreenshots] = useState<PendingScreenshot[]>([]);
+  const pendingScreenshotsRef = useRef<PendingScreenshot[]>([]);
   const [cropSource, setCropSource] = useState<string | null>(null);
-  const cropObjectUrlRef = useRef<string | null>(null);
+  const [cropTarget, setCropTarget] = useState<ScreenshotActionTarget | null>(null);
+  const [actionScreenshot, setActionScreenshot] = useState<ScreenshotActionTarget | null>(null);
   const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
 
+  useEffect(() => {
+    pendingScreenshotsRef.current = pendingScreenshots;
+  }, [pendingScreenshots]);
+
   useEffect(() => () => {
-    if (cropObjectUrlRef.current) URL.revokeObjectURL(cropObjectUrlRef.current);
+    pendingScreenshotsRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl));
   }, []);
+
+  function clearPendingScreenshots() {
+    pendingScreenshots.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    pendingScreenshotsRef.current = [];
+    setPendingScreenshots([]);
+    setCropSource(null);
+    setCropTarget(null);
+    setActionScreenshot(null);
+    setPreviewScreenshot(null);
+  }
 
   async function uploadScreenshotToImageKit(file: File): Promise<string> {
     const authResponse = await fetch(API_BASE + "/api/publishing/imagekit-auth", {
@@ -788,16 +806,12 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     return imageUrl;
   }
 
-  async function uploadScreenshots(files: FileList | null) {
-    if (!files?.length || uploadBusy) return;
-    const currentScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+  function selectScreenshotFiles(files: FileList | null) {
+    if (!files?.length || uploadBusy || busy) return;
+    const savedUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
     const selectedFiles = Array.from(files);
-    if (currentScreenshotUrls.length + selectedFiles.length > 6) {
+    if (savedUrls.length + pendingScreenshots.length + selectedFiles.length > 6) {
       setUploadMessage("An app can have at most 6 screenshots. Remove existing screenshots or select fewer images.");
-      return;
-    }
-    if (!token.trim()) {
-      setUploadMessage("Enter the publishing token and load the catalogue before uploading screenshots.");
       return;
     }
     for (const file of selectedFiles) {
@@ -810,47 +824,45 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
         return;
       }
     }
-    setUploadBusy(true);
-    setUploadMessage("Crop each screenshot before uploading it to ImageKit.");
-    setCropQueue(selectedFiles);
-    const objectUrl = URL.createObjectURL(selectedFiles[0]);
-    cropObjectUrlRef.current = objectUrl;
-    setCropSource(objectUrl);
+    const additions = selectedFiles.map((file, index) => ({
+      id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2) + "-" + index,
+      file,
+      previewUrl: URL.createObjectURL(file)
+    }));
+    setPendingScreenshots((current) => [...current, ...additions]);
+    setUploadMessage(selectedFiles.length + " image" + (selectedFiles.length === 1 ? "" : "s") + " selected. They will upload to ImageKit when you save the application.");
   }
 
   async function confirmScreenshotCrop(croppedFile: File) {
-    const originalFile = cropQueue[0];
-    if (!originalFile) return;
-    const baseName = originalFile.name.replace(/\.[^.]+$/, "") || "crownstore-screenshot";
+    const target = cropTarget;
+    if (!target) return;
+    const previous = target.kind === "pending" ? pendingScreenshots.find((item) => item.id === target.id) : undefined;
+    const baseName = (previous?.file.name || "crownstore-screenshot").replace(/\.[^.]+$/, "") || "crownstore-screenshot";
     const uploadFile = new File([croppedFile], baseName + "-cropped.jpg", { type: croppedFile.type || "image/jpeg" });
-    const imageUrl = await uploadScreenshotToImageKit(uploadFile);
-    setForm((current) => ({
-      ...current,
-      screenshotsText: [...current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean), imageUrl].join("\n")
-    }));
-    const remaining = cropQueue.slice(1);
-    setCropQueue(remaining);
-    if (cropObjectUrlRef.current) URL.revokeObjectURL(cropObjectUrlRef.current);
-    cropObjectUrlRef.current = null;
-    if (remaining.length > 0) {
-      const nextUrl = URL.createObjectURL(remaining[0]);
-      cropObjectUrlRef.current = nextUrl;
-      setCropSource(nextUrl);
-      setUploadMessage("Screenshot uploaded. Crop the next selected image.");
+    const previewUrl = URL.createObjectURL(uploadFile);
+    if (target.kind === "pending") {
+      if (previous) URL.revokeObjectURL(previous.previewUrl);
+      setPendingScreenshots((current) => current.map((item) => item.id === target.id ? { ...item, file: uploadFile, previewUrl } : item));
     } else {
-      setCropSource(null);
-      setUploadBusy(false);
-      setUploadMessage(cropQueue.length + " screenshot" + (cropQueue.length === 1 ? "" : "s") + " cropped and uploaded to ImageKit.");
+      setForm((current) => ({
+        ...current,
+        screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== target.url).join("\n")
+      }));
+      setPendingScreenshots((current) => [...current, {
+        id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2),
+        file: uploadFile,
+        previewUrl
+      }]);
     }
+    setCropSource(null);
+    setCropTarget(null);
+    setUploadMessage("Crop applied to the preview. Save application changes to upload it to ImageKit.");
   }
 
   function cancelScreenshotCrop() {
-    if (cropObjectUrlRef.current) URL.revokeObjectURL(cropObjectUrlRef.current);
-    cropObjectUrlRef.current = null;
-    setCropQueue([]);
     setCropSource(null);
-    setUploadBusy(false);
-    setUploadMessage("Screenshot cropping cancelled. Completed uploads have been kept.");
+    setCropTarget(null);
+    setUploadMessage("Cropping cancelled. The screenshot has not been changed or uploaded.");
   }
 
   async function loadCatalogue() {
@@ -871,6 +883,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       const preferredSlug = editingSlug !== "__new__" ? editingSlug : loaded ? "__new__" : rememberedSlug;
       const selected = (preferredSlug !== "__new__" ? items.find((item) => item.slug === preferredSlug) : undefined)
         || (preferredSlug === "__new__" && loaded ? undefined : items[0]);
+      clearPendingScreenshots();
       setCatalogue(items);
       setLoaded(true);
       setEditingSlug(selected?.slug || "__new__");
@@ -889,10 +902,12 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   function selectEntry(value: string) {
     setMessage("");
     setEditingSlug(value);
-    if (value === "__new__") { setForm(emptyCatalogueForm()); return; }
+    clearPendingScreenshots();
+    if (value === "__new__") { setForm(emptyCatalogueForm()); setUploadMessage(""); return; }
     const item = catalogue.find((entry) => entry.slug === value);
     if (item) {
       setForm(catalogueFormFor(item));
+      setUploadMessage("");
       try { window.localStorage.setItem(MANAGED_APP_SELECTION_KEY, item.slug); } catch { /* Storage is optional. */ }
     }
   }
@@ -900,27 +915,37 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!token.trim()) { setMessage("Enter your publishing token first."); return; }
-    const screenshotCount = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length;
+    const existingScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+    const screenshotCount = existingScreenshotUrls.length + pendingScreenshots.length;
     if (screenshotCount < 4 || screenshotCount > 6) {
       setMessage("Each app must have 4 to 6 screenshots. You currently have " + screenshotCount + ".");
       return;
     }
-    setBusy(true); setMessage("");
+    setBusy(true);
+    setMessage("");
     const previousSlug = editingSlug;
     const isNew = previousSlug === "__new__";
-    const payload = {
-      name: form.name.trim(),
-      slug: form.slug.trim().toLowerCase(),
-      packageId: form.packageId.trim(),
-      shortDescription: form.shortDescription.trim(),
-      description: form.description.trim(),
-      category: form.category.trim() || "Utilities",
-      sourceRepo: form.sourceRepo.trim(),
-      iconUrl: form.iconUrl.trim() || null,
-      screenshots: form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean),
-      isListed: form.isListed
-    };
     try {
+      const screenshotUrls = [...existingScreenshotUrls];
+      if (pendingScreenshots.length) {
+        setUploadBusy(true);
+        for (let index = 0; index < pendingScreenshots.length; index += 1) {
+          setUploadMessage("Uploading screenshot " + (index + 1) + " of " + pendingScreenshots.length + " to ImageKit…");
+          screenshotUrls.push(await uploadScreenshotToImageKit(pendingScreenshots[index].file));
+        }
+      }
+      const payload = {
+        name: form.name.trim(),
+        slug: form.slug.trim().toLowerCase(),
+        packageId: form.packageId.trim(),
+        shortDescription: form.shortDescription.trim(),
+        description: form.description.trim(),
+        category: form.category.trim() || "Utilities",
+        sourceRepo: form.sourceRepo.trim(),
+        iconUrl: form.iconUrl.trim() || null,
+        screenshots: screenshotUrls,
+        isListed: form.isListed
+      };
       const endpoint = isNew ? API_BASE + "/api/apps" : API_BASE + "/api/apps/" + encodeURIComponent(previousSlug);
       const response = await fetch(endpoint, {
         method: isNew ? "POST" : "PATCH",
@@ -934,16 +959,35 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
         const next = isNew ? [...current, saved] : current.map((item) => item.slug === previousSlug ? saved : item);
         return next.sort((a, b) => a.name.localeCompare(b.name));
       });
+      pendingScreenshots.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      pendingScreenshotsRef.current = [];
+      setPendingScreenshots([]);
+      setCropSource(null);
+      setCropTarget(null);
+      setActionScreenshot(null);
+      setPreviewScreenshot(null);
       setEditingSlug(saved.slug);
       setForm(catalogueFormFor(saved));
       try { window.localStorage.setItem(MANAGED_APP_SELECTION_KEY, saved.slug); } catch { /* Storage is optional. */ }
       setMessage((isNew ? "Application added: " : "Application updated: ") + saved.name + ". " +
         (saved.isListed ? "It is listed in the public store." : "It is hidden from the public store."));
+      setUploadMessage(pendingScreenshots.length
+        ? "Uploaded " + pendingScreenshots.length + " screenshot" + (pendingScreenshots.length === 1 ? "" : "s") + " to ImageKit."
+        : "");
       onSaved();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not save application details.");
-    } finally { setBusy(false); }
+      if (pendingScreenshots.length) setUploadMessage("Save failed. Your selected image previews are still here; retry saving after fixing the issue.");
+    } finally {
+      setUploadBusy(false);
+      setBusy(false);
+    }
   }
+
+  const savedScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+  const actionScreenshotUrl = actionScreenshot
+    ? actionScreenshot.kind === "saved" ? actionScreenshot.url : pendingScreenshots.find((item) => item.id === actionScreenshot.id)?.previewUrl || null
+    : null;
 
   return <>
   <section className="admin-page manager-page" aria-labelledby="manager-title">
@@ -977,7 +1021,28 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
           <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
-          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label><p>Saved screenshots appear below when you select an existing app. Scroll sideways to review them, use × to remove one, or add more images (up to 6). {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length}/6 screenshots · Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" className="screenshot-file-input" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} /><label className={"button button-outline screenshot-add-button" + (uploadBusy || busy ? " is-disabled" : "")} htmlFor="catalogue-screenshot-upload" aria-disabled={uploadBusy || busy}>Add Screenshot</label>{uploadBusy && <p role="status">Crop and apply each screenshot to upload it…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><button type="button" className="screenshot-preview-open" onClick={() => setPreviewScreenshot(url)} aria-label={"Preview screenshot " + (index + 1)}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /></button><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
+          <div className="screenshot-upload-field">
+            <label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label>
+            <p>Tap any image to choose Crop, View, or Remove. New images appear as previews first and upload to ImageKit only when you save. {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length + pendingScreenshots.length}/6 screenshots · Up to 10 MB per image.</p>
+            <input id="catalogue-screenshot-upload" className="screenshot-file-input" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { selectScreenshotFiles(event.target.files); event.currentTarget.value = ""; }} />
+            <label className={"button button-outline screenshot-add-button" + (uploadBusy || busy ? " is-disabled" : "")} htmlFor="catalogue-screenshot-upload" aria-disabled={uploadBusy || busy}>Add Screenshot</label>
+            {uploadBusy && <p role="status">Uploading screenshots to ImageKit. Keep this page open until the save finishes…</p>}
+            {uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}
+            {(form.screenshotsText.trim() || pendingScreenshots.length > 0) && <div className="screenshot-preview-list" aria-label="App screenshots">
+              {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={"saved-" + url + "-" + index}>
+                <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot({ kind: "saved", url })} aria-label={"Screenshot " + (index + 1) + " actions"}>
+                  <img src={url} alt={"Screenshot " + (index + 1)} loading="lazy" />
+                </button>
+                <span>Screenshot {index + 1}</span>
+              </div>)}
+              {pendingScreenshots.map((item, index) => <div className="screenshot-preview-item is-pending" key={item.id}>
+                <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot({ kind: "pending", id: item.id })} aria-label={"Selected screenshot " + (form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).length + index + 1) + " actions"}>
+                  <img src={item.previewUrl} alt={"Selected screenshot " + (index + 1)} />
+                </button>
+                <span>Screenshot {form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).length + index + 1} · Not uploaded yet</span>
+              </div>)}
+            </div>}
+          </div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
@@ -985,8 +1050,29 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       {message && <p className="publisher-message manager-message" role="status">{message}</p>}
     </div>
   </section>
+  {actionScreenshot && actionScreenshotUrl && <div className="screenshot-actions-overlay" role="presentation" onClick={() => setActionScreenshot(null)}>
+    <section className="screenshot-actions-modal" role="dialog" aria-modal="true" aria-labelledby="screenshot-actions-title" onClick={(event) => event.stopPropagation()}>
+      <div className="screenshot-actions-heading"><strong id="screenshot-actions-title">Screenshot actions</strong><button type="button" onClick={() => setActionScreenshot(null)} aria-label="Close screenshot actions"><X size={19} /></button></div>
+      <img className="screenshot-actions-image" src={actionScreenshotUrl} alt="Selected screenshot preview" />
+      <div className="screenshot-actions-buttons">
+        <button type="button" onClick={() => { setCropTarget(actionScreenshot); setCropSource(actionScreenshotUrl); setActionScreenshot(null); }}><Crop size={17} /> Crop</button>
+        <button type="button" onClick={() => { setPreviewScreenshot(actionScreenshotUrl); setActionScreenshot(null); }}><Eye size={17} /> View</button>
+        <button type="button" className="is-danger" onClick={() => {
+          if (actionScreenshot.kind === "saved") {
+            setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== actionScreenshot.url).join("\n") }));
+          } else {
+            const item = pendingScreenshots.find((entry) => entry.id === actionScreenshot.id);
+            if (item) URL.revokeObjectURL(item.previewUrl);
+            setPendingScreenshots((current) => current.filter((entry) => entry.id !== actionScreenshot.id));
+          }
+          setActionScreenshot(null);
+          setUploadMessage("Screenshot removed from the draft. Save application changes to apply the change.");
+        }}><Trash2 size={17} /> Remove</button>
+      </div>
+    </section>
+  </div>}
   {cropSource && <ScreenshotCropModal imageUrl={cropSource} onCancel={cancelScreenshotCrop} onDone={confirmScreenshotCrop} title="Crop app screenshot" aspectRatio={9 / 16} />}
-  {previewScreenshot && <ImagePreviewModal imageUrl={previewScreenshot} onClose={() => setPreviewScreenshot(null)} title="Uploaded screenshot preview" />}
+  {previewScreenshot && <ImagePreviewModal imageUrl={previewScreenshot} onClose={() => setPreviewScreenshot(null)} title="Screenshot preview" />}
   </>;
 }
 
