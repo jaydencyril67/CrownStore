@@ -1045,7 +1045,8 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
             {uploadBusy && <p role="status">Uploading screenshots to ImageKit. Keep this page open until the save finishes…</p>}
             {uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}
             {(form.screenshotsText.trim() || pendingScreenshots.length > 0) && <div className="screenshot-preview-list" aria-label="App screenshots">
-              {savedScreenshotUrls.map((url, index) => <div className="screenshot-preview-item-wrap" key={"saved-" + url + "-" + index}>
+              {savedScreenshotUrls.map((url, index) => {
+                return <div className="screenshot-preview-item-wrap" key={"saved-" + url + "-" + index}>
                   <div className="screenshot-preview-item">
                     <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot((current) => current?.kind === "saved" && current.url === url ? null : { kind: "saved", url })} aria-label={"Screenshot " + (index + 1) + " actions"} aria-expanded={actionScreenshot?.kind === "saved" && actionScreenshot.url === url}>
                       <img src={url} alt={"Screenshot " + (index + 1)} loading="lazy" />
@@ -1061,8 +1062,8 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
                       setUploadMessage("Screenshot removed from the draft. Save application changes to apply the change.");
                     }}><Trash2 size={17} /></button>
                   </div>}
-                </div>
-              ))}
+                </div>;
+              })}
               {pendingScreenshots.map((item, index) => <div className="screenshot-preview-item-wrap" key={item.id}>
                 <div className="screenshot-preview-item is-pending">
                   <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot((current) => current?.kind === "pending" && current.id === item.id ? null : { kind: "pending", id: item.id })} aria-label={"Selected screenshot " + (savedScreenshotUrls.length + index + 1) + " actions"} aria-expanded={actionScreenshot?.kind === "pending" && actionScreenshot.id === item.id}>
