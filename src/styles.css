@@ -885,3 +885,20 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .screenshot-actions-popout>button.is-danger{border-color:rgba(248,113,113,.3);background:rgba(127,29,29,.22);color:#fecaca}
 .screenshot-actions-popout>button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:390px){.screenshot-actions-popout{gap:5px;padding:5px}.screenshot-actions-popout>button{width:34px;height:34px;flex-basis:34px}}
+
+
+/* Shared toast notifications for user-facing success, error and warning feedback. */
+.crown-toast-viewport{position:fixed;z-index:14000;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:stretch;gap:8px;width:min(92vw,440px);max-height:calc(100dvh - 32px);overflow:visible;pointer-events:none}
+.crown-toast{display:grid;grid-template-columns:22px minmax(0,1fr) 26px;align-items:center;gap:10px;padding:12px 12px;border:1px solid rgba(196,181,253,.26);border-radius:14px;background:rgba(20,16,31,.96);color:#f4efff;box-shadow:0 12px 34px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.055);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);font-size:13px;font-weight:650;line-height:1.4;pointer-events:auto;animation:crown-toast-enter .16s ease-out both}
+.crown-toast-icon{display:grid;place-items:center;color:#c4b5fd}
+.crown-toast-message{min-width:0;white-space:pre-line;overflow-wrap:anywhere}
+.crown-toast-dismiss{display:grid;place-items:center;width:26px;height:26px;padding:0;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.045);color:#d9d1e8;cursor:pointer;touch-action:manipulation}
+.crown-toast-dismiss:focus-visible{outline:2px solid #c4b5fd;outline-offset:2px}
+.crown-toast.is-success{border-color:rgba(74,222,128,.28)}
+.crown-toast.is-success .crown-toast-icon{color:#86efac}
+.crown-toast.is-error{border-color:rgba(251,113,133,.34)}
+.crown-toast.is-error .crown-toast-icon{color:#fda4af}
+.crown-toast.is-warning{border-color:rgba(251,191,36,.3)}
+.crown-toast.is-warning .crown-toast-icon{color:#fcd34d}
+@keyframes crown-toast-enter{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.crown-toast{animation:none}}
