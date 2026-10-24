@@ -811,3 +811,27 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .updates-page .shelf-app-chevron{flex:0 0 auto}
 .updates-page .state-panel{width:100%;box-sizing:border-box}
 @media(max-width:620px){.updates-page{padding:8px 16px 54px}.updates-page-heading h1{font-size:clamp(28px,8vw,36px)}.updates-page .app-grid{grid-template-columns:minmax(0,1fr);gap:0}.updates-page .shelf-app-tile{min-height:82px;padding:11px 2px;gap:11px}}
+
+
+/* Administrator tools are full pages, not blocking modal overlays. */
+.admin-page{width:min(100% - 32px,900px);margin:20px auto 44px;min-width:0;position:relative;z-index:2}
+.admin-page-back{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:8px 4px;margin:0 0 14px;border:0;background:transparent;color:#d8ccf4;font:13px var(--serif);cursor:pointer}
+.admin-page-back:hover{color:#fff}
+.admin-page .publisher-modal{width:100%;max-width:none;max-height:none;overflow:visible;padding:clamp(18px,4vw,32px);border:1px solid rgba(196,181,253,.24);border-radius:18px;background:linear-gradient(145deg,rgba(36,20,59,.82),rgba(10,7,17,.94));box-shadow:0 14px 38px rgba(0,0,0,.34)}
+.admin-page .publisher-modal h2{margin-top:5px}
+.admin-page .publisher-intro{max-width:780px;line-height:1.65}
+.admin-page .publisher-form{margin-top:18px}
+.admin-page .publisher-form label{display:flex;flex-direction:column;gap:7px}
+.admin-page .publisher-form input:not([type="checkbox"]):not([type="file"]),.admin-page .publisher-form textarea{width:100%;min-width:0}
+.admin-page .publisher-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.admin-page .publisher-submit{width:100%;margin-top:5px}
+.admin-page .publisher-message{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55}
+.screenshot-upload-field{display:flex;flex-direction:column;gap:9px;min-width:0}
+.screenshot-upload-field>p{margin:0;color:#b8a9cc;font-size:12px;line-height:1.5}
+.screenshot-upload-field input[type=file]{width:100%;min-width:0;padding:12px;border:1px dashed rgba(196,181,253,.38);border-radius:12px;background:rgba(0,0,0,.18);color:#ded5ee;font-size:12px}
+.screenshot-preview-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin-top:4px}
+.screenshot-preview-item{position:relative;min-width:0;overflow:hidden;border:1px solid rgba(196,181,253,.2);border-radius:10px;background:rgba(0,0,0,.22)}
+.screenshot-preview-item img{display:block;width:100%;height:105px;object-fit:cover;background:rgba(255,255,255,.025)}
+.screenshot-preview-item span{display:block;padding:7px 26px 7px 8px;color:#cfc3e4;font-size:11px;overflow-wrap:anywhere}
+.screenshot-remove{position:absolute;right:5px;bottom:4px;width:23px;height:23px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.16);border-radius:7px;background:rgba(12,7,20,.9);color:#fff;cursor:pointer}
+@media(max-width:600px){.admin-page{width:calc(100% - 24px);margin-top:12px}.admin-page .publisher-modal{padding:16px;border-radius:14px}.admin-page .publisher-fields{grid-template-columns:minmax(0,1fr);gap:12px}.screenshot-preview-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
