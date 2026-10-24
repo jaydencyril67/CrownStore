@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Download } from "lucide-react";
+import { X } from "lucide-react";
 import type { TouchList, TouchEvent, MouseEvent } from "react";
 
 
@@ -31,33 +31,6 @@ export default function ImagePreviewModal({ imageUrl, onClose, title = "Screensh
       setZoom(pending.zoom);
     });
   };
-  const [downloading, setDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState("");
-
-  async function downloadImage() {
-    if (downloading) return;
-    setDownloading(true);
-    setDownloadError("");
-    try {
-      const response = await fetch(imageUrl);
-      if (!response.ok) throw new Error("Image download failed.");
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      const extension = (blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg").replace(/[^a-z0-9]/gi, "");
-      anchor.href = objectUrl;
-      anchor.download = `crownstore-image-${Date.now()}.${extension}`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    } catch {
-      setDownloadError("Couldn't download this image directly. Try opening the image in a new tab and saving it.");
-    } finally {
-      setDownloading(false);
-    }
-  }
-
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -134,9 +107,8 @@ export default function ImagePreviewModal({ imageUrl, onClose, title = "Screensh
         <div>
 
         </div>
-        <div className="crownstore-image-modal-actions"><button type="button" className="crownstore-image-modal-download" onClick={() => void downloadImage()} disabled={downloading} aria-label="Download image" title="Download image">{downloading ? <span className="crownstore-image-modal-download-spinner" aria-hidden="true" /> : <Download size={20} />}</button><button type="button" className="crownstore-image-modal-close" onClick={onClose} aria-label="Close image preview" title="Close preview"><X size={22} /></button></div>
+        <div className="crownstore-image-modal-actions"><button type="button" className="crownstore-image-modal-close" onClick={onClose} aria-label="Close image preview" title="Close preview"><X size={22} /></button></div>
       </header>
-      {downloadError && <p className="crownstore-image-modal-download-note" role="status">{downloadError}</p>}
       <div ref={stageRef} className="crownstore-image-modal-stage" onClick={event => event.stopPropagation()} onTouchStart={touchStart} onTouchMove={touchMove} onTouchEnd={touchEnd}>
         <img src={imageUrl} alt="Full-size CrownStore screenshot" draggable={false} onMouseDown={mouseDown} onMouseMove={mouseMove} onMouseUp={mouseUp} onMouseLeave={mouseUp} style={{ transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`, transformOrigin: "center center", willChange: "transform", transition: "none", cursor: zoom > 1 ? (dragging.current ? "grabbing" : "grab") : "zoom-in" }} />
       </div>
