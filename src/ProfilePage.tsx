@@ -1168,7 +1168,7 @@ export default function ProfilePage({
         <div className="profile-identity-copy">
           <span className="profile-eyebrow">KINGSHALL ACCOUNT</span>
           <h1 id="profile-page-title" className="profile-identity-name">{glassTitle}{user.verificationStatus?.toLowerCase() === "verified" && <VerificationBadge size={20} />}</h1>
-          {user.username && <p className="profile-username">@{user.username}{user.verificationStatus?.toLowerCase() === "verified" && <VerificationBadge size={16} />}</p>}
+          {user.username && <p className="profile-username">@{user.username}</p>}
           <p className="profile-email">{user.email}</p>
         </div>
       </section>
