@@ -99,7 +99,7 @@ public class CrossAppLauncherPlugin extends Plugin {
         if (intent == null || intent.getData() == null) return;
         JSObject event = new JSObject();
         event.put("url", intent.getData().toString());
-        notifyListeners("appUrlOpen", event);
+        notifyListeners("appUrlOpen", event, true);
     }
 
     private boolean launchInstalledPackage(String packageName, String targetUrl) {
