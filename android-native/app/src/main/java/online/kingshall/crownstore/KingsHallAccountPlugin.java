@@ -29,17 +29,10 @@ public class KingsHallAccountPlugin extends Plugin {
 
     @PluginMethod
     public void chooseAccount(PluginCall call) {
-        boolean found = false;
-        for (Account account : AccountManager.get(getContext()).getAccountsByType(ACCOUNT_TYPE)) {
-            if (account.name != null && account.name.trim().contains("@")) { found = true; break; }
-        }
-        if (!found) {
-            JSObject result = new JSObject();
-            result.put("noAccount", true);
-            call.resolve(result);
-            return;
-        }
-        Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[] { ACCOUNT_TYPE }, null, null, null, null);
+        // Let Android's account picker be the source of truth instead of pre-filtering
+        // through getAccountsByType, which can be visibility-restricted on Android 8+.
+        Intent intent = AccountManager.newChooseAccountIntent(
+                null, null, new String[] { ACCOUNT_TYPE }, null, null, null, null);
         startActivityForResult(call, intent, "handleChooseAccountResult");
     }
 
