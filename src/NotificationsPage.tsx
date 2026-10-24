@@ -4,6 +4,7 @@ import {
   clearNotifications, markAllNotificationsRead, markNotificationRead, mergeCrownNotifications, readNotifications,
   type CrownNotification, type NotificationKind
 } from "./notifications";
+import { showToast } from "./toast";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 const SESSION_KEY = "crownstore-profile-token";
@@ -38,6 +39,8 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
   const [confirmClear, setConfirmClear] = useState(false);
   const [syncNotice, setSyncNotice] = useState("");
   const [expandedItems, setExpandedItems] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => { if (syncNotice) showToast(syncNotice, "warning", 6500); }, [syncNotice]);
 
   async function syncAccountInbox(token = sessionToken()) {
     if (!token) return;
@@ -94,6 +97,7 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
   }
 
   async function markAllRead() {
+    setSyncNotice("");
     markAllNotificationsRead();
     const token = sessionToken();
     if (token) {
@@ -121,6 +125,7 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
   };
 
   async function clearAll() {
+    setSyncNotice("");
     clearNotifications();
     const token = sessionToken();
     if (token) {
@@ -155,7 +160,7 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
       </div>
     </div>
 
-    {syncNotice && <p className="notifications-footnote" role="status">{syncNotice}</p>}
+
     {confirmClear && <div className="notifications-confirm" role="group" aria-label="Confirm clearing notifications"><span>Clear notifications from this device and your signed-in account inbox?</span><button type="button" onClick={() => void clearAll()}>Clear all</button><button type="button" onClick={() => setConfirmClear(false)}>Cancel</button></div>}
 
     {visible.length ? <div className="notifications-list">{visible.map((item) => <article key={item.id} className={"notification-item" + (!item.readAt ? " is-unread" : "") + (expandedItems.has(item.id) ? " is-expanded" : "")}>
