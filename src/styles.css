@@ -685,7 +685,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .notification-copy{display:grid;gap:5px;flex:1;min-width:0}
 .notification-kind{color:#c4b5fd;font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 .notification-copy strong{font-size:12px;line-height:1.35;color:#f4efff;font-weight:700}
-.notification-body{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:10px;line-height:1.55;color:#b8a9cc;overflow-wrap:anywhere}.notification-body.is-expanded{display:block;overflow:visible}
+.notification-body{display:block;max-height:3.1em;line-height:1.55;overflow:hidden;font-size:10px;color:#b8a9cc;overflow-wrap:anywhere;white-space:normal;transition:max-height .18s ease}.notification-body.is-expanded{display:block;max-height:none;overflow:visible;white-space:pre-wrap;overflow-wrap:anywhere}.notification-expand-toggle:focus-visible{outline:2px solid #c4b5fd;outline-offset:3px;border-radius:4px}.notification-item.is-expanded .notification-item-footer{padding-top:3px}
 .notification-copy time{font-size:9px;color:#9588ab}
 .notification-unread-dot{display:block;width:7px;height:7px;flex:0 0 7px;margin-top:4px;border-radius:50%;background:#c4b5fd}
 .notification-item-footer{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:0 13px 9px 58px}.notification-expand-toggle{display:inline-flex;align-items:center;gap:4px;padding:2px 0;border:0;background:transparent;color:#a99fba;font-size:9px;cursor:pointer}.notification-item-actions{display:flex;justify-content:flex-end;gap:12px}.notification-item-actions button{border:0;background:transparent;color:#c4b5fd;font-size:9px;cursor:pointer}
