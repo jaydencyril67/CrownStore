@@ -4,7 +4,7 @@ import { disableCrownStorePush } from "./pushNotifications";
 import { App as CapacitorApp } from "@capacitor/app";
 import { QRCodeSVG } from "qrcode.react";
 import {
-  ArrowDownToLine, ChevronRight, Clock3, Download,
+  ArrowDownToLine, ChevronRight, Clock3, Copy, Download,
   Fingerprint, KeyRound, LogOut, RefreshCw, ShieldCheck,
   Smartphone, X
 } from "lucide-react";
@@ -1201,7 +1201,7 @@ export default function ProfilePage({
               <p>1. Scan this QR code in your authenticator app.</p>
               <div className="profile-security-qr"><QRCodeSVG value={twoFactorSetupUri} size={176} includeMargin /></div>
               <label htmlFor="crown-profile-totp-key">Manual setup key</label>
-              <div className="profile-security-manual-key"><code id="crown-profile-totp-key">{twoFactorSetupSecret}</code><button className="profile-text-button" type="button" onClick={() => { void navigator.clipboard?.writeText(twoFactorSetupSecret).then(() => setSecurityNotice("Authenticator setup key copied."), () => setSecurityError("Could not copy the setup key on this device.")); }}>Copy</button></div>
+              <div className="profile-security-manual-key"><code id="crown-profile-totp-key">{twoFactorSetupSecret}</code><button className="profile-security-copy-key" type="button" aria-label="Copy authenticator setup key" title="Copy setup key" onClick={() => { void navigator.clipboard?.writeText(twoFactorSetupSecret).then(() => setSecurityNotice("Authenticator setup key copied."), () => setSecurityError("Could not copy the setup key on this device.")); }}><Copy size={17} aria-hidden="true" /></button></div>
               <label htmlFor="crown-profile-totp-code">2. Verification code</label>
               <input id="crown-profile-totp-code" value={twoFactorSetupCode} onChange={(event) => setTwoFactorSetupCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000" required />
               <button className="profile-primary-button" type="submit" disabled={twoFactorVerifyBusy || twoFactorSetupCode.length !== 6}>{twoFactorVerifyBusy ? <span className="profile-spinner" /> : "Verify & finish"}</button>
