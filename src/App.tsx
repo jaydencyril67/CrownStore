@@ -22,7 +22,7 @@ import "./app-details.css";
 import "./profile.css";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
-type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "COLOR_PICKER";
+type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "COLOR_PICKER" | "ADMIN_MANAGE" | "ADMIN_PUBLISH";
 
 function formatSize(value: number | string | null) {
   const bytes = Number(value);
@@ -680,9 +680,9 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
     }
   }
 
-  return <div className="modal-backdrop publisher-backdrop">
-    <section className="publisher-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="publisher-title">
-      <button className="modal-close" onClick={onClose} aria-label="Close publisher"><X size={19} /></button>
+  return <section className="admin-page publisher-page" aria-labelledby="publisher-title">
+      <button className="admin-page-back" type="button" onClick={onClose}><ArrowLeft size={17} /> Back to store</button>
+      <div className="publisher-modal glass-panel">
       <span className="eyebrow">ADMINISTRATOR TOOL</span>
       <h2 id="publisher-title">Publish an official APK</h2>
       <p className="publisher-intro">CrownStore checks each listed app's own GitHub releases automatically. The API verifies each APK, mirrors valid builds to the public CrownStore APK repository, and updates the catalogue. Automatic checks run when the API starts and every five minutes; use the button below to request an immediate sync. Your publishing token is held in this browser session and sent only to the CrownStore API.</p>
@@ -710,8 +710,8 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
         <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Verifying APK…" : "Verify and publish release"}</button>
         {message && <p className="publisher-message" role="status">{message}</p>}
       </form>
-    </section>
-  </div>;
+      </div>
+    </section>;
 }
 
 
@@ -740,6 +740,38 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [form, setForm] = useState<CatalogueForm>(emptyCatalogueForm);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState("");
+
+  async function uploadScreenshots(files: FileList | null) {
+    if (!files?.length) return;
+    const cloudName = String(import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "").trim();
+    const uploadPreset = String(import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "").trim();
+    if (!cloudName || !uploadPreset) {
+      setUploadMessage("Cloudinary is not configured yet. Add VITE_CLOUDINARY_CLOUD_NAME and VITE_CLOUDINARY_UPLOAD_PRESET to the CrownStore Pages environment.");
+      return;
+    }
+    setUploadBusy(true); setUploadMessage("");
+    const uploaded: string[] = [];
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) throw new Error(file.name + " is not an image.");
+        if (file.size > 10 * 1024 * 1024) throw new Error(file.name + " is larger than 10 MB.");
+        const body = new FormData();
+        body.append("file", file);
+        body.append("upload_preset", uploadPreset);
+        body.append("folder", "crownstore/screenshots");
+        const response = await fetch("https://api.cloudinary.com/v1_1/" + encodeURIComponent(cloudName) + "/image/upload", { method: "POST", body });
+        const data = await response.json() as { secure_url?: string; error?: { message?: string } };
+        if (!response.ok || !data.secure_url) throw new Error(data.error?.message || "Cloudinary could not upload " + file.name + ".");
+        uploaded.push(data.secure_url);
+      }
+      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\\n") }));
+      setUploadMessage(uploaded.length + " screenshot" + (uploaded.length === 1 ? "" : "s") + " uploaded to Cloudinary.");
+    } catch (error) {
+      setUploadMessage(error instanceof Error ? error.message : "Screenshot upload failed.");
+    } finally { setUploadBusy(false); }
+  }
 
   async function loadCatalogue() {
     if (!token.trim()) { setMessage("Enter the Render PUBLISHING_TOKEN to access app management."); return; }
@@ -809,9 +841,9 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     } finally { setBusy(false); }
   }
 
-  return <div className="modal-backdrop publisher-backdrop">
-    <section className="publisher-modal glass-panel" role="dialog" aria-modal="true" aria-labelledby="manager-title">
-      <button className="modal-close" onClick={onClose} aria-label="Close app manager"><X size={19} /></button>
+  return <section className="admin-page manager-page" aria-labelledby="manager-title">
+    <button className="admin-page-back" type="button" onClick={onClose}><ArrowLeft size={17} /> Back to store</button>
+    <div className="publisher-modal glass-panel">
       <span className="eyebrow">CATALOGUE ADMINISTRATION</span>
       <h2 id="manager-title">Manage CrownStore apps</h2>
       <p className="publisher-intro">Add, update, or hide applications without editing the storefront source. App metadata is stored in the CrownStore database. APK releases are published separately through the verified Publisher.</p>
@@ -840,14 +872,14 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
           <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
-          <label>Screenshot HTTPS URLs (one per line)<textarea value={form.screenshotsText} onChange={(event) => setForm({ ...form, screenshotsText: event.target.value })} rows={3} placeholder="https://…/screenshot-1.png" /></label>
+          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots</label><p>Choose image files to upload them to Cloudinary. Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
       </>}
       {message && <p className="publisher-message manager-message" role="status">{message}</p>}
-    </section>
-  </div>;
+    </div>
+  </section>;
 }
 
 export default function App() {
@@ -875,14 +907,13 @@ export default function App() {
   const downloadAbortRef = useRef<AbortController | null>(null);
   const nativeDownloadIdRef = useRef<number | null>(null);
   const [showPublisher, setShowPublisher] = useState(false);
-  const [showAppManager, setShowAppManager] = useState(false);
   const [view, setView] = useState<View>(() => {
     try {
       if (new URLSearchParams(window.location.search).get("profile") === "1") return "PROFILE";
       const requestedView = new URLSearchParams(window.location.search).get("view");
-      if (requestedView === "MENU" || requestedView === "NOTIFICATIONS") return requestedView;
+      if (requestedView === "MENU" || requestedView === "NOTIFICATIONS" || requestedView === "ADMIN_MANAGE" || requestedView === "ADMIN_PUBLISH") return requestedView;
       const saved = window.localStorage.getItem("crownstore-current-view");
-      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" || saved === "PROFILE" || saved === "MENU" || saved === "NOTIFICATIONS" ? saved : "HOME";
+      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" || saved === "PROFILE" || saved === "MENU" || saved === "NOTIFICATIONS" || saved === "ADMIN_MANAGE" || saved === "ADMIN_PUBLISH" ? saved : "HOME";
     } catch { return "HOME"; }
   });
 
@@ -1724,7 +1755,7 @@ export default function App() {
         onRefreshInstalledApps={() => installedScanRef.current()}
         allApps={apps}
         onOpenApp={openAppDetails}
-      /> : view === "COLOR_PICKER" ? <ColorPickerPage target={colorPickerTarget} onBack={() => navigate("MENU")} /> : view === "MENU" ? <MenuPage onBack={() => navigate("HOME")} onChooseColor={(target) => { setColorPickerTarget(target); navigate("COLOR_PICKER"); }} /> : view === "NOTIFICATIONS" ? <NotificationsPage onBack={() => navigate("MENU")} onOpenApp={(slug) => {
+      /> : view === "ADMIN_MANAGE" ? <AppManagerPanel onClose={() => navigate("HOME")} onSaved={() => void loadApps()} /> : view === "ADMIN_PUBLISH" ? <PublisherPanel apps={apps.filter((item) => !("isListed" in item) || item.isListed)} onPublished={() => void loadApps()} onClose={() => navigate("HOME")} /> : view === "COLOR_PICKER" ? <ColorPickerPage target={colorPickerTarget} onBack={() => navigate("MENU")} /> : view === "MENU" ? <MenuPage onBack={() => navigate("HOME")} onChooseColor={(target) => { setColorPickerTarget(target); navigate("COLOR_PICKER"); }} /> : view === "NOTIFICATIONS" ? <NotificationsPage onBack={() => navigate("MENU")} onOpenApp={(slug) => {
         const app = apps.find((item) => item.slug === slug);
         if (app) openAppDetails(app);
       }} /> : view === "PROFILE" ? <ProfilePage
@@ -1862,7 +1893,7 @@ export default function App() {
       </>}
       {view !== "HOME" && view !== "SEARCH" && view !== "UPDATES" && view !== "PROFILE" && view !== "MENU" && view !== "NOTIFICATIONS" && view !== "COLOR_PICKER" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
     </main>
-    <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => setShowAppManager(true)}>Manage Apps</button><button className="publisher-open" onClick={() => setShowPublisher(true)}>Publisher</button></div></footer>
+    <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => navigate("ADMIN_MANAGE")}>Manage Apps</button><button className="publisher-open" onClick={() => navigate("ADMIN_PUBLISH")}>Publisher</button></div></footer>
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
     <NowBar activePage={selectedApp ? "DETAILS" : view === "COLOR_PICKER" ? "MENU" : view === "PROFILE" ? "PROFILE" : view === "MENU" ? "MENU" : view === "NOTIFICATIONS" ? "NOTIFICATIONS" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} onMenu={() => { closeAppDetails(); navigate("MENU"); }} onNotifications={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }} />
     {downloadProgress && (!selectedApp || selectedApp.releaseId !== downloadProgress.releaseId) && <div className="download-tray">
@@ -1881,7 +1912,5 @@ export default function App() {
       />
     </div>}
 
-    {showAppManager && <AppManagerPanel onClose={() => setShowAppManager(false)} onSaved={() => void loadApps()} />}
-    {showPublisher && <PublisherPanel apps={apps.filter((item) => !("isListed" in item) || item.isListed)} onPublished={() => void loadApps()} onClose={() => setShowPublisher(false)} />}
   </div>;
 }
