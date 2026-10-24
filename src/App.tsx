@@ -29,7 +29,7 @@ import { showToast, toastKindForMessage } from "./toast";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 const IMAGEKIT_URL_ENDPOINT = (import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT || "").trim().replace(/\/+$/, "");
-type View = "HOME" | "APPS" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "COLOR_PICKER" | "ADMIN_MANAGE" | "ADMIN_PUBLISH";
+type View = "HOME" | "UPDATES" | "ABOUT" | "SEARCH" | "PROFILE" | "MENU" | "NOTIFICATIONS" | "COLOR_PICKER" | "ADMIN_MANAGE" | "ADMIN_PUBLISH";
 
 function formatSize(value: number | string | null) {
   const bytes = Number(value);
@@ -1163,7 +1163,7 @@ export default function App() {
       const requestedView = new URLSearchParams(window.location.search).get("view");
       if (requestedView === "ABOUT" || requestedView === "MENU" || requestedView === "NOTIFICATIONS" || requestedView === "ADMIN_MANAGE" || requestedView === "ADMIN_PUBLISH") return requestedView;
       const saved = window.localStorage.getItem("crownstore-current-view");
-      return saved === "HOME" || saved === "APPS" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" || saved === "PROFILE" || saved === "MENU" || saved === "NOTIFICATIONS" || saved === "ADMIN_MANAGE" || saved === "ADMIN_PUBLISH" ? saved : "HOME";
+      return saved === "HOME" || saved === "UPDATES" || saved === "ABOUT" || saved === "SEARCH" || saved === "PROFILE" || saved === "MENU" || saved === "NOTIFICATIONS" || saved === "ADMIN_MANAGE" || saved === "ADMIN_PUBLISH" ? saved : "HOME";
     } catch { return "HOME"; }
   });
 
@@ -1247,7 +1247,7 @@ export default function App() {
           const slug = (url.searchParams.get("slug") || url.pathname.replace(/^\/+/, "")).trim().toLowerCase();
           if (slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
             setRequestedAppSlug(slug);
-            setView("APPS");
+            setView("HOME");
           }
           return;
         }
@@ -2124,59 +2124,16 @@ export default function App() {
           <div className="shelf-heading">
             <div className="shelf-title-wrap">
               <span className="shelf-icon"><Sparkles size={18} /></span>
-              <div>
-                <h2 id="shelf-recommended">Recommended for you</h2>
-                <p>Explore the official KingsHall app collection.</p>
-              </div>
+              <div><h2 id="shelf-recommended">Recommended for you</h2><p>Explore the official KingsHall app collection.</p></div>
             </div>
-            <div className="shelf-heading-actions">
-              <span className="shelf-count">{apps.length} {apps.length === 1 ? "app" : "apps"}</span>
-            </div>
+            <div className="shelf-heading-actions"><span className="shelf-count">{apps.length} {apps.length === 1 ? "app" : "apps"}</span></div>
           </div>
           <div className="shelf-track" aria-label="Recommended apps">
-            {(loading ? [] : [...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name))).map((app) => (
-              <div className="shelf-app-card" key={app.id}>
-                <AppCard app={app} onDetails={openAppDetails} />
-              </div>
-            ))}
+            {(loading ? [] : [...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name))).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={openAppDetails} /></div>)}
           </div>
         </section>
-      </section> : <>
-      <section className="hero">
-        <div className="hero-copy">
-          <div className="eyebrow"><Sparkles size={14} /> THE OFFICIAL APP COLLECTION</div>
-          <h1>All your apps.<br /><span>One royal home.</span></h1>
-          <p className="hero-description">Discover the apps built for the KingsHall ecosystem. Official Android releases, clear version details and direct downloads—all in one trusted place.</p>
-          
-          <div className="trust-row"><span><ShieldCheck size={16} /> Official releases</span><span><CheckCircle2 size={16} /> Verified APK metadata</span></div>
-        </div>
-        <div className="hero-art"><div className="orbit orbit-outer" /><div className="orbit orbit-inner" /><div className="hero-glow" /><div className="hero-crown"><StoreMark size={61} /><span>CROWNSTORE</span></div><div className="floating-chip chip-one"><Smartphone size={17} /> Android apps</div><div className="floating-chip chip-two"><ShieldCheck size={17} /> Verified builds</div><div className="floating-chip chip-three"><ArrowDownToLine size={17} /> Direct downloads</div></div>
-      </section>
-      <section className="apps-section" id="apps">
-        <div className="section-heading">
-          <div><div className="eyebrow">THE COLLECTION</div><h2>Find your next app.</h2><p>Browse the official KingsHall app family.</p></div>
-          <label className="search-box"><Search size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search apps or package names..." aria-label="Search applications" />{search && <button onClick={() => setSearch("")} aria-label="Clear search"><X size={15} /></button>}</label>
-        </div>
-        {!loading && !error && apps.length > 0 && <div className="catalogue-controls">
-          <div className="category-filters" role="group" aria-label="Filter by app category">
-            {categories.map((item) => <button key={item} className={category === item ? "category-filter active" : "category-filter"} aria-pressed={category === item} onClick={() => setCategory(item)}>{item === "All apps" ? item : readableCategory(item)}</button>)}
-          </div>
-          <span className="results-count">{filtered.length} {filtered.length === 1 ? "app" : "apps"}</span>
-        </div>}
-        {loading
-          ? <div className="state-panel"><div className="loader-ring" /><strong>Opening the collection</strong><span>Fetching published apps…</span></div>
-          : error
-            ? <div className="state-panel state-error"><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
-            : filtered.length
-              ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} onDetails={openAppDetails} />)}</div>
-              : apps.length
-                ? <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No matching applications</strong><span>Try another search term or category.</span><button className="button button-outline" onClick={() => { setSearch(""); setCategory("All apps"); }}>Clear filters</button></div>
-                : <div className="state-panel"><div className="state-icon"><StoreMark size={23} /></div><strong>The collection is getting ready</strong><span>Official apps appear here as soon as the catalogue is configured.</span></div>}
-        <div className="catalogue-footnote"><ShieldCheck size={15} /> Downloads resolve through the official CrownStore API and published release catalogue.</div>
-      </section>
-      </>}
-      {view !== "HOME" && view !== "SEARCH" && view !== "UPDATES" && view !== "PROFILE" && view !== "MENU" && view !== "NOTIFICATIONS" && view !== "COLOR_PICKER" && view !== "ADMIN_MANAGE" && view !== "ADMIN_PUBLISH" && view !== "ABOUT" && <section className="bottom-banner"><div className="banner-icon"><StoreMark size={28} /></div><div><span className="eyebrow">BUILT FOR THE ECOSYSTEM</span><h2>One home. Every KingsHall app.</h2><p>Come back for official releases and verified updates.</p></div><button className="button button-outline" onClick={() => navigate("APPS")}>Browse apps <ArrowRight size={16} /></button></section>}
-    </main>
+      </section> : <></>}
+          </main>
     <footer className="site-footer"><a className="brand footer-brand" href="#home"><span className="brand-mark"><StoreMark size={19} /></span><span className="brand-word">Crown<span>Store</span><small>BY KINGSHALL</small></span></a><span>Official apps. One trusted home.</span><span className="footer-status"><span className="status-dot live-dot" /> Public catalogue</span><div className="footer-admin-actions"><button className="publisher-open" onClick={() => navigate("ADMIN_MANAGE")}>Manage Apps</button><button className="publisher-open" onClick={() => navigate("ADMIN_PUBLISH")}>Publisher</button></div></footer>
     <NativeSelfUpdate apps={apps} onRequestUpdate={downloadRelease} />
     <NowBar activePage={selectedApp ? "DETAILS" : view === "COLOR_PICKER" ? "MENU" : view === "PROFILE" ? "PROFILE" : view === "MENU" ? "MENU" : view === "NOTIFICATIONS" ? "NOTIFICATIONS" : view === "ABOUT" ? "ABOUT" : view === "SEARCH" ? "SEARCH" : view === "UPDATES" ? "UPDATES" : "HOME"} onHome={() => { closeAppDetails(); setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }} onSearch={() => { closeAppDetails(); navigate("SEARCH"); }} onUpdates={() => { closeAppDetails(); navigate("UPDATES"); }} onProfile={() => { closeAppDetails(); setView("PROFILE"); window.scrollTo({ top: 0, behavior: "auto" }); }} onMenu={() => { closeAppDetails(); navigate("MENU"); }} onNotifications={() => { closeAppDetails(); navigate("NOTIFICATIONS"); }} onAbout={() => { closeAppDetails(); navigate("ABOUT"); }} />
