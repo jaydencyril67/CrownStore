@@ -15,7 +15,7 @@ import type { NativeInstalledApp } from "./native/nativeAppUpdate";
 import { App as CapacitorApp } from "@capacitor/app";
 import {
   ArrowDownToLine, ArrowLeft, ArrowRight, Bot, CheckCircle2, ChevronDown, ChevronRight,
-  Crop, Download, Eye, Image as ImageIcon, Info, Layers3, MessageCircle, PackageCheck, Search, Send, Star,
+  Crop, Download, Eye, Image as ImageIcon, Layers3, MessageCircle, PackageCheck, Search, Send, Star,
   ShieldCheck, Smartphone, Sparkles, Trash2, X
 } from "lucide-react";
 import type { AppsResponse, CrownApp } from "./types";
