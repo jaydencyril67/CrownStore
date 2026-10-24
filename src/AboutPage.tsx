@@ -1,10 +1,9 @@
-import { ArrowLeft, FileText, Info, ShieldCheck, Store } from "lucide-react";
+import { FileText, Info, ShieldCheck, Store } from "lucide-react";
 
-export default function AboutPage({ onBack }: { onBack: () => void }) {
+export default function AboutPage() {
   return <section className="about-page" aria-label="About CrownStore and Terms of Service">
     <header className="about-page-heading">
       <div className="about-page-topline">
-        <button className="about-page-back" type="button" onClick={onBack} aria-label="Back to menu"><ArrowLeft size={18} /></button>
         <span className="about-page-eyebrow"><Info size={14} /> ABOUT CROWNSTORE</span>
       </div>
       <h1>About CrownStore</h1>
