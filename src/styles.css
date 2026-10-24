@@ -739,8 +739,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 
 /* CrownStore Menu and notifications */
 .menu-page,.notifications-page{width:100%;max-width:850px;margin:0 auto;padding:24px clamp(16px,3vw,28px) 130px;box-sizing:border-box;color:#f4efff}
-.menu-page-heading,.notifications-heading{margin-bottom:18px}
-.menu-page-heading h1,.notifications-heading h1{font-size:clamp(30px,6vw,42px);font-weight:550;letter-spacing:-.04em;line-height:1.1;margin:16px 0 9px;color:#f4efff}
+.menu-page-heading{margin-bottom:18px}.notifications-heading{margin-bottom:12px}
+.menu-page-heading h1{font-size:clamp(30px,6vw,42px);font-weight:550;letter-spacing:-.04em;line-height:1.1;margin:16px 0 9px;color:#f4efff}.notifications-heading h1{font-size:clamp(23px,5vw,29px);font-weight:600;letter-spacing:-.035em;line-height:1.15;margin:0;color:#f4efff}.notifications-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.notifications-unread-count{flex:0 0 auto;padding:5px 8px;border:1px solid rgba(196,181,253,.22);border-radius:99px;background:rgba(139,92,246,.1);color:#d9ccff;font-size:9px;font-weight:650}
 .menu-page-heading>p,.notifications-heading>p{max-width:620px;margin:0;color:#b8a9cc;font-size:12px;line-height:1.65}
 .menu-back{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:7px 10px;margin:0 0 17px;border:1px solid rgba(226,220,228,.17);border-radius:10px;background:rgba(255,255,255,.025);color:#e8ddfa;font-size:11px;cursor:pointer}
 .menu-page .eyebrow,.notifications-page .eyebrow{display:flex;align-items:center;gap:7px;color:#c4b5fd;font-size:9px;font-weight:750;letter-spacing:1.7px}
@@ -785,7 +785,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .menu-status{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;margin:10px 0 0;border:1px solid rgba(196,181,253,.2);border-radius:12px;background:rgba(139,92,246,.07);color:#e6ddf7;font-size:10px;line-height:1.5}
 .menu-status button{border:0;background:transparent;color:#c4b5fd;font-size:10px;cursor:pointer}
 
-.notifications-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:21px}
+.notifications-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px}
 .notifications-filters,.notifications-actions{display:flex;align-items:center;gap:6px}
 .notifications-filters button,.notifications-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 10px;border:1px solid rgba(226,220,228,.14);border-radius:10px;background:rgba(255,255,255,.025);color:#b8a9cc;font-size:10px;cursor:pointer}
 .notifications-filters button.is-selected{border-color:rgba(196,181,253,.6);background:rgba(139,92,246,.14);color:#f4efff}
@@ -802,12 +802,12 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .notification-copy{display:grid;gap:5px;flex:1;min-width:0}
 .notification-kind{color:#c4b5fd;font-size:8px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 .notification-copy strong{font-size:12px;line-height:1.35;color:#f4efff;font-weight:700}
-.notification-body{font-size:10px;line-height:1.55;color:#b8a9cc;overflow-wrap:anywhere}
+.notification-body{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:10px;line-height:1.55;color:#b8a9cc;overflow-wrap:anywhere}.notification-body.is-expanded{display:block;overflow:visible}
 .notification-copy time{font-size:9px;color:#9588ab}
 .notification-unread-dot{display:block;width:7px;height:7px;flex:0 0 7px;margin-top:4px;border-radius:50%;background:#c4b5fd}
-.notification-item-actions{display:flex;justify-content:flex-end;gap:12px;padding:0 13px 10px 58px}
+.notification-item-footer{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:0 13px 9px 58px}.notification-expand-toggle{display:inline-flex;align-items:center;gap:4px;padding:2px 0;border:0;background:transparent;color:#a99fba;font-size:9px;cursor:pointer}.notification-item-actions{display:flex;justify-content:flex-end;gap:12px}.notification-item-actions button{border:0;background:transparent;color:#c4b5fd;font-size:9px;cursor:pointer}
 .notification-item-actions button{border:0;background:transparent;color:#c4b5fd;font-size:9px;cursor:pointer}
-.notifications-empty{min-height:195px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;margin-top:15px;padding:23px;border:1px dashed rgba(226,220,228,.18);border-radius:15px;background:rgba(255,255,255,.015);text-align:center}
+.notifications-empty{min-height:145px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;margin-top:15px;padding:23px;border:1px dashed rgba(226,220,228,.18);border-radius:15px;background:rgba(255,255,255,.015);text-align:center}
 .notifications-empty>span{width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(196,181,253,.18);border-radius:13px;background:rgba(196,181,253,.05);color:#c4b5fd}
 .notifications-empty strong{font-size:13px}
 .notifications-empty p{max-width:340px;margin:0;color:#a99fba;font-size:10px;line-height:1.6}
