@@ -5,6 +5,7 @@ import { Capacitor } from "@capacitor/core";
 import type { CrownApp } from "./types";
 const API_BASE = "https://apicrownstore.kingshall.online";
 import { NativeAppUpdate } from "./native/nativeAppUpdate";
+import { showToast } from "./toast";
 
 type Props = {
   apps: CrownApp[];
@@ -22,6 +23,8 @@ export default function NativeSelfUpdate({ apps, onRequestUpdate }: Props) {
   const [checking, setChecking] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => { if (error) showToast(error, "error", 6500); }, [error]);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -75,7 +78,7 @@ export default function NativeSelfUpdate({ apps, onRequestUpdate }: Props) {
       <span className="eyebrow">CROWNSTORE UPDATE AVAILABLE</span>
       <strong>CrownStore {latestVersion}</strong>
       <p>A newer verified CrownStore APK is published. Download it and Android will ask you to approve the installation.</p>
-      {error && <small>{error}</small>}
+
     </div>
     <button className="button button-primary" type="button" disabled={requesting || checking} onClick={() => {
       setRequesting(true);
