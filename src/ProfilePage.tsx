@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { disableCrownStorePush } from "./pushNotifications";
+import VerificationBadge from "./VerificationBadge";
 import { App as CapacitorApp } from "@capacitor/app";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -1166,8 +1167,8 @@ export default function ProfilePage({
         <div className="profile-avatar">{safePhoto ? <img src={safePhoto} alt="" /> : <span>{initials}</span>}</div>
         <div className="profile-identity-copy">
           <span className="profile-eyebrow">KINGSHALL ACCOUNT</span>
-          <h1 id="profile-page-title">{glassTitle}</h1>
-          {user.username && <p className="profile-username">@{user.username}</p>}
+          <h1 id="profile-page-title" className="profile-identity-name">{glassTitle}{user.verificationStatus?.toLowerCase() === "verified" && <VerificationBadge size={20} />}</h1>
+          {user.username && <p className="profile-username">@{user.username}{user.verificationStatus?.toLowerCase() === "verified" && <VerificationBadge size={16} />}</p>}
           <p className="profile-email">{user.email}</p>
         </div>
       </section>
@@ -1175,7 +1176,7 @@ export default function ProfilePage({
       <section className="profile-section profile-account-details">
         <div className="profile-section-heading"><h2>Account details</h2><span>Synced with KingsHall</span></div>
         <div className="profile-detail-list">
-          <div><span>Full name</span><strong className="profile-detail-name">{displayName(user)}</strong></div>
+          <div><span>Full name</span><strong className="profile-detail-name">{displayName(user)}{user.verificationStatus?.toLowerCase() === "verified" && <VerificationBadge size={16} />}</strong></div>
           <div><span>Email</span><strong>{user.email || "Not provided"}</strong></div>
           <div><span>Username</span><strong>{user.username ? "@" + user.username : "Not set"}</strong></div>
         </div>
