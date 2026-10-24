@@ -861,3 +861,4 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .manager-save-progress>span::after{position:absolute;inset:0;content:"";background:linear-gradient(100deg,transparent 0%,rgba(255,255,255,.85) 45%,transparent 75%);transform:translateX(-100%);animation:manager-save-shimmer 1.15s ease-in-out infinite}
 @keyframes manager-save-shimmer{to{transform:translateX(100%)}}
 @media(prefers-reduced-motion:reduce){.manager-save-progress>span{transition:none}.manager-save-progress>span::after{animation:none}}
+\n\n/* Match KingsHall full-screen image flows: hide the storefront chrome while the native gallery or image preview is open. */\nbody.crownstore-image-focus-mode .app-header,\nbody.crownstore-image-focus-mode .kh-nowbar-dock {\n  display: none !important;\n}\nbody.crownstore-image-focus-mode .site-shell {\n  padding-bottom: 0 !important;\n}\n
