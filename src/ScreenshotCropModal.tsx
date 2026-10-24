@@ -269,7 +269,7 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
     cropPaintFrameRef.current = null;
     const pending = pendingCropRef.current;
     pendingCropRef.current = null;
-    if (pending) setCrop(pending);
+    setCrop(pending || cropRef.current);
     try { event.currentTarget.releasePointerCapture(event.pointerId); } catch { /* Capture may already be released. */ }
   };
 
