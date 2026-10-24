@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
 import NowBar from "./NowBar";
 import ScreenshotCropModal from "./ScreenshotCropModal";
+import NativeGalleryModal from "./NativeGalleryModal";
+import { isNativeGalleryAvailable } from "./native/nativeImagePicker";
 import ImagePreviewModal from "./ImagePreviewModal";
 import NativeSelfUpdate from "./NativeSelfUpdate";
 import ProfilePage from "./ProfilePage";
@@ -284,6 +286,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
 }) {
   const [expanded, setExpanded] = useState(false);
   const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
+  const [nativeGalleryOpen, setNativeGalleryOpen] = useState(false);
   const [reviewerToken] = useState(() => getReviewerToken());
   const [reviewPayload, setReviewPayload] = useState<AppReviewsPayload | null>(null);
   const [reviewLoading, setReviewLoading] = useState(true);
@@ -1067,7 +1070,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           <div className="screenshot-upload-field">
             <label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label>
             <p>Tap any image to choose Crop, View, or Remove. New images appear as previews first and upload to ImageKit only when you save. {savedScreenshotUrls.length + pendingScreenshots.length}/6 screenshots · Up to 10 MB per image.</p>
-            <input id="catalogue-screenshot-upload" className="screenshot-file-input" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { selectScreenshotFiles(event.target.files); event.currentTarget.value = ""; }} />
+            <input id="catalogue-screenshot-upload" className="screenshot-file-input" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onClick={(event) => { if (isNativeGalleryAvailable()) { event.preventDefault(); setNativeGalleryOpen(true); } }} onChange={(event) => { selectScreenshotFiles(event.target.files); event.currentTarget.value = ""; }} />
             <label className={"button button-outline screenshot-add-button" + (uploadBusy || busy ? " is-disabled" : "")} htmlFor="catalogue-screenshot-upload" aria-disabled={uploadBusy || busy}>Add Screenshot</label>
 
             {(form.screenshotsText.trim() || pendingScreenshots.length > 0) && <div className="screenshot-preview-list" aria-label="App screenshots">
@@ -1124,6 +1127,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     </div>
   </section>
   {cropSource && <ScreenshotCropModal imageUrl={cropSource} onCancel={cancelScreenshotCrop} onDone={confirmScreenshotCrop} title="Crop app screenshot" aspectRatio={9 / 16} />}
+  {nativeGalleryOpen && <NativeGalleryModal onClose={() => setNativeGalleryOpen(false)} onSelect={(file) => { const transfer = new DataTransfer(); transfer.items.add(file); selectScreenshotFiles(transfer.files); }} />}
   {previewScreenshot && <ImagePreviewModal imageUrl={previewScreenshot} onClose={() => setPreviewScreenshot(null)} title="Screenshot preview" />}
   </>;
 }
