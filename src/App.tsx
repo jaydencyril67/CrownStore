@@ -1163,6 +1163,12 @@ export default function App() {
     } catch { return "HOME"; }
   });
 
+  useEffect(() => {
+    const openProfileFromNativeSignIn = () => setView("PROFILE");
+    window.addEventListener("crownstore:open-profile", openProfileFromNativeSignIn);
+    return () => window.removeEventListener("crownstore:open-profile", openProfileFromNativeSignIn);
+  }, []);
+
   const [colorPickerTarget, setColorPickerTarget] = useState<ColorPickerTarget>("nowbar");
   const [notificationPreferences, setNotificationPreferences] = useState(() => readNotificationPreferences());
   const [unreadAlerts, setUnreadAlerts] = useState(() => unreadNotificationCount());
