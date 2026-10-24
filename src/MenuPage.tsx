@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ColorPickerTarget } from "./ColorPickerPage";
 import {
-  Bell, Check, Palette, Radio, ShieldCheck,
+  Bell, Check, ChevronRight, Info, Palette, Radio, ShieldCheck,
   Sparkles, Zap
 } from "lucide-react";
 import {
@@ -93,7 +93,7 @@ function SettingRow({ title, detail, trailing }: { title: string; detail: string
   return <div className="menu-setting-row"><div className="menu-setting-copy"><strong>{title}</strong><span>{detail}</span></div><div className="menu-setting-control">{trailing}</div></div>;
 }
 
-export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void; onChooseColor: (target: ColorPickerTarget) => void }) {
+export default function MenuPage({ onBack, onAbout, onChooseColor }: { onBack: () => void; onAbout: () => void; onChooseColor: (target: ColorPickerTarget) => void }) {
   void onBack;
   const [edge, setEdge] = useState<EdgeSettings>(() => readEdge());
   const [buttonColor, setButtonColor] = useState(() => {
@@ -249,6 +249,13 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
     <section className="menu-section">
       <div className="menu-section-heading"><span className="menu-section-icon"><ShieldCheck size={18} /></span><div><h2>Notification types</h2><p>Turn specific CrownStore alerts on or off.</p></div></div>
       {NOTIFICATION_GROUPS.map((group) => <div key={group.title} className="menu-notification-group"><h3>{group.title}</h3>{group.items.map((item) => <SettingRow key={item.key} title={item.label} detail={item.detail} trailing={<SettingSwitch checked={preferences.types[item.key]} label={"Enable " + item.label} onChange={(enabled) => savePreferences({ ...preferences, types: { ...preferences.types, [item.key]: enabled } })} />} />)}</div>)}
+    </section>
+    <section className="menu-section">
+      <div className="menu-section-heading"><span className="menu-section-icon"><Info size={18} /></span><div><h2>About & legal</h2><p>Learn about CrownStore and review the Terms of Service.</p></div></div>
+      <button className="menu-about-link" type="button" onClick={onAbout}>
+        <span><strong>About CrownStore</strong><small>Store information, usage terms and service details.</small></span>
+        <ChevronRight size={18} aria-hidden="true" />
+      </button>
     </section>
     <div className="menu-page-footer"><Sparkles size={14} /> Preferences are saved locally and synced to your signed-in CrownStore account when available.</div>
 
