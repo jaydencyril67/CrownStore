@@ -718,13 +718,22 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 @media(max-width:600px){
  .menu-page,.notifications-page{padding:18px 14px 124px}
  .menu-section{padding:15px 0 6px}
- .menu-section-heading{gap:8px}
+ .menu-section-heading{gap:9px}
+ .menu-section-heading h2{font-size:18px}
+ .menu-section-heading p{font-size:13px;line-height:1.5}
  .menu-setting-row{gap:10px;min-height:58px}
- .menu-setting-copy strong{font-size:12px}
- .menu-setting-copy span{font-size:11px}
+ .menu-setting-copy strong{font-size:14px;line-height:1.4}
+ .menu-setting-copy span{font-size:13px;line-height:1.55}
  .menu-mode-list{grid-template-columns:1fr}
- .menu-mode-row{min-height:46px}
- .menu-page-footer{align-items:flex-start}
+ .menu-mode-row{min-height:50px}
+ .menu-mode-row strong{font-size:14px;line-height:1.35}
+ .menu-mode-row small{font-size:12px;line-height:1.4}
+ .menu-page-footer{align-items:flex-start;font-size:13px;line-height:1.55}
+ .menu-subheading{font-size:13px}
+ .menu-notification-group h3{font-size:13px}
+ .menu-inline-note{font-size:13px;line-height:1.55}
+ .menu-status{font-size:13px}
+ .menu-status button{font-size:13px}
  .notifications-toolbar{align-items:flex-start;flex-direction:column}
  .notifications-actions{width:100%}
  .notifications-actions button{flex:1}
