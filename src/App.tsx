@@ -746,6 +746,12 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
 
   async function uploadScreenshots(files: FileList | null) {
     if (!files?.length) return;
+    const currentScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+    const selectedFiles = Array.from(files);
+    if (currentScreenshotUrls.length + selectedFiles.length > 6) {
+      setUploadMessage("An app can have at most 6 screenshots. Remove existing screenshots or select fewer images.");
+      return;
+    }
     if (!token.trim()) {
       setUploadMessage("Enter the publishing token and load the catalogue before uploading screenshots.");
       return;
@@ -753,7 +759,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     setUploadBusy(true); setUploadMessage("");
     const uploaded: string[] = [];
     try {
-      for (const file of Array.from(files)) {
+      for (const file of selectedFiles) {
         if (!file.type.startsWith("image/")) throw new Error(file.name + " is not an image.");
         if (file.size > 10 * 1024 * 1024) throw new Error(file.name + " is larger than 10 MB.");
         const authResponse = await fetch(API_BASE + "/api/publishing/imagekit-auth", {
@@ -820,6 +826,11 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!token.trim()) { setMessage("Enter your publishing token first."); return; }
+    const screenshotCount = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length;
+    if (screenshotCount < 4 || screenshotCount > 6) {
+      setMessage("Each app must have 4 to 6 screenshots. You currently have " + screenshotCount + ".");
+      return;
+    }
     setBusy(true); setMessage("");
     const previousSlug = editingSlug;
     const isNew = previousSlug === "__new__";
@@ -890,7 +901,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
           <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
-          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots</label><p>Choose image files to upload them to ImageKit. Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
+          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label><p>Choose image files to upload them to ImageKit. {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length}/6 screenshots · Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
