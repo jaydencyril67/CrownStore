@@ -88,10 +88,8 @@ jobs:
           cp public/crownstore-pwa-icon.svg assets/splash.svg
           npx capacitor-assets generate --android
 
-      - name: Sync native plugin and deep link
-        run: |
-          npx cap sync android
-          python3 scripts/install-android-device-bridge.py
+      - name: Sync native plugins
+        run: npx cap sync android
 
       - name: Configure Firebase for CrownStore Android push
         env:
