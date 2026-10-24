@@ -22,6 +22,7 @@ import type { AppsResponse, CrownApp } from "./types";
 import "./search.css";
 import "./app-details.css";
 import "./profile.css";
+import { showToast, toastKindForMessage } from "./toast";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 const IMAGEKIT_URL_ENDPOINT = (import.meta.env.VITE_IMAGEKIT_URL_ENDPOINT || "").trim().replace(/\/+$/, "");
@@ -323,6 +324,9 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
   const distribution = reviewSummary?.ratingDistribution || [5, 4, 3, 2, 1].map((rating) => ({ rating, count: 0 }));
   const relatedApps = allApps.filter((item) => item.slug !== app.slug).slice(0, 6);
 
+  useEffect(() => { if (reviewNotice) showToast(reviewNotice, reviewNoticeError ? "error" : "success"); }, [reviewNotice, reviewNoticeError]);
+  useEffect(() => { if (reviewLoadError) showToast(reviewLoadError, "error"); }, [reviewLoadError]);
+
   useEffect(() => {
     let active = true;
     setReviewLoading(true);
@@ -502,8 +506,8 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
         </div>
         <label className="app-review-field"><span>Your review</span><textarea value={reviewBody} onChange={(event) => setReviewBody(event.target.value)} minLength={8} maxLength={1600} required placeholder="What did you like, or what could be better?" /></label>
         <div className="app-review-form-actions"><span>{reviewBody.trim().length}/1,600 characters</span><button className="button button-primary" type="submit" disabled={reviewSubmitting || reviewBody.trim().length < 8}>{reviewSubmitting ? "Saving…" : <><Send size={15} /> {reviewPayload?.myReview ? "Update review" : "Post review"}</>}</button></div>
-        {reviewNotice && <p className={"app-review-notice " + (reviewNoticeError ? "is-error" : "")} role={reviewNoticeError ? "alert" : "status"}>{reviewNotice}</p>}
-        {reviewLoadError && <p className="app-review-notice is-error" role="alert">{reviewLoadError}</p>}
+        
+        
       </form>
 
       <hr className="app-review-divider" />
@@ -511,7 +515,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
       {reviewLoading
         ? <div className="app-review-empty"><span className="download-dot-loader" aria-hidden="true"><i /><i /><i /></span><span>Loading reviews…</span></div>
         : reviewLoadError
-          ? <div className="app-review-empty"><MessageCircle size={22} /><strong>Reviews unavailable</strong><span>Try reopening this page in a moment.</span></div>
+          ? null
           : (reviewPayload?.reviews || []).length > 0
             ? <div className="app-review-list">{(reviewPayload?.reviews || []).map((review) => <article className="app-review-card" key={review.id}>
                 <div className="app-review-card-heading">
@@ -607,6 +611,8 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
   const [syncBusy, setSyncBusy] = useState(false);
   const [message, setMessage] = useState("");
 
+  useEffect(() => { if (message) showToast(message, toastKindForMessage(message), 6500); }, [message]);
+
   async function syncSourceReleases() {
     if (!token.trim()) { setMessage("Enter the publishing token first."); return; }
     setSyncBusy(true);
@@ -699,7 +705,7 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
         <label>Source commit SHA (40 characters)<input value={sourceCommit} onChange={(event) => setSourceCommit(event.target.value)} minLength={40} maxLength={40} pattern="[a-fA-F0-9]{40}" required placeholder="Git commit used to build the APK" /></label>
         <label>What's new<textarea value={changelog} onChange={(event) => setChangelog(event.target.value)} rows={3} maxLength={10000} placeholder="Release notes (optional)" /></label>
         <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Verifying APK…" : "Verify and publish release"}</button>
-        {message && <p className="publisher-message" role="status">{message}</p>}
+
       </form>
       </div>
     </section>;
@@ -753,6 +759,10 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [message, setMessage] = useState("");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+
+  useEffect(() => { if (message) showToast(message, toastKindForMessage(message), 6500); }, [message]);
+  useEffect(() => { if (uploadMessage && !/^Uploading screenshot \d+ of /i.test(uploadMessage)) showToast(uploadMessage, toastKindForMessage(uploadMessage)); }, [uploadMessage]);
+  useEffect(() => { if (uploadBusy) showToast("Uploading screenshots to ImageKit. Keep this page open until the save finishes…", "info", 6500); }, [uploadBusy]);
   const [pendingScreenshots, setPendingScreenshots] = useState<PendingScreenshot[]>([]);
   const pendingScreenshotsRef = useRef<PendingScreenshot[]>([]);
   const [cropSource, setCropSource] = useState<string | null>(null);
@@ -1039,8 +1049,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
             <p>Tap any image to choose Crop, View, or Remove. New images appear as previews first and upload to ImageKit only when you save. {savedScreenshotUrls.length + pendingScreenshots.length}/6 screenshots · Up to 10 MB per image.</p>
             <input id="catalogue-screenshot-upload" className="screenshot-file-input" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { selectScreenshotFiles(event.target.files); event.currentTarget.value = ""; }} />
             <label className={"button button-outline screenshot-add-button" + (uploadBusy || busy ? " is-disabled" : "")} htmlFor="catalogue-screenshot-upload" aria-disabled={uploadBusy || busy}>Add Screenshot</label>
-            {uploadBusy && <p role="status">Uploading screenshots to ImageKit. Keep this page open until the save finishes…</p>}
-            {uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}
+
             {(form.screenshotsText.trim() || pendingScreenshots.length > 0) && <div className="screenshot-preview-list" aria-label="App screenshots">
               {savedScreenshotUrls.map((url, index) => {
                 return <div className="screenshot-preview-item-wrap" key={"saved-" + url + "-" + index}>
@@ -1085,7 +1094,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
       </>}
-      {message && <p className="publisher-message manager-message" role="status">{message}</p>}
+
     </div>
   </section>
   {cropSource && <ScreenshotCropModal imageUrl={cropSource} onCancel={cancelScreenshotCrop} onDone={confirmScreenshotCrop} title="Crop app screenshot" aspectRatio={9 / 16} />}
@@ -1130,6 +1139,9 @@ export default function App() {
   const [colorPickerTarget, setColorPickerTarget] = useState<ColorPickerTarget>("nowbar");
   const [notificationPreferences, setNotificationPreferences] = useState(() => readNotificationPreferences());
   const [unreadAlerts, setUnreadAlerts] = useState(() => unreadNotificationCount());
+
+  useEffect(() => { if (error) showToast(error, "error", 6500); }, [error]);
+  useEffect(() => { if (updatesError) showToast(updatesError, "error", 6500); }, [updatesError]);
 
   useEffect(() => {
     const refreshNotifications = () => setUnreadAlerts(unreadNotificationCount());
@@ -1802,7 +1814,7 @@ export default function App() {
     if (Capacitor.getPlatform() === "android") {
       const downloadId = downloadProgress.downloadId;
       if (downloadId && downloadId > 0) void continueNativeInstall(app, downloadId);
-      else window.alert("CrownStore cannot find the completed Android download. Please download the APK again.");
+      else showToast("CrownStore cannot find the completed Android download. Please download the APK again.", "error", 6500);
       return;
     }
 
@@ -1817,16 +1829,17 @@ export default function App() {
       // Some browsers/device builds block external activity intents. Keep a clear fallback
       // instead of leaving the Install button appearing to do nothing.
       window.setTimeout(() => {
-        window.alert(
+        showToast(
           "Your APK is already downloaded as " + downloadProgress.filename +
-          ". If Files did not open, open your phone's Files app (or My Files) → Downloads, " +
-          "then tap that APK. Do not download it again."
+          ". If Files did not open, open your phone’s Files app (or My Files) → Downloads, " +
+          "then tap that APK. Do not download it again.",
+          "info", 7500
         );
       }, 900);
       return;
     }
 
-    window.alert("Your APK is already downloaded as " + downloadProgress.filename + ". On your Android phone, open Files (or My Files) → Downloads and tap the saved APK. CrownStore will not download it again.");
+    showToast("Your APK is already downloaded as " + downloadProgress.filename + ". On your Android phone, open Files (or My Files) → Downloads and tap the saved APK. CrownStore will not download it again.", "info", 7500);
   }
 
   function cancelDownload() {
@@ -2014,7 +2027,7 @@ export default function App() {
               {loading
                 ? <div className="state-panel"><div className="loader-ring" /><strong>Searching apps</strong><span>Loading the official catalogue…</span></div>
                 : error
-                  ? <div className="state-panel state-error"><strong>Search is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
+                  ? <div className="state-panel state-error"><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : searchResults.length
                     ? <div className="store-search-results">{searchResults.map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={openAppDetails} />)}</div>
                     : <div className="state-panel"><div className="state-icon"><Search size={22} /></div><strong>No apps found</strong><span>Try another name, category, or package ID.</span></div>}
@@ -2028,7 +2041,7 @@ export default function App() {
               {loading
                 ? <div className="state-panel"><div className="loader-ring" /><strong>Loading apps</strong><span>Fetching the official catalogue…</span></div>
                 : error
-                  ? <div className="state-panel state-error"><strong>The catalogue is temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
+                  ? <div className="state-panel state-error"><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
                   : apps.length
                     ? <div className="store-search-results">{[...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name)).slice(0, 6).map((app) => <SearchAppResultRow key={app.id} app={app} onDetails={openAppDetails} />)}</div>
                     : <div className="search-empty-prompt"><Search size={24} /><strong>No apps are listed yet</strong><span>Official apps will appear here when they are published to CrownStore.</span></div>}
@@ -2043,7 +2056,7 @@ export default function App() {
         {updatesLoading
           ? <div className="state-panel"><div className="loader-ring" /><strong>Loading recent releases</strong><span>Checking releases published in the last 7 days…</span></div>
           : updatesError
-            ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Recent releases are unavailable</strong><span>{updatesError}</span><button className="button button-outline" onClick={() => void loadRecentApps()}>Try again</button></div>
+            ? <div className="state-panel state-error"><button className="button button-outline" onClick={() => void loadRecentApps()}>Try again</button></div>
             : recentApps.length
               ? <div className="app-grid">{recentApps.map((app) => <AppCard key={app.id} app={app} onDetails={openAppDetails} />)}</div>
               : <div className="state-panel"><div className="state-icon"><Download size={22} /></div><strong>No new releases in the last 7 days</strong><span>Only apps with a recent published stable release appear here.</span></div>}
@@ -2092,7 +2105,7 @@ export default function App() {
         {loading
           ? <div className="state-panel"><div className="loader-ring" /><strong>Opening the collection</strong><span>Fetching published apps…</span></div>
           : error
-            ? <div className="state-panel state-error"><div className="state-icon"><Info size={22} /></div><strong>Catalogue temporarily unavailable</strong><span>{error}</span><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
+            ? <div className="state-panel state-error"><button className="button button-outline" onClick={() => void loadApps()}>Try again</button></div>
             : filtered.length
               ? <div className="app-grid">{filtered.map((app) => <AppCard key={app.id} app={app} onDetails={openAppDetails} />)}</div>
               : apps.length
