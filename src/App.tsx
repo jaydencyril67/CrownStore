@@ -715,11 +715,29 @@ const emptyCatalogueForm = (): CatalogueForm => ({
   name: "", slug: "", packageId: "", shortDescription: "", description: "",
   category: "Utilities", sourceRepo: "", iconUrl: "", screenshotsText: "", isListed: true
 });
+const MANAGED_APP_SELECTION_KEY = "crownstore-admin-last-managed-app";
+
+function normalizeScreenshotUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim()).filter(Boolean);
+  }
+  if (typeof value !== "string" || !value.trim()) return [];
+  const trimmed = value.trim();
+  if (trimmed.startsWith("[")) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return normalizeScreenshotUrls(parsed);
+    } catch { /* Fall back to a plain list of URLs below. */ }
+  }
+  return trimmed.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
+}
+
 function catalogueFormFor(app: ManagedApp): CatalogueForm {
   return {
     name: app.name, slug: app.slug, packageId: app.packageId, shortDescription: app.shortDescription || "",
     description: app.description || "", category: app.category || "Utilities", sourceRepo: app.sourceRepo || "",
-    iconUrl: app.iconUrl || "", screenshotsText: (app.screenshots || []).join("\n"), isListed: app.isListed
+    iconUrl: app.iconUrl || "", screenshotsText: normalizeScreenshotUrls(app.screenshots).join("\n"), isListed: app.isListed
   };
 }
 
@@ -844,10 +862,25 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       });
       const data = await response.json() as { apps?: ManagedApp[]; error?: string };
       if (!response.ok) throw new Error(data.error || "Could not load the managed catalogue.");
-      const items = Array.isArray(data.apps) ? data.apps : [];
-      setCatalogue(items); setLoaded(true);
-      setEditingSlug("__new__"); setForm(emptyCatalogueForm());
-      setMessage("Loaded " + items.length + " catalogue entries.");
+      const items = (Array.isArray(data.apps) ? data.apps : []).map((item) => ({
+        ...item,
+        screenshots: normalizeScreenshotUrls(item.screenshots)
+      }));
+      let rememberedSlug = "";
+      try { rememberedSlug = window.localStorage.getItem(MANAGED_APP_SELECTION_KEY) || ""; } catch { /* Storage is optional. */ }
+      const preferredSlug = editingSlug !== "__new__" ? editingSlug : loaded ? "__new__" : rememberedSlug;
+      const selected = (preferredSlug !== "__new__" ? items.find((item) => item.slug === preferredSlug) : undefined)
+        || (preferredSlug === "__new__" && loaded ? undefined : items[0]);
+      setCatalogue(items);
+      setLoaded(true);
+      setEditingSlug(selected?.slug || "__new__");
+      setForm(selected ? catalogueFormFor(selected) : emptyCatalogueForm());
+      if (selected) {
+        try { window.localStorage.setItem(MANAGED_APP_SELECTION_KEY, selected.slug); } catch { /* Storage is optional. */ }
+      }
+      setMessage("Loaded " + items.length + " catalogue entries." + (selected
+        ? " Showing saved screenshots for " + selected.name + "."
+        : " Select an existing app to edit its saved screenshots, or add a new app."));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not load the managed catalogue.");
     } finally { setBusy(false); }
@@ -858,7 +891,10 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     setEditingSlug(value);
     if (value === "__new__") { setForm(emptyCatalogueForm()); return; }
     const item = catalogue.find((entry) => entry.slug === value);
-    if (item) setForm(catalogueFormFor(item));
+    if (item) {
+      setForm(catalogueFormFor(item));
+      try { window.localStorage.setItem(MANAGED_APP_SELECTION_KEY, item.slug); } catch { /* Storage is optional. */ }
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -893,13 +929,14 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       });
       const data = await response.json() as { app?: ManagedApp; error?: string };
       if (!response.ok || !data.app) throw new Error(data.error || "Could not save application details.");
-      const saved = data.app;
+      const saved: ManagedApp = { ...data.app, screenshots: normalizeScreenshotUrls(data.app.screenshots) };
       setCatalogue((current) => {
         const next = isNew ? [...current, saved] : current.map((item) => item.slug === previousSlug ? saved : item);
         return next.sort((a, b) => a.name.localeCompare(b.name));
       });
       setEditingSlug(saved.slug);
       setForm(catalogueFormFor(saved));
+      try { window.localStorage.setItem(MANAGED_APP_SELECTION_KEY, saved.slug); } catch { /* Storage is optional. */ }
       setMessage((isNew ? "Application added: " : "Application updated: ") + saved.name + ". " +
         (saved.isListed ? "It is listed in the public store." : "It is hidden from the public store."));
       onSaved();
@@ -940,7 +977,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
           <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
-          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label><p>Choose image files to crop and upload to ImageKit. {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length}/6 screenshots · Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Crop and apply each screenshot to upload it…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><button type="button" className="screenshot-preview-open" onClick={() => setPreviewScreenshot(url)} aria-label={"Preview screenshot " + (index + 1)}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /></button><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
+          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots (4–6 required)</label><p>Saved screenshots appear below when you select an existing app. Scroll sideways to review them, use × to remove one, or add more images (up to 6). {form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).length}/6 screenshots · Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Crop and apply each screenshot to upload it…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><button type="button" className="screenshot-preview-open" onClick={() => setPreviewScreenshot(url)} aria-label={"Preview screenshot " + (index + 1)}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /></button><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
