@@ -1070,7 +1070,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
                   <button type="button" className="screenshot-preview-open" onClick={() => setActionScreenshot((current) => current?.kind === "pending" && current.id === item.id ? null : { kind: "pending", id: item.id })} aria-label={"Selected screenshot " + (savedScreenshotUrls.length + index + 1) + " actions"} aria-expanded={actionScreenshot?.kind === "pending" && actionScreenshot.id === item.id}>
                     <img src={item.previewUrl} alt={"Selected screenshot " + (index + 1)} />
                   </button>
-                  <span>Screenshot {savedScreenshotUrls.length + index + 1} · Not uploaded yet</span>
+                  <span>Screenshot {savedScreenshotUrls.length + index + 1}</span>
                 </div>
                 {actionScreenshot?.kind === "pending" && actionScreenshot.id === item.id && <div className="screenshot-actions-popout" role="group" aria-label="Screenshot actions">
                   <button type="button" title="Crop screenshot" aria-label="Crop screenshot" onClick={() => { setCropTarget(actionScreenshot); setCropSource(item.previewUrl); setActionScreenshot(null); }}><Crop size={17} /></button>
