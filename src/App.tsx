@@ -766,7 +766,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
         if (!response.ok || !data.secure_url) throw new Error(data.error?.message || "Cloudinary could not upload " + file.name + ".");
         uploaded.push(data.secure_url);
       }
-      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\\n") }));
+      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\n") }));
       setUploadMessage(uploaded.length + " screenshot" + (uploaded.length === 1 ? "" : "s") + " uploaded to Cloudinary.");
     } catch (error) {
       setUploadMessage(error instanceof Error ? error.message : "Screenshot upload failed.");
@@ -872,7 +872,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
           </div>
           <label>Short description<input value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} maxLength={180} placeholder="A short description for the catalogue" /></label>
           <label>Full description<textarea value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} rows={3} maxLength={5000} placeholder="Describe what the app does" /></label>
-          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots</label><p>Choose image files to upload them to Cloudinary. Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
+          <div className="screenshot-upload-field"><label htmlFor="catalogue-screenshot-upload">App screenshots</label><p>Choose image files to upload them to Cloudinary. Up to 10 MB per image.</p><input id="catalogue-screenshot-upload" type="file" accept="image/*" multiple disabled={uploadBusy || busy} onChange={(event) => { void uploadScreenshots(event.target.files); event.currentTarget.value = ""; }} />{uploadBusy && <p role="status">Uploading screenshots…</p>}{uploadMessage && <p className="publisher-message" role="status">{uploadMessage}</p>}{form.screenshotsText.trim() && <div className="screenshot-preview-list" aria-label="Uploaded screenshots">{form.screenshotsText.split(/[\n,]+/).map((url) => url.trim()).filter(Boolean).map((url, index) => <div className="screenshot-preview-item" key={url}><img src={url} alt={"Uploaded screenshot " + (index + 1)} loading="lazy" /><span>Screenshot {index + 1}</span><button type="button" className="screenshot-remove" onClick={() => setForm((current) => ({ ...current, screenshotsText: current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean).filter((item) => item !== url).join("\n") }))} aria-label={"Remove screenshot " + (index + 1)}><X size={15} /></button></div>)}</div>}</div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
           <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
         </form>
@@ -906,7 +906,6 @@ export default function App() {
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
   const downloadAbortRef = useRef<AbortController | null>(null);
   const nativeDownloadIdRef = useRef<number | null>(null);
-  const [showPublisher, setShowPublisher] = useState(false);
   const [view, setView] = useState<View>(() => {
     try {
       if (new URLSearchParams(window.location.search).get("profile") === "1") return "PROFILE";
