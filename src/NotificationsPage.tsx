@@ -158,14 +158,14 @@ export default function NotificationsPage({ onBack, onOpenApp }: { onBack: () =>
     {syncNotice && <p className="notifications-footnote" role="status">{syncNotice}</p>}
     {confirmClear && <div className="notifications-confirm" role="group" aria-label="Confirm clearing notifications"><span>Clear notifications from this device and your signed-in account inbox?</span><button type="button" onClick={() => void clearAll()}>Clear all</button><button type="button" onClick={() => setConfirmClear(false)}>Cancel</button></div>}
 
-    {visible.length ? <div className="notifications-list">{visible.map((item) => <article key={item.id} className={"notification-item" + (!item.readAt ? " is-unread" : "")}>
+    {visible.length ? <div className="notifications-list">{visible.map((item) => <article key={item.id} className={"notification-item" + (!item.readAt ? " is-unread" : "") + (expandedItems.has(item.id) ? " is-expanded" : "")}>
       <button type="button" className="notification-main" onClick={() => openItem(item)} aria-label={item.appSlug ? "Open " + item.title : "Read " + item.title}>
         <span className="notification-type-icon">{kindIcon(item.kind)}</span>
-        <span className="notification-copy"><span className="notification-kind">{KIND_LABELS[item.kind]}</span><strong>{item.title}</strong><span className={"notification-body" + (expandedItems.has(item.id) ? " is-expanded" : "")}>{item.body}</span><time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time></span>
+        <span className="notification-copy"><span className="notification-kind">{KIND_LABELS[item.kind]}</span><strong>{item.title}</strong><span id={"notification-body-" + item.id} className={"notification-body" + (expandedItems.has(item.id) ? " is-expanded" : "")}>{item.body}</span><time dateTime={item.createdAt}>{formatTime(item.createdAt)}</time></span>
         {!item.readAt && <span className="notification-unread-dot" aria-label="Unread" />}
       </button>
       <div className="notification-item-footer">
-        <button type="button" className="notification-expand-toggle" aria-expanded={expandedItems.has(item.id)} onClick={() => setExpandedItems((current) => { const next = new Set(current); if (next.has(item.id)) next.delete(item.id); else next.add(item.id); return next; })}>
+        <button type="button" className="notification-expand-toggle" aria-expanded={expandedItems.has(item.id)} aria-controls={"notification-body-" + item.id} aria-label={(expandedItems.has(item.id) ? "Collapse details for " : "Expand details for ") + item.title} onClick={() => setExpandedItems((current) => { const next = new Set(current); if (next.has(item.id)) next.delete(item.id); else next.add(item.id); return next; })}>
           {expandedItems.has(item.id) ? <ChevronUp size={13} /> : <ChevronDown size={13} />} {expandedItems.has(item.id) ? "Less" : "More"}
         </button>
         {expandedItems.has(item.id) && <div className="notification-item-actions">
