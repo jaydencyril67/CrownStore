@@ -20,6 +20,7 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
   const gestureRef = useRef<{ distance: number; midpoint: Point; zoom: number; offset: Point } | null>(null);
   const imageDragRef = useRef<{ pointerId: number; point: Point; offset: Point } | null>(null);
   const cropDragRef = useRef<CropDrag | null>(null);
+  const cropSelectionRef = useRef<HTMLDivElement | null>(null);
   const zoomRef = useRef(1);
   const offsetRef = useRef<Point>({ x: 0, y: 0 });
   const paintFrameRef = useRef<number | null>(null);
@@ -38,7 +39,8 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
     setCrop(next);
   };
 
-  // Keep the pointer handler lightweight: paint crop-box changes at most once per frame.
+  // Paint the crop box directly once per display frame. Avoid React renders on every
+  // finger movement; on slower phones those renders can make the crop handles feel sticky.
   const scheduleCropUpdate = (next: CropRect) => {
     cropRef.current = next;
     pendingCropRef.current = next;
@@ -47,7 +49,11 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
       cropPaintFrameRef.current = null;
       const pending = pendingCropRef.current;
       pendingCropRef.current = null;
-      if (pending) setCrop(pending);
+      const selection = cropSelectionRef.current;
+      if (!pending || !selection) return;
+      selection.style.transform = `translate3d(${pending.x}px, ${pending.y}px, 0)`;
+      selection.style.width = `${pending.width}px`;
+      selection.style.height = `${pending.height}px`;
     });
   };
 
@@ -335,8 +341,9 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
             }}
           />
           {ready && <div
+            ref={cropSelectionRef}
             className="crownstore-screenshot-crop-selection"
-            style={{ left: crop.x, top: crop.y, width: crop.width, height: crop.height }}
+            style={{ left: 0, top: 0, transform: `translate3d(${crop.x}px, ${crop.y}px, 0)`, width: crop.width, height: crop.height }}
             onPointerDown={event => handleCropPointerDown(event, "move")}
             onPointerMove={handleCropPointerMove}
             onPointerUp={handleCropPointerUp}
