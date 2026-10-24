@@ -754,6 +754,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   const [message, setMessage] = useState("");
   const [uploadBusy, setUploadBusy] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<{ completed: number; total: number; percent: number; filename: string } | null>(null);
 
   useEffect(() => { if (message) showToast(message, toastKindForMessage(message), 6500); }, [message]);
   useEffect(() => { if (uploadMessage && !/^Uploading screenshot \d+ of /i.test(uploadMessage)) showToast(uploadMessage, toastKindForMessage(uploadMessage)); }, [uploadMessage]);
@@ -799,7 +800,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     setPreviewScreenshot(null);
   }
 
-  async function uploadScreenshotToImageKit(file: File): Promise<string> {
+  async function uploadScreenshotToImageKit(file: File, onProgress: (percent: number) => void): Promise<string> {
     const authResponse = await fetch(API_BASE + "/api/publishing/imagekit-auth", {
       headers: { Authorization: "Bearer " + token.trim() },
       cache: "no-store"
@@ -816,14 +817,31 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     body.append("expire", String(auth.expire));
     body.append("signature", auth.signature);
     body.append("folder", "/crownstore/screenshots");
-    const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", { method: "POST", body });
-    const data = await response.json() as { url?: string; filePath?: string; message?: string; help?: string };
-    if (!response.ok || (!data.url && !data.filePath)) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
-    const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\/+/, "") : "";
+    const data = await new Promise<{ url?: string; filePath?: string; message?: string; help?: string }>((resolve, reject) => {
+      const request = new XMLHttpRequest();
+      request.open("POST", "https://upload.imagekit.io/api/v1/files/upload");
+      request.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(Math.min(99, Math.floor((event.loaded / event.total) * 100)));
+      };
+      request.onload = () => {
+        let payload: { url?: string; filePath?: string; message?: string; help?: string } = {};
+        try { payload = JSON.parse(request.responseText) as typeof payload; } catch { /* handled below */ }
+        if (request.status < 200 || request.status >= 300) {
+          reject(new Error(payload.message || payload.help || "ImageKit could not upload " + file.name + "."));
+          return;
+        }
+        resolve(payload);
+      };
+      request.onerror = () => reject(new Error("Network error while uploading " + file.name + "."));
+      request.onabort = () => reject(new Error("Upload cancelled for " + file.name + "."));
+      request.send(body);
+    });
+    const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\\/+/, "") : "";
     const imageUrl = IMAGEKIT_URL_ENDPOINT && imagePath
       ? IMAGEKIT_URL_ENDPOINT + "/" + imagePath
       : data.url;
     if (!imageUrl) throw new Error("ImageKit returned no usable image URL for " + file.name + ".");
+    onProgress(100);
     return imageUrl;
   }
 
@@ -950,9 +968,15 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       const screenshotUrls = [...existingScreenshotUrls];
       if (pendingScreenshots.length) {
         setUploadBusy(true);
+        setUploadProgress({ completed: 0, total: pendingScreenshots.length, percent: 0, filename: pendingScreenshots[0].file.name });
         for (let index = 0; index < pendingScreenshots.length; index += 1) {
+          const currentFile = pendingScreenshots[index].file;
           setUploadMessage("Uploading screenshot " + (index + 1) + " of " + pendingScreenshots.length + " to ImageKit…");
-          screenshotUrls.push(await uploadScreenshotToImageKit(pendingScreenshots[index].file));
+          setUploadProgress({ completed: index, total: pendingScreenshots.length, percent: Math.floor((index / pendingScreenshots.length) * 100), filename: currentFile.name });
+          screenshotUrls.push(await uploadScreenshotToImageKit(currentFile, (filePercent) => {
+            setUploadProgress({ completed: index, total: pendingScreenshots.length, percent: Math.min(100, Math.floor(((index + filePercent / 100) / pendingScreenshots.length) * 100)), filename: currentFile.name });
+          }));
+          setUploadProgress({ completed: index + 1, total: pendingScreenshots.length, percent: Math.floor(((index + 1) / pendingScreenshots.length) * 100), filename: currentFile.name });
         }
       }
       const payload = {
@@ -1001,6 +1025,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
       if (pendingScreenshots.length) setUploadMessage("Save failed. Your selected image previews are still here; retry saving after fixing the issue.");
     } finally {
       setUploadBusy(false);
+      setUploadProgress(null);
       setBusy(false);
     }
   }
@@ -1086,7 +1111,13 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
             </div>}
           </div>
           <label className="manager-listed"><input type="checkbox" checked={form.isListed} onChange={(event) => setForm({ ...form, isListed: event.target.checked })} /> Show this app in the public CrownStore catalogue</label>
-          <button className="button button-primary publisher-submit" disabled={busy}>{busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}</button>
+          <button className={"button button-primary publisher-submit manager-save-button" + (uploadBusy ? " is-uploading" : "")} disabled={busy}>
+            {uploadBusy && uploadProgress ? <>
+              <span className="manager-save-copy"><span>{uploadProgress.percent >= 100 ? "Finishing uploads…" : "Uploading images " + uploadProgress.completed + "/" + uploadProgress.total}</span><small>{uploadProgress.filename}</small></span>
+              <strong className="manager-save-percent">{uploadProgress.percent}%</strong>
+              <span className="manager-save-progress" aria-hidden="true"><span style={{ width: uploadProgress.percent + "%" }} /></span>
+            </> : busy ? "Saving…" : editingSlug === "__new__" ? "Add application" : "Save application changes"}
+          </button>
         </form>
       </>}
 
