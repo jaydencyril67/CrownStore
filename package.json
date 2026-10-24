@@ -9,7 +9,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "node scripts/copy-fonts.mjs && tsc -b --pretty",
     "android:add": "cap add android",
-    "android:sync": "npm run build && npx cap sync android && python3 scripts/install-android-device-bridge.py"
+    "android:sync": "npm run build && npx cap sync android && python3 scripts/install-android-native-plugins.py"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
