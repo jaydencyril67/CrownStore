@@ -194,7 +194,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
         }}
         onTouchEnd={(event) => {
           stopHold();
-          if ((event.target as HTMLElement).closest(".kh-nowbar-title")) finishSwipe(event);
+          if (swipeStart.current) finishSwipe(event);
         }}
         onTouchCancel={() => { stopHold(); swipeStart.current = null; }}
       >
