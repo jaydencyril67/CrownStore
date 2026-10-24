@@ -383,7 +383,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 .kh-nowbar::-webkit-scrollbar{display:none}
 .kh-nowbar-rail{position:absolute;inset:50% 10px auto;height:1px;transform:translateY(-50%);pointer-events:none;background:linear-gradient(90deg,transparent,rgba(139,92,246,.2),transparent)}
 .kh-nowbar-title.is-pressing{background:transparent}
-.kh-nowbar-title{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:2px 4px;color:#eee7ff;white-space:nowrap;font-size:.95rem;font-weight:700;letter-spacing:.02em;user-select:none;-webkit-user-select:none}
+.kh-nowbar-title{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:2px 4px;color:#eee7ff;white-space:nowrap;font-size:.95rem;font-weight:700;letter-spacing:.02em;user-select:none;-webkit-user-select:none;touch-action:pan-y}
 .kh-nowbar-orb{width:10px;height:10px;flex:0 0 10px;border-radius:999px;background:linear-gradient(135deg,#c4b5fd,#6d28d9);box-shadow:0 0 10px rgba(139,92,246,.42)}
 .kh-nowbar-current{max-width:calc(100vw - 105px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.95rem;font-weight:700;letter-spacing:.02em}
 .kh-nowbar-title>svg{width:16px;height:16px;flex:0 0 16px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
