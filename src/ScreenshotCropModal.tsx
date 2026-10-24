@@ -329,6 +329,7 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
           onPointerCancel={handleStagePointerUp}
         >
           <img
+            crossOrigin="anonymous"
             ref={imageRef}
             src={imageUrl}
             alt="Selected screenshot crop"
