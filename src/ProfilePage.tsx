@@ -1292,7 +1292,6 @@ export default function ProfilePage({
             : <p className="profile-empty">Recent app activity will appear here when Android has usage history.</p>}
         </section>
       </>}
-      <div className="profile-signout-bottom"><button className="profile-text-button" type="button" onClick={signOut}><LogOut size={15} /> Sign out of CrownStore</button></div>
     </div>}
 
     {checkingAccounts && <div className="profile-loading-backdrop" role="status" aria-live="polite"><div className="profile-loading-dialog"><span className="profile-spinner" /><strong>Checking KingsHall accounts</strong><span>Your sign-in is being prepared.</span></div></div>}
