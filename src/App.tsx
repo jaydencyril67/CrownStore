@@ -2109,26 +2109,28 @@ export default function App() {
             : recentApps.length
               ? <div className="app-grid">{recentApps.map((app) => <AppCard key={app.id} app={app} onDetails={openAppDetails} />)}</div>
               : <div className="state-panel"><div className="state-icon"><Download size={22} /></div><strong>No new releases in the last 7 days</strong><span>Only apps with a recent published stable release appear here.</span></div>}
-      </section> : view === "HOME" ? <section className="home-shelves" aria-label="App shelves">
-        {[
-          { id: "recommended", title: "Recommended for you", subtitle: "Explore the official KingsHall app collection.", icon: Sparkles, select: (_app: CrownApp) => true, sort: (a: CrownApp, b: CrownApp) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name) },
-          { id: "top-charts", title: "Top charts", subtitle: "Discover the apps available across CrownStore.", icon: Layers3, select: (_app: CrownApp) => true, sort: (a: CrownApp, b: CrownApp) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name) },
-          { id: "recently-updated", title: "Recently updated", subtitle: "The latest officially published app releases.", icon: Download, select: (app: CrownApp) => Boolean(app.releaseId), sort: (a: CrownApp, b: CrownApp) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime() },
-          { id: "social", title: "Social", subtitle: "Apps for conversations and staying connected.", icon: MessageCircle, select: (app: CrownApp) => /social|chat|communication|community/i.test([app.category, app.slug, app.name].join(" ")), sort: (a: CrownApp, b: CrownApp) => a.name.localeCompare(b.name) },
-          { id: "ai-productivity", title: "AI & productivity", subtitle: "Tools designed to help you create and get things done.", icon: Bot, select: (app: CrownApp) => /ai|productivity|bot|automation/i.test([app.category, app.slug, app.name].join(" ")), sort: (a: CrownApp, b: CrownApp) => a.name.localeCompare(b.name) },
-          { id: "tools", title: "Tools & utilities", subtitle: "Useful apps from across the KingsHall ecosystem.", icon: ShieldCheck, select: (app: CrownApp) => /tool|utilit|finance|security/i.test([app.category, app.slug, app.name].join(" ")), sort: (a: CrownApp, b: CrownApp) => a.name.localeCompare(b.name) }
-        ].map((shelf) => {
-          const ShelfIcon = shelf.icon;
-          const shelfApps = apps.filter(shelf.select).sort(shelf.sort);
-          return <section className="app-shelf" key={shelf.id} aria-labelledby={"shelf-" + shelf.id}>
-            <div className="shelf-heading"><div className="shelf-title-wrap"><span className="shelf-icon"><ShelfIcon size={18} /></span><div><h2 id={"shelf-" + shelf.id}>{shelf.title}</h2><p>{shelf.subtitle}</p></div></div><div className="shelf-heading-actions"><span className="shelf-count">{shelfApps.length} {shelfApps.length === 1 ? "app" : "apps"}</span></div></div>
-            <div className="shelf-track" aria-label={shelf.title + " app slots"}>
-              {(loading ? [] : shelfApps).map((app) => <div className="shelf-app-card" key={app.id}><AppCard app={app} onDetails={openAppDetails} /></div>)}
-
+      </section> : view === "HOME" ? <section className="home-shelves" aria-label="Recommended apps">
+        <section className="app-shelf" aria-labelledby="shelf-recommended">
+          <div className="shelf-heading">
+            <div className="shelf-title-wrap">
+              <span className="shelf-icon"><Sparkles size={18} /></span>
+              <div>
+                <h2 id="shelf-recommended">Recommended for you</h2>
+                <p>Explore the official KingsHall app collection.</p>
+              </div>
             </div>
-          </section>;
-        })}
-        <div className="shelf-footer-note"><ShieldCheck size={15} /> Official apps and verified Android releases, all in one trusted place.</div>
+            <div className="shelf-heading-actions">
+              <span className="shelf-count">{apps.length} {apps.length === 1 ? "app" : "apps"}</span>
+            </div>
+          </div>
+          <div className="shelf-track" aria-label="Recommended apps">
+            {(loading ? [] : [...apps].sort((a, b) => Number(Boolean(b.releaseId)) - Number(Boolean(a.releaseId)) || a.name.localeCompare(b.name))).map((app) => (
+              <div className="shelf-app-card" key={app.id}>
+                <AppCard app={app} onDetails={openAppDetails} />
+              </div>
+            ))}
+          </div>
+        </section>
       </section> : <>
       <section className="hero">
         <div className="hero-copy">
