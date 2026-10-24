@@ -34,6 +34,11 @@ export default function ScreenshotCropModal({ imageUrl, onCancel, onDone, title 
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => {
+    document.body.classList.add("crownstore-image-focus-mode");
+    return () => document.body.classList.remove("crownstore-image-focus-mode");
+  }, []);
+
   useEffect(() => { if (errorMessage) showToast(errorMessage, "error"); }, [errorMessage]);
 
   const updateCrop = (next: CropRect) => {
