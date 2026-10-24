@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ColorPickerTarget } from "./ColorPickerPage";
 import {
-  Bell, Check, Palette, Radio, Settings2, ShieldCheck,
+  Bell, Check, Palette, Radio, ShieldCheck,
   Smartphone, Sparkles, Zap, Mail
 } from "lucide-react";
 import {
@@ -200,9 +200,7 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
       <div className="app-detail-topbar">
         <span className="app-detail-top-label">MENU</span>
       </div>
-      <span className="eyebrow"><Settings2 size={14} /> CROWNSTORE CONTROL CENTER</span>
       <h1>Menu</h1>
-      <p>Personalize navigation, lighting and the alerts you receive from CrownStore.</p>
     </div>
 
 
