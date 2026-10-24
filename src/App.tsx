@@ -767,7 +767,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   useEffect(() => {
     const closeScreenshotActions = (event: PointerEvent) => {
       const target = event.target;
-      if (!(target instanceof Element) || !target.closest(".screenshot-preview-item-wrap")) setActionScreenshot(null);
+      if (!(target instanceof Element) || !target.closest(".screenshot-actions-popout")) setActionScreenshot(null);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setActionScreenshot(null);
