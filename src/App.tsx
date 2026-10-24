@@ -1127,7 +1127,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     </div>
   </section>
   {cropSource && <ScreenshotCropModal imageUrl={cropSource} onCancel={cancelScreenshotCrop} onDone={confirmScreenshotCrop} title="Crop app screenshot" aspectRatio={9 / 16} />}
-  {nativeGalleryOpen && <NativeGalleryModal onClose={() => setNativeGalleryOpen(false)} onSelect={(file) => { const transfer = new DataTransfer(); transfer.items.add(file); selectScreenshotFiles(transfer.files); }} />}
+  {nativeGalleryOpen && <NativeGalleryModal onClose={() => setNativeGalleryOpen(false)} onSelect={(file) => { selectScreenshotFiles([file]); }} />}
   {previewScreenshot && <ImagePreviewModal imageUrl={previewScreenshot} onClose={() => setPreviewScreenshot(null)} title="Screenshot preview" />}
   </>;
 }
