@@ -105,6 +105,7 @@ jobs:
               "KingsHallAccountPlugin",
               "NativeProfileUsagePlugin",
               "NativeWebAuthnPlugin",
+              "CrossAppLauncherPlugin",
           )
 
           missing_sources = [
@@ -124,7 +125,7 @@ jobs:
           if missing_registrations:
               raise SystemExit("MainActivity is missing native plugin registrations: " + ", ".join(missing_registrations))
 
-          print("Verified all four custom CrownStore Android plugin classes and MainActivity registrations.")
+          print("Verified all five custom CrownStore Android plugin classes and MainActivity registrations.")
           PY
 
       - name: Configure Firebase for CrownStore Android push
