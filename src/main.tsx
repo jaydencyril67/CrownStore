@@ -4,6 +4,7 @@ import App from "./App";
 import PushNotificationAgent from "./PushNotificationAgent";
 import ToastViewport from "./toast";
 import "./styles.css";
+import { listenForNativeLaunchUrls } from "./utils/crossAppLauncher";
 
 function GlobalInteractionRules() {
   useEffect(() => {
@@ -39,6 +40,27 @@ declare global {
   }
 }
 
+function NativeSignInReturnBridge() {
+  useEffect(() => {
+    const handleLaunchUrl = (value: string) => {
+      try {
+        const url = new URL(value);
+        if (url.protocol !== "crownstore:" || url.hostname !== "signin") return;
+        const email = new URLSearchParams(url.hash.replace(/^#/, "")).get("kingshall_account") || "";
+        const params = new URLSearchParams({ profile: "1" });
+        const hash = email ? "#kingshall_account=" + encodeURIComponent(email) : "";
+        window.history.replaceState({}, "", "/" + "?" + params.toString() + hash);
+        window.dispatchEvent(new Event("crownstore:open-profile"));
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      } catch {
+        // Ignore unrelated or malformed app launch URLs.
+      }
+    };
+    return listenForNativeLaunchUrls(handleLaunchUrl);
+  }, []);
+  return null;
+}
+
 function RefreshSplashCleanup() {
   useEffect(() => {
     const splash = document.getElementById("crownstore-refresh-splash");
@@ -71,6 +93,7 @@ createRoot(document.getElementById("root")!).render(
     <GlobalInteractionRules />
     <PwaServiceWorker />
     <RefreshSplashCleanup />
+    <NativeSignInReturnBridge />
     <PushNotificationAgent />
     <ToastViewport />
     <App />
