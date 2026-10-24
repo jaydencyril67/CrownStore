@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ColorPickerTarget } from "./ColorPickerPage";
 import {
   Bell, Check, Palette, Radio, Settings2, ShieldCheck,
   Smartphone, Sparkles, Zap, Mail
@@ -91,7 +92,7 @@ function SettingRow({ title, detail, trailing }: { title: string; detail: string
   return <div className="menu-setting-row"><div className="menu-setting-copy"><strong>{title}</strong><span>{detail}</span></div><div className="menu-setting-control">{trailing}</div></div>;
 }
 
-export default function MenuPage({ onBack }: { onBack: () => void }) {
+export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void; onChooseColor: (target: ColorPickerTarget) => void }) {
   void onBack;
   const [edge, setEdge] = useState<EdgeSettings>(() => readEdge());
   const [buttonColor, setButtonColor] = useState(() => {
@@ -208,17 +209,17 @@ export default function MenuPage({ onBack }: { onBack: () => void }) {
     <section className="menu-section">
       <div className="menu-section-heading"><span className="menu-section-icon"><Zap size={18} /></span><div><h2>NowBar lighting</h2><p>Style the edge and navigation buttons.</p></div></div>
       <SettingRow title="Edge lighting" detail="Show a colored light or glow around the NowBar." trailing={<SettingSwitch checked={edge.enabled} label="Enable NowBar edge lighting" onChange={(enabled) => { const next = { ...edge, enabled }; setEdge(next); writeEdge(next); }} />} />
-      <SettingRow title="Edge-light color" detail="Choose the accent used by the NowBar edge." trailing={<label className="menu-color-control"><span style={{ background: edge.color }} /><input aria-label="NowBar edge color" type="color" value={edge.color} onChange={(event) => { const next = { ...edge, color: event.target.value }; setEdge(next); writeEdge(next); }} /></label>} />
+      <SettingRow title="Edge-light color" detail="Choose the accent used by the NowBar edge." trailing={<button className="menu-color-choose" type="button" onClick={() => onChooseColor("nowbar")} aria-label="Choose NowBar edge color"><span className="menu-color-swatch" style={{ background: edge.color }} /><span>Choose</span></button>} />
       <div className="menu-subheading">Lighting behavior</div>
       <div className="menu-mode-list">{EDGE_MODES.map((mode) => <button key={mode.value} type="button" className={"menu-mode-row" + (edge.mode === mode.value ? " is-selected" : "")} aria-pressed={edge.mode === mode.value} onClick={() => { const next = { ...edge, mode: mode.value }; setEdge(next); writeEdge(next); }}><span><strong>{mode.label}</strong><small>{mode.detail}</small></span><span className="menu-radio">{edge.mode === mode.value ? <Check size={12} /> : null}</span></button>)}</div>
       <SettingRow title="NowBar button lighting" detail="Apply the chosen accent color to navigation buttons." trailing={<SettingSwitch checked={buttonColorEnabled} label="Enable NowBar button lighting" onChange={(enabled) => { setButtonColorEnabled(enabled); writeBoolean(BUTTON_COLOR_ENABLED_KEY, enabled, "crownstore:nowbar-settings-changed"); }} />} />
-      <SettingRow title="Button-light color" detail="Choose the color used by navigation buttons." trailing={<label className="menu-color-control"><span style={{ background: buttonColor }} /><input aria-label="NowBar button color" type="color" value={buttonColor} onChange={(event) => { setButtonColor(event.target.value); try { window.localStorage.setItem(BUTTON_COLOR_KEY, event.target.value); } catch {} window.dispatchEvent(new CustomEvent("crownstore:nowbar-settings-changed")); }} /></label>} />
+      <SettingRow title="Button-light color" detail="Choose the color used by navigation buttons." trailing={<button className="menu-color-choose" type="button" onClick={() => onChooseColor("button")} aria-label="Choose NowBar button color"><span className="menu-color-swatch" style={{ background: buttonColor }} /><span>Choose</span></button>} />
     </section>
 
     <section className="menu-section">
       <div className="menu-section-heading"><span className="menu-section-icon"><Palette size={18} /></span><div><h2>App header lighting</h2><p>Control the light around the CrownStore header.</p></div></div>
       <SettingRow title="Header lighting" detail="Add a subtle colored glow around the app header." trailing={<SettingSwitch checked={preferences.headerLightingEnabled} label="Enable app header lighting" onChange={(enabled) => savePreferences({ ...preferences, headerLightingEnabled: enabled })} />} />
-      <SettingRow title="Header-light color" detail="Shared accent for the header glow and notification count." trailing={<label className="menu-color-control"><span style={{ background: preferences.headerLightingColor }} /><input aria-label="Header and notification accent color" type="color" value={preferences.headerLightingColor} onChange={(event) => savePreferences({ ...preferences, headerLightingColor: event.target.value })} /></label>} />
+      <SettingRow title="Header-light color" detail="Shared accent for the header glow and notification count." trailing={<button className="menu-color-choose" type="button" onClick={() => onChooseColor("header")} aria-label="Choose app header notification color"><span className="menu-color-swatch" style={{ background: preferences.headerLightingColor }} /><span>Choose</span></button>} />
     </section>
 
     <section className="menu-section">
