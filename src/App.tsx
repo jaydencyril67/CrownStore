@@ -140,22 +140,15 @@ function DownloadFeedback({
     : progress.status === "cancelled" ? "The download was stopped. You can start it again."
     : progress.error || "CrownStore could not finish the download. Check your connection and try again.";
 
-  return <section className={"download-feedback status-" + progress.status} role="status" aria-live="polite">
-    <div className="download-feedback-heading">
-      <span className="download-feedback-icon" aria-hidden="true">
-        {progress.status === "complete" ? <CheckCircle2 size={17} />
-          : progress.status === "error" ? <Info size={17} />
-          : progress.status === "permission" ? <Smartphone size={17} />
-          : <Download size={17} />}
-      </span>
+  return <section className={"download-feedback status-" + progress.status} role={busy ? "status" : "group"} aria-live={busy ? "polite" : "off"}>
+    {busy && <div className="download-feedback-heading">
+      <span className="download-feedback-icon" aria-hidden="true"><Download size={17} /></span>
       <div className="download-feedback-copy">
         <strong>{progress.appName} · {title}</strong>
         <span>{message}</span>
       </div>
-      <button className="download-feedback-dismiss" type="button" onClick={busy ? onCancel : onDismiss} aria-label={busy ? "Cancel download" : "Dismiss download status"}>
-        {busy ? "Cancel" : "Dismiss"}
-      </button>
-    </div>
+      <button className="download-feedback-dismiss" type="button" onClick={onCancel} aria-label="Cancel download">Cancel</button>
+    </div>}
     {(busy || progress.status === "complete" || progress.status === "installing" || progress.status === "permission") && <>
       <div className="download-progress-track" aria-label={percent === null ? "Download in progress" : "Download " + percent + "% complete"}>
         <span className={percent === null && busy && progress.status !== "installing" ? "is-indeterminate" : ""} style={{ width: (percent === null ? 28 : progress.status === "complete" || progress.status === "installing" || progress.status === "permission" ? 100 : percent) + "%" }} />
@@ -168,6 +161,7 @@ function DownloadFeedback({
     {(progress.status === "complete" || progress.status === "error" || progress.status === "cancelled" || progress.status === "permission") && <div className="download-feedback-actions">
       {progress.status === "complete" && <button type="button" className="button button-primary" onClick={onInstall}>{progress.platform === "android" ? <><Smartphone size={15} /> Open installer</> : <><PackageCheck size={15} /> Install saved APK</>}</button>}
       {(progress.status === "error" || progress.status === "cancelled" || progress.status === "permission") && <button type="button" className="button button-outline" onClick={progress.status === "permission" ? onInstall : onRetry}>{progress.status === "permission" ? <><Smartphone size={15} /> Continue installation</> : <><Download size={15} /> Try again</>}</button>}
+      <button type="button" className="download-feedback-dismiss" onClick={onDismiss} aria-label="Dismiss download actions">Dismiss</button>
     </div>}
   </section>;
 }
@@ -612,6 +606,7 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
   const [message, setMessage] = useState("");
 
   useEffect(() => { if (message) showToast(message, toastKindForMessage(message), 6500); }, [message]);
+  useEffect(() => { if (apps.length === 0) showToast("No listed apps are available to publish. Add and list an app in Manage Apps first.", "warning", 6500); }, [apps.length]);
 
   async function syncSourceReleases() {
     if (!token.trim()) { setMessage("Enter the publishing token first."); return; }
@@ -695,7 +690,7 @@ function PublisherPanel({ onClose, apps, onPublished }: { onClose: () => void; a
           options={apps.map((item) => ({ value: item.slug, label: item.name + " (" + item.slug + ")" }))}
           ariaLabel="Choose application to publish"
         /></label>
-        {apps.length === 0 && <p className="publisher-message">No listed apps are available to publish. Add and list an app in Manage Apps first.</p>}
+
         <div className="publisher-fields">
           <label>Release tag<input value={tagName} onChange={(event) => setTagName(event.target.value)} required placeholder="v1.0.0" /></label>
           <label>Version name<input value={versionName} onChange={(event) => setVersionName(event.target.value)} required placeholder="1.0.0" /></label>
@@ -1124,6 +1119,7 @@ export default function App() {
   const [selectedApp, setSelectedApp] = useState<CrownApp | null>(null);
   const detailHistoryPushedRef = useRef(false);
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress | null>(null);
+  const downloadToastKeyRef = useRef("");
   const downloadAbortRef = useRef<AbortController | null>(null);
   const nativeDownloadIdRef = useRef<number | null>(null);
   const [view, setView] = useState<View>(() => {
@@ -1142,6 +1138,28 @@ export default function App() {
 
   useEffect(() => { if (error) showToast(error, "error", 6500); }, [error]);
   useEffect(() => { if (updatesError) showToast(updatesError, "error", 6500); }, [updatesError]);
+  useEffect(() => {
+    if (!downloadProgress) {
+      downloadToastKeyRef.current = "";
+      return;
+    }
+    const { releaseId, status } = downloadProgress;
+    const key = releaseId + ":" + status;
+    if (!["complete", "error", "cancelled", "permission"].includes(status) || downloadToastKeyRef.current === key) {
+      downloadToastKeyRef.current = key;
+      return;
+    }
+    downloadToastKeyRef.current = key;
+    if (status === "complete") {
+      showToast("Download complete for " + downloadProgress.appName + ". " + (downloadProgress.platform === "android" ? "The installer is ready." : "The APK has been saved as " + downloadProgress.filename + "."), "success", 7000);
+    } else if (status === "error") {
+      showToast(downloadProgress.error || "The APK download failed. Please try again.", "error", 7500);
+    } else if (status === "cancelled") {
+      showToast("Download cancelled for " + downloadProgress.appName + ".", "warning");
+    } else {
+      showToast(downloadProgress.error || "Android needs permission to install this app. Allow CrownStore in Android settings, then continue installation.", "warning", 8500);
+    }
+  }, [downloadProgress?.releaseId, downloadProgress?.status, downloadProgress?.error]);
 
   useEffect(() => {
     const refreshNotifications = () => setUnreadAlerts(unreadNotificationCount());
