@@ -207,7 +207,7 @@ export default function NowBar({ onHome, onSearch, onUpdates, onProfile, onNotif
         {view === "title" ? (
           <div className={`kh-nowbar-title ${pressing ? "is-pressing" : ""}`}>
             <span className="kh-nowbar-orb" />
-            <span className="kh-nowbar-current">{activePage}</span>
+            <span className="kh-nowbar-current" style={buttonColorEnabled ? { color: buttonColor, textShadow: `0 0 6px ${buttonColor}aa, 0 0 14px ${buttonColor}66` } : undefined}>{activePage}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
           </div>
         ) : (
