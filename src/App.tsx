@@ -1001,9 +1001,6 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
   }
 
   const savedScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
-  const actionScreenshotUrl = actionScreenshot
-    ? actionScreenshot.kind === "saved" ? actionScreenshot.url : pendingScreenshots.find((item) => item.id === actionScreenshot.id)?.previewUrl || null
-    : null;
 
   return <>
   <section className="admin-page manager-page" aria-labelledby="manager-title">
