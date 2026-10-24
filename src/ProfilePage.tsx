@@ -579,7 +579,7 @@ export default function ProfilePage({
 
   function redirectToKingsHall() {
     const returnTo = "https://crownstore.kingshall.online/?profile=1";
-    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") {
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android" && Capacitor.isPluginAvailable("CrossAppLauncher")) {
       const targetUrl = new URL("kingshall://signin");
       targetUrl.searchParams.set("app", "crownstore");
       targetUrl.searchParams.set("returnTo", returnTo);
