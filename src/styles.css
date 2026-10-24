@@ -854,7 +854,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .crownstore-screenshot-crop-error{position:absolute;left:16px;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:2;padding:10px 12px;border:1px solid rgba(196,181,253,.35);border-radius:12px;background:rgba(19,13,30,.96);color:#f4efff;font-size:.82rem;line-height:1.4;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.5)}
 @media(max-width:520px){.crownstore-screenshot-crop-stage{padding:10px 8px}.crownstore-screenshot-crop-header{gap:7px;padding-right:10px;padding-left:10px}.crownstore-screenshot-crop-header>button{flex-basis:38px;width:38px;height:38px}.crownstore-screenshot-crop-handle{width:18px;height:18px}.crownstore-screenshot-crop-handle.nw{top:-9px;left:-9px}.crownstore-screenshot-crop-handle.n{top:-9px}.crownstore-screenshot-crop-handle.ne{top:-9px;right:-9px}.crownstore-screenshot-crop-handle.w{left:-9px}.crownstore-screenshot-crop-handle.e{right:-9px}.crownstore-screenshot-crop-handle.sw{bottom:-9px;left:-9px}.crownstore-screenshot-crop-handle.s{bottom:-9px}.crownstore-screenshot-crop-handle.se{right:-9px;bottom:-9px}}
 
-/* CrownStore copy of HallsChat's full-screen zoom, pan, download and close preview modal. */
+/* CrownStore full-screen image preview modal with zoom, pan, and close controls. */
 .crownstore-image-modal{position:fixed;inset:0;z-index:10010;display:flex;flex-direction:column;background:rgba(4,3,10,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);color:#f4efff}
 .crownstore-image-modal-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:max(14px,env(safe-area-inset-top)) 16px 14px;border-bottom:1px solid rgba(196,181,253,.18);background:rgba(32,21,51,.92)}
 .crownstore-image-modal-actions{display:flex;align-items:center;gap:9px}
@@ -862,7 +862,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 .crownstore-image-modal-actions .crownstore-image-modal-close{border-color:rgba(196,181,253,.42);background:rgba(139,92,246,.24);box-shadow:0 6px 24px rgba(0,0,0,.35)}
 .crownstore-image-modal-actions>button:disabled{opacity:.6;cursor:wait}
 .crownstore-image-modal-actions .crownstore-image-modal-close{font-size:0;line-height:0}
-}
 .crownstore-image-modal-stage{position:relative;display:flex;flex:1;min-height:0;align-items:center;justify-content:center;overflow:hidden;touch-action:none;padding:12px}
 .crownstore-image-modal-stage img{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;user-select:none;-webkit-user-select:none;touch-action:none}
 
