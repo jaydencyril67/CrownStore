@@ -984,7 +984,7 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
     }
   }
 
-  const savedScreenshotUrls = savedScreenshotUrls;
+  const savedScreenshotUrls = form.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean);
   const actionScreenshotUrl = actionScreenshot
     ? actionScreenshot.kind === "saved" ? actionScreenshot.url : pendingScreenshots.find((item) => item.id === actionScreenshot.id)?.previewUrl || null
     : null;
