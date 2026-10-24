@@ -13,6 +13,8 @@ export default function NativeGalleryModal({ onClose, onSelect }: Props) {
   const [error, setError] = useState('');
   const [albumsOpen, setAlbumsOpen] = useState(false);
 
+  useEffect(() => { if (error) showToast(error, 'error'); }, [error]);
+
   useEffect(() => {
     let active = true;
     loadNativeGalleryPhotos().then(items => { if (active) { setPhotos(items); if (items.length) setSelected(items[0]); } })
@@ -52,7 +54,7 @@ export default function NativeGalleryModal({ onClose, onSelect }: Props) {
         {selected?.id===photo.id && <span style={{position:'absolute',top:5,right:5,width:21,height:21,display:'grid',placeItems:'center',borderRadius:'50%',background:'#e2e6ed',color:'#090a0c',fontSize:14,fontWeight:800}}>✓</span>}
       </button>)}</div>}
     </main>
-    {error && photos.length>0 && showToast(error, 'error')}
+
     <footer style={{padding:'12px 14px calc(14px + env(safe-area-inset-bottom))',background:'rgba(15,16,19,.95)',borderTop:'1px solid '+line,boxShadow:'0 -12px 30px rgba(0,0,0,.22)'}}>
       {selected && <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:10}}><div style={{width:38,height:38,borderRadius:9,overflow:'hidden',border:'1px solid '+line,flexShrink:0}}>{selected.thumbnail && <img src={selected.thumbnail} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/>}</div><div style={{minWidth:0}}><strong style={{display:'block',fontSize:12}}>Selected photo</strong><small style={{display:'block',maxWidth:'70vw',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'#aeb2bb',fontSize:10}}>{selected.name}</small></div></div>}
       <button type="button" disabled={!selected||busy} onClick={()=>void choose()} style={{width:'100%',minHeight:46,border:'1px solid rgba(245,247,250,.75)',borderRadius:13,background:selected&&!busy?'linear-gradient(120deg,#f1f3f6,#c4cbd5)':'rgba(255,255,255,.08)',color:selected&&!busy?'#090a0c':'#7c8088',fontSize:13,fontWeight:800}}>{busy?'Opening photo…':'Use selected photo'}</button>
