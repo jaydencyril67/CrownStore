@@ -1559,7 +1559,7 @@ export default function App() {
     const matched = apps.find((app) => app.slug.toLowerCase() === requestedAppSlug);
     setRequestedAppSlug("");
     if (!matched) return;
-    setView("APPS");
+    setView("HOME");
     try {
       const url = new URL(window.location.href);
       url.searchParams.delete("app");
@@ -2060,9 +2060,9 @@ export default function App() {
               setApps((current) => current.some((item) => item.slug === matchingApp.slug) ? current : [...current, matchingApp]);
               openAppDetails(matchingApp);
             } else {
-              setView("APPS");
+              setView("HOME");
             }
-          }).catch(() => setView("APPS"));
+          }).catch(() => setView("HOME"));
         }}
         onBack={() => { setView("HOME"); window.scrollTo({ top: 0, behavior: "auto" }); }}
       /> : view === "SEARCH" ? <section id="search-page" className="store-search-page" aria-label="Search CrownStore apps">
