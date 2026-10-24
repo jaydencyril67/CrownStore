@@ -777,14 +777,14 @@ function AppManagerPanel({ onClose, onSaved }: { onClose: () => void; onSaved: (
         if (!response.ok || (!data.url && !data.filePath)) throw new Error(data.message || data.help || "ImageKit could not upload " + file.name + ".");
         // Prefer the configured delivery endpoint + ImageKit file path so deployments
         // consistently use VITE_IMAGEKIT_URL_ENDPOINT rather than a hardcoded host.
-        const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\\/+/, "") : "";
+        const imagePath = typeof data.filePath === "string" ? data.filePath.replace(/^\/+/, "") : "";
         const imageUrl = IMAGEKIT_URL_ENDPOINT && imagePath
           ? IMAGEKIT_URL_ENDPOINT + "/" + imagePath
           : data.url;
         if (!imageUrl) throw new Error("ImageKit returned no usable image URL for " + file.name + ".");
         uploaded.push(imageUrl);
       }
-      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\\n") }));
+      setForm((current) => ({ ...current, screenshotsText: [...current.screenshotsText.split(/[\n,]+/).map((item) => item.trim()).filter(Boolean), ...uploaded].join("\n") }));
       setUploadMessage(uploaded.length + " screenshot" + (uploaded.length === 1 ? "" : "s") + " uploaded to ImageKit.");
     } catch (error) {
       setUploadMessage(error instanceof Error ? error.message : "Screenshot upload failed.");
