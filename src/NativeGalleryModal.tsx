@@ -13,7 +13,7 @@ export default function NativeGalleryModal({ onClose, onSelect }: Props) {
   const [error, setError] = useState('');
   const [albumsOpen, setAlbumsOpen] = useState(false);
 
-  useEffect(() => { if (error) showToast(error, 'error'); }, [error]);
+  useEffect(() => {\n    document.body.classList.add('crownstore-image-focus-mode');\n    return () => document.body.classList.remove('crownstore-image-focus-mode');\n  }, []);\n\n  useEffect(() => { if (error) showToast(error, 'error'); }, [error]);
 
   useEffect(() => {
     let active = true;
