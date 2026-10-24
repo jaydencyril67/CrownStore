@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ColorPickerTarget } from "./ColorPickerPage";
 import {
   Bell, Check, Palette, Radio, ShieldCheck,
-  Sparkles, Zap, Mail
+  Sparkles, Zap
 } from "lucide-react";
 import {
   BUTTON_COLOR_ENABLED_KEY, BUTTON_COLOR_KEY, DEFAULT_ACCENT,
@@ -11,6 +11,7 @@ import {
   type NotificationKind, type NotificationPreferences
 } from "./notifications";
 import { disableCrownStorePush, enableCrownStorePush, syncCrownStorePushPreferences } from "./pushNotifications";
+import { showToast, toastKindForMessage } from "./toast";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "https://apicrownstore.kingshall.online").replace(/\/$/, "");
 
@@ -104,7 +105,15 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
   const [preferences, setPreferences] = useState<NotificationPreferences>(() => readNotificationPreferences());
   const [loggedIn, setLoggedIn] = useState(() => hasCrownStoreSession());
   const [emailDeliveryReady, setEmailDeliveryReady] = useState<boolean | null>(null);
+  const [emailDeliveryChecked, setEmailDeliveryChecked] = useState(false);
   const [notice, setNotice] = useState("");
+
+  useEffect(() => { if (notice) showToast(notice, toastKindForMessage(notice)); }, [notice]);
+  useEffect(() => {
+    if (!loggedIn || !emailDeliveryChecked) return;
+    if (emailDeliveryReady === false) showToast("Email notifications are not configured on CrownStore yet. Your preference can be saved, but email delivery will not work until the API’s Resend settings are configured.", "warning", 7500);
+    else if (emailDeliveryReady === null) showToast("CrownStore could not check email delivery readiness. Your notification preference can still be saved.", "warning", 6500);
+  }, [loggedIn, emailDeliveryChecked, emailDeliveryReady]);
 
   useEffect(() => {
     let active = true;
@@ -116,9 +125,13 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
       .then((data) => {
         if (!active) return;
         setEmailDeliveryReady(data.emailConfigured === true);
+        setEmailDeliveryChecked(true);
       })
       .catch(() => {
-        if (active) setEmailDeliveryReady(null);
+        if (active) {
+          setEmailDeliveryReady(null);
+          setEmailDeliveryChecked(true);
+        }
       });
     return () => { active = false; };
   }, []);
@@ -230,8 +243,7 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
       <SettingRow title="Device notifications" detail="Receive app releases and CrownStore alerts even when the app or browser is in the background. Sign-in and notification permission are required." trailing={<SettingSwitch checked={preferences.channels.device} label="Enable device notifications" onChange={(enabled) => void toggleChannel("device", enabled)} />} />
       {loggedIn && <SettingRow title="Email notifications" detail="Send enabled CrownStore alert types to the email address on your signed-in KingsHall account." trailing={<SettingSwitch checked={preferences.channels.email} label="Enable email notifications" onChange={(enabled) => void toggleChannel("email", enabled)} />} />}
 
-      {loggedIn && emailDeliveryReady === false && <p className="menu-inline-note" role="status"><Mail size={14} /> Email notifications are available here, but Resend is not configured on the CrownStore API. Add RESEND_API_KEY and RESEND_FROM_EMAIL to the ApiCrownStore service to deliver email alerts.</p>}
-      {loggedIn && emailDeliveryReady === null && <p className="menu-inline-note" role="status"><Mail size={14} /> Email delivery readiness could not be checked. Your signed-in account can still save its email notification preference.</p>}
+
     </section>
 
     <section className="menu-section">
@@ -239,6 +251,6 @@ export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void
       {NOTIFICATION_GROUPS.map((group) => <div key={group.title} className="menu-notification-group"><h3>{group.title}</h3>{group.items.map((item) => <SettingRow key={item.key} title={item.label} detail={item.detail} trailing={<SettingSwitch checked={preferences.types[item.key]} label={"Enable " + item.label} onChange={(enabled) => savePreferences({ ...preferences, types: { ...preferences.types, [item.key]: enabled } })} />} />)}</div>)}
     </section>
     <div className="menu-page-footer"><Sparkles size={14} /> Preferences are saved locally and synced to your signed-in CrownStore account when available.</div>
-    {notice && <p className="menu-status" role="status">{notice}<button type="button" onClick={() => setNotice("")} aria-label="Dismiss message">Dismiss</button></p>}
+
   </section>;
 }
