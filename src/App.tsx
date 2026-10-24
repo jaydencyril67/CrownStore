@@ -442,8 +442,7 @@ function AppDetailsPage({ app, onClose, download, isAnotherDownloadRunning, onDo
       </div>
     </section>
 
-    <section className="app-detail-section" aria-labelledby="app-screenshots-title">
-      <div className="app-detail-section-heading"><div><h2 id="app-screenshots-title">Screenshots</h2><p>Take a closer look inside the app.</p></div><span className="app-detail-section-count">{screenshots.length} {screenshots.length === 1 ? "image" : "images"}</span></div>
+    <section className="app-detail-section" aria-label={app.name + " screenshots"}>
       {screenshots.length > 0
         ? <div className="app-detail-screenshot-track" aria-label={app.name + " screenshots"}>
             {screenshots.map((screenshot, index) => <button className="app-detail-screenshot" key={screenshot + index} type="button" onClick={() => setPreviewScreenshot(screenshot)} aria-label={"View screenshot " + (index + 1)}>
