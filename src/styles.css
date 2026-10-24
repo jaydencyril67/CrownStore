@@ -738,7 +738,6 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,.site-shell *::-webkit-scrollbar
 
 
 /* CrownStore Menu and notifications */
-/* CrownStore Menu and notifications */
 .menu-page,.notifications-page{width:100%;max-width:850px;margin:0 auto;padding:20px clamp(16px,3vw,28px) 130px;box-sizing:border-box;color:#f4efff}
 .menu-page-heading{margin-bottom:17px}.notifications-heading{margin-bottom:12px}
 .menu-page-heading h1{font-size:clamp(23px,5vw,29px);font-weight:600;letter-spacing:-.035em;line-height:1.15;margin:8px 0 0;color:#f4efff}.notifications-heading h1{font-size:clamp(23px,5vw,29px);font-weight:600;letter-spacing:-.035em;line-height:1.15;margin:0;color:#f4efff}.notifications-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.notifications-unread-count{flex:0 0 auto;padding:5px 8px;border:1px solid rgba(196,181,253,.22);border-radius:99px;background:rgba(139,92,246,.1);color:#d9ccff;font-size:9px;font-weight:650}
