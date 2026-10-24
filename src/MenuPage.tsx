@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ColorPickerTarget } from "./ColorPickerPage";
 import {
-  Bell, Check, ChevronRight, Info, Palette, Radio, ShieldCheck,
+  Bell, Check, Palette, Radio, ShieldCheck,
   Sparkles, Zap
 } from "lucide-react";
 import {
@@ -93,7 +93,7 @@ function SettingRow({ title, detail, trailing }: { title: string; detail: string
   return <div className="menu-setting-row"><div className="menu-setting-copy"><strong>{title}</strong><span>{detail}</span></div><div className="menu-setting-control">{trailing}</div></div>;
 }
 
-export default function MenuPage({ onBack, onAbout, onChooseColor }: { onBack: () => void; onAbout: () => void; onChooseColor: (target: ColorPickerTarget) => void }) {
+export default function MenuPage({ onBack, onChooseColor }: { onBack: () => void; onChooseColor: (target: ColorPickerTarget) => void }) {
   void onBack;
   const [edge, setEdge] = useState<EdgeSettings>(() => readEdge());
   const [buttonColor, setButtonColor] = useState(() => {
