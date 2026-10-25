@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://crownstore.kingshall.online/sitemap.xml
