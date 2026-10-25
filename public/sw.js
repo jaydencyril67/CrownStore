@@ -1,5 +1,5 @@
-const CACHE_NAME = "crownstore-shell-v15";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/crownstore-icon.svg?v=3", "/crownstore-maskable.svg?v=3", "/crownstore-pwa-icon.svg?v=3"];
+const CACHE_NAME = "crownstore-shell-v16";
+const APP_SHELL = ["/", "/manifest.webmanifest", "/favicon.svg?v=2", "/crownstore-icon.svg?v=3", "/crownstore-maskable.svg?v=3", "/crownstore-pwa-icon.svg?v=3"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
