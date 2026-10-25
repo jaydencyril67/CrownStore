@@ -25,9 +25,11 @@ function GlobalInteractionRules() {
 function PwaServiceWorker() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        // CrownStore remains usable in the browser if service-worker registration is unavailable.
-      });
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+        .then((registration) => registration.update())
+        .catch(() => {
+          // CrownStore remains usable in the browser if service-worker registration is unavailable.
+        });
     }
   }, []);
 
