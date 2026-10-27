@@ -34,7 +34,6 @@ The public CrownStore website for official KingsHall applications. Built with Re
 3. Keep apps listed to make them public. Hiding an app removes it from the public catalogue without deleting its release history.
 4. Create a stable GitHub Release with the APK attached in the public `jaydencyril67/CrownStoreApk` repository, then use **Publisher** to verify and publish it. The APK is checked against the app package and manifest version before CrownStore enables downloads. 
 
-
 The frontend never embeds the admin token or database credentials. The administrator enters the token into the management panel, and it is held in UI state for that session. Configure ApiCrownStore's CORS allowlist to include the deployed storefront origin.
 
 ## Push notifications
